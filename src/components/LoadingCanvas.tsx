@@ -239,9 +239,16 @@ const LoadingCanvas: React.FC<LoadingCanvasProps> = ({ onFinish }) => {
   return (
     <canvas
       ref={canvasRef}
-      className={`fixed inset-0 z-50 transition-opacity duration-400 ${fadeOut ? 'opacity-0' : 'opacity-100'}`}
-      style={{ display: stage === 'done' && !fadeOut ? 'none' : 'block' }}
+      className={`fixed inset-0 z-50 transition-opacity duration-1000 ease-out ${
+        fadeOut ? 'opacity-0' : 'opacity-100'
+      }`}
+      style={{
+        display: 'block', // 始终 block，使用 opacity 控制显示
+        pointerEvents: 'none', // 避免阻塞用户交互
+        transition: 'opacity 1s ease-in-out',
+      }}
     />
+
   );
 };
 
