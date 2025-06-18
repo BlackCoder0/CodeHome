@@ -34,6 +34,12 @@ export default function Home() {
 
         if (deltaY > 0) {
           setShowMain(true);
+          setTimeout(() => {
+            const projectsSection = document.getElementById("projects");
+            if (projectsSection) {
+              projectsSection.scrollIntoView({ behavior: "smooth" });
+            }
+          }, 100); // 等待内容渲染后再滚动
         }
       };
 
