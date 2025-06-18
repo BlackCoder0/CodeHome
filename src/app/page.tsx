@@ -8,6 +8,7 @@ import Hobbies from "@/components/sections/Hobbies";
 import Contact from "@/components/sections/Contact";
 import About from "@/components/sections/About";
 import Friends from "@/components/sections/Friends";
+import Navbar from "@/components/Navbar";
 
 export default function Home() {
   const [showMain, setShowMain] = useState(false);
@@ -109,6 +110,7 @@ export default function Home() {
         <Contact />
         <Friends />
       </div>
+      <Navbar show={!loading && showMain && showContent} />
     </div>
   );
 }
