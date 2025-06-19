@@ -4,15 +4,17 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPixelatedPass } from 'three/examples/jsm/postprocessing/RenderPixelatedPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 
-export function initPixelScene(container: HTMLDivElement) {
+export function webglPostprocessing(container: HTMLDivElement) {
   const width = container.clientWidth;
   const height = container.clientHeight;
   const aspectRatio = width / height;
 
-  // Camera setup - using orthographic camera like in the HTML version
+  // Camera setup - using orthographic camera with 45° angled view
   const camera = new THREE.OrthographicCamera(-aspectRatio, aspectRatio, 1, -1, 0.1, 10);
-  camera.position.y = 2 * Math.tan(Math.PI / 6);
-  camera.position.z = 2;
+  // Set camera position for 45° diagonal view from above
+  camera.position.set(1, 1, 2);
+  // Look at the center of the scene
+  camera.lookAt(0, 0, 0);
 
   // Scene setup
   const scene = new THREE.Scene();

@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MorphingText } from "@/components/magicui/morphing-text";
 import { BentoGrid, BentoGridItem } from "../ui/bento-grid";
+import { WarpBackground } from "@/components/magicui/warp-background";
 
 // 项目数据类型定义
 interface ProjectData {
@@ -260,10 +261,13 @@ const Projects: React.FC = () => {
 
   return (
     <>
-      <section id="projects" className="min-h-screen py-20 bg-gradient-to-b from-[#acc8e3] to-[#2e3346]">
+      <section id="projects" className="relative z-10 min-h-screen py-16 bg-gradient-to-b from-[#acc8e3] to-[#2e3346] overflow-hidden">
+      <WarpBackground className="absolute inset-0" />
+      <div className="relative">
+
         <div className="container mx-auto px-4">
           <div className="relative h-[120px] w-full overflow-hidden text-center mb-1">
-          <MorphingText texts={["我的项目", "My Project"]} />
+          <MorphingText texts={["我的项目", "My Project"]} className="text-[#44475a]" />
           </div>
 
         </div>
@@ -333,6 +337,7 @@ const Projects: React.FC = () => {
             <p className="text-slate-300 text-sm">点击项目卡片查看详细信息</p>
           </div>
         </div>
+        </div>
       </section>
 
       <ProjectModal
@@ -346,3 +351,4 @@ const Projects: React.FC = () => {
 
 
 export default Projects;
+
