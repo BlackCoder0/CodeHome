@@ -3,7 +3,7 @@ import { PinContainer } from "../ui/3d-pin";
 import { motion, AnimatePresence } from "motion/react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { VideoText } from "@/components/magicui/video-text";
+import { MorphingText } from "@/components/magicui/morphing-text";
 import { BentoGrid, BentoGridItem } from "../ui/bento-grid";
 
 // 项目数据类型定义
@@ -262,8 +262,8 @@ const Projects: React.FC = () => {
     <>
       <section id="projects" className="min-h-screen py-20 bg-gradient-to-b from-[#acc8e3] to-[#2e3346]">
         <div className="container mx-auto px-4">
-          <div className="relative h-[100px] w-full overflow-hidden text-center mb-1">
-          <VideoText src="/assets/project/star.mp4" fontSize={typeof window !== 'undefined' && window.innerWidth <= 768 ? 8 : 4}>我的项目</VideoText>
+          <div className="relative h-[120px] w-full overflow-hidden text-center mb-1">
+          <MorphingText texts={["我的项目", "My Project"]} />
           </div>
 
         </div>
