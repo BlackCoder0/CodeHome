@@ -10,7 +10,10 @@ export function webglPostprocessing(container: HTMLDivElement) {
   const aspectRatio = width / height;
 
   // Camera setup - using orthographic camera with 45° angled view
-  const camera = new THREE.OrthographicCamera(-aspectRatio, aspectRatio, 1, -1, 0.1, 10);
+  // Adjust camera bounds based on screen size for better scaling
+  const isMobile = width < 768;
+  const scale = isMobile ? 1 : 1.5; // Larger scale for desktop
+  const camera = new THREE.OrthographicCamera(-aspectRatio * scale, aspectRatio * scale, 1 * scale, -1 * scale, 0.1, 10);
   // Set camera position for 45° diagonal view from above
   camera.position.set(1, 1, 2);
   // Look at the center of the scene
