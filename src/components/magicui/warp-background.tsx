@@ -95,7 +95,7 @@ export const WarpBackground: React.FC<WarpBackgroundProps> = ({
   const { top: topBeams, right: rightBeams, bottom: bottomBeams, left: leftBeams } = beams;
 
   return (
-    <div className={cn("relative rounded border p-20", className)} {...props}>
+    <div className={cn("relative rounded p-20", className)} {...props}>
       <div
         style={
           {
