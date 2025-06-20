@@ -171,9 +171,10 @@ const Hobbies: React.FC = () => {
   const allCards = [...cards];
   const topCards = cards.slice(0, 4);
   const bottomCards = cards.slice(4);
+  const dynamicPaddingBottom = bottomCards.length > 0 ? 'pb-96' : 'pb-32';
 
   return (
-    <section id="hobbies" className="relative min-h-screen py-16 bg-gradient-to-b from-[#2e3346] to-black text-white">
+    <section id="hobbies" className={`relative min-h-screen py-16 ${dynamicPaddingBottom} bg-gradient-to-b from-[#2e3346] to-black text-white`}>
       <Particles
         className="absolute inset-0 z-0"
         quantity={300}
@@ -184,7 +185,7 @@ const Hobbies: React.FC = () => {
         vy={10}
       />
       <div className="relative container mx-auto px-4">
-        <div className="text-center mb-12 pt-36">
+        <div className="text-center mb-12 pt-8">
           <h2 className="text-4xl font-bold mb-2">我的兴趣爱好</h2>
           <p className="text-white/70">探索我喜欢的书籍、音乐、番剧、电影和角色</p>
         </div>
