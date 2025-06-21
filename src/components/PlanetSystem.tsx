@@ -5,7 +5,7 @@ import { RiLinksLine } from 'react-icons/ri';
 
 const ringData = [
   {
-    radius: 120,
+    radius: 150,
     icons: [
       { icon: <FaGithub />, link: 'https://github.com/' },
       {
@@ -21,7 +21,7 @@ const ringData = [
     ],
   },
   {
-    radius: 200,
+    radius: 250,
     icons: [
       {
         icon: (
@@ -47,7 +47,7 @@ const ringData = [
     ],
   },
   {
-    radius: 280,
+    radius: 350,
     icons: [
       { icon: <RiLinksLine />, link: 'https://yourfriendlink.com/' },
       { icon: <FaSteam />, link: 'https://store.steampowered.com/' },

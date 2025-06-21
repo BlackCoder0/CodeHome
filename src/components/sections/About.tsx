@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import PlanetSystem from "@/components/PlanetSystem";
+import { AnimatedTestimonials } from "@/components/ui/animated-testimonials";
 
 // 声明全局Window接口扩展
 declare global {
@@ -8,7 +9,64 @@ declare global {
     matterCleanup?: () => void;
   }
 }
-
+const testimonials = [
+  {
+    quote:
+      "The attention to detail and innovative features have completely transformed our workflow. This is exactly what we've been looking for.",
+    name: "Sarah Chen",
+    designation: "Product Manager at TechFlow",
+    src: "assets/oc/oc1.png",
+  },
+  {
+    quote:
+      "Implementation was seamless and the results exceeded our expectations. The platform's flexibility is remarkable.",
+    name: "Michael Rodriguez",
+    designation: "CTO at InnovateSphere",
+    src: "assets/oc/oc2.png",
+  },
+  {
+    quote:
+      "This solution has significantly improved our team's productivity. The intuitive interface makes complex tasks simple.",
+    name: "Emily Watson",
+    designation: "Operations Director at CloudScale",
+    src: "assets/oc/oc3.png",
+  },
+  {
+    quote:
+      "Outstanding support and robust features. It's rare to find a product that delivers on all its promises.",
+    name: "James Kim",
+    designation: "Engineering Lead at DataPro",
+    src: "assets/oc/oc4.png",
+  },
+  {
+    quote:
+      "The scalability and performance have been game-changing for our organization. Highly recommend to any growing business.",
+    name: "Lisa Thompson",
+    designation: "VP of Technology at FutureNet",
+    src: "assets/oc/oc5.png",
+  },
+  {
+    quote:
+      "The scalability and performance have been game-changing for our organization. Highly recommend to any growing business.",
+    name: "Lisa Thompson",
+    designation: "VP of Technology at FutureNet",
+    src: "assets/oc/oc6.png",
+  },
+  {
+    quote:
+      "The scalability and performance have been game-changing for our organization. Highly recommend to any growing business.",
+    name: "Lisa Thompson",
+    designation: "VP of Technology at FutureNet",
+    src: "assets/oc/oc7.png",
+  },
+  {
+    quote:
+      "The scalability and performance have been game-changing for our organization. Highly recommend to any growing business.",
+    name: "Lisa Thompson",
+    designation: "VP of Technology at FutureNet",
+    src: "assets/oc/oc8.png",
+  },
+];
 
 
 const About: React.FC = () => {
@@ -76,8 +134,11 @@ const About: React.FC = () => {
   <h2 className="text-4xl font-bold mb-8">About Me</h2>
 
 </div>
-<div className="absolute top-0 right-0 w-[800px] h-[800px] -translate-y-1/4 translate-x-1/4 pointer-events-none">
+<div className="absolute top-0 right-0 w-[1000px] h-[1000px] -translate-y-1/4 translate-x-1/4 pointer-events-none">
     <PlanetSystem />
+  </div>
+  <div className="absolute bottom-120 left-20 z-10">
+    <AnimatedTestimonials testimonials={testimonials} />
   </div>
       {/* Matter.js 物理引擎将在这里渲染 - 位于最底层 */}
     </section>
