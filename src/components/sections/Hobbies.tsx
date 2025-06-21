@@ -43,14 +43,14 @@ const Hobbies: React.FC = () => {
       <div className="relative container mx-auto px-4 h-full">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full items-stretch">
           {/* 左侧 - 3D模型区域 */}
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="w-full h-[50vh] lg:h-full flex items-center justify-center">
             <div className="w-full h-full max-h-[calc(100vh-8rem)] rounded-lg overflow-hidden border border-white/10 shadow-lg relative z-10">
               <div ref={mountRef} className="w-full h-full" style={{ background: 'transparent' }} />
             </div>
           </div>
           
           {/* 右侧 - 文章区域 */}
-          <div className="w-full h-full flex flex-col">
+          <div className="w-full h-[50vh] lg:h-full flex flex-col">
             <div className="h-full bg-black/40 backdrop-blur-sm border-2 border-white/20 shadow-2xl relative z-10 flex flex-col"
                  style={{
                    clipPath: 'polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px))',
