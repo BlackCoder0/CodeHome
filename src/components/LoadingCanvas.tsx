@@ -35,7 +35,7 @@ const LoadingCanvas: React.FC<LoadingCanvasProps> = ({ onFinish }) => {
       img.onload = () => {
         processImage();
       };
-      img.src = '/assets/bg_big.png'; // 保证图片比例为1920x1080
+      img.src = '/assets/bg_big2.jpg'; // 保证图片比例为1920x1080
     };
 
     const processImage = () => {

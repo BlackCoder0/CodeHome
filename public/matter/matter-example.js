@@ -1,20 +1,3 @@
-var Engine = Matter.Engine,
-    Render = Matter.Render,
-    Runner = Matter.Runner,
-    Bodies = Matter.Bodies,
-    Composite = Matter.Composite,
-    Common = Matter.Common,
-    Mouse = Matter.Mouse,
-    MouseConstraint = Matter.MouseConstraint;
-
-// create an engine
-var engine = Engine.create();
-
-// 设置重力 - 电脑端1.5倍重力
-if (!isMobile()) {
-    engine.world.gravity.y = 1.5;
-}
-
 // 检测设备类型
 function isMobile() {
     return window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -68,8 +51,23 @@ function createRandomBody(x, y) {
     return randomShape();
 }
 
-// 等待DOM加载完成，然后找到about section
-function initMatter() {
+window.initMatter = function() {
+  var Engine = Matter.Engine,
+      Render = Matter.Render,
+      Runner = Matter.Runner,
+      Bodies = Matter.Bodies,
+      Composite = Matter.Composite,
+      Common = Matter.Common,
+      Mouse = Matter.Mouse,
+      MouseConstraint = Matter.MouseConstraint;
+
+// create an engine
+var engine = Engine.create();
+
+// 设置重力 - 电脑端1.5倍重力
+if (!isMobile()) {
+    engine.world.gravity.y = 1.5;
+}
     var aboutSection = document.getElementById('about');
     if (!aboutSection) {
         console.error('找不到id为about的元素');
@@ -255,35 +253,24 @@ function initMatter() {
         });
     }
     
-// 双击爆炸效果 - 阻止默认缩放行为
-var lastClickTime = 0;
-aboutSection.addEventListener('click', function(event) {
-    var currentTime = Date.now();
-    if (currentTime - lastClickTime < 300) {
-        // 双击触发爆炸
-        event.preventDefault(); // 阻止默认行为
-        addExplosionEffect(event.clientX, event.clientY);
-    }
-    lastClickTime = currentTime;
-});
+    // 双击爆炸效果 - 阻止默认缩放行为
+    var lastClickTime = 0;
+    aboutSection.addEventListener('click', function(event) {
+        var currentTime = Date.now();
+        if (currentTime - lastClickTime < 300) {
+            // 双击触发爆炸
+            event.preventDefault(); // 阻止默认行为
+            addExplosionEffect(event.clientX, event.clientY);
+        }
+        lastClickTime = currentTime;
+    });
 
-// 触摸双击效果 - 阻止默认缩放
-var lastTouchTime = 0;
-aboutSection.addEventListener('touchend', function(event) {
-    var currentTime = Date.now();
-    if (currentTime - lastTouchTime < 300 && event.changedTouches.length === 1) {
-        event.preventDefault(); // 阻止默认行为
-        var touch = event.changedTouches[0];
-        addExplosionEffect(touch.clientX, touch.clientY);
-    }
-    lastTouchTime = currentTime;
-});
-    
-    // 触摸双击效果
+    // 触摸双击效果 - 阻止默认缩放
     var lastTouchTime = 0;
     aboutSection.addEventListener('touchend', function(event) {
         var currentTime = Date.now();
         if (currentTime - lastTouchTime < 300 && event.changedTouches.length === 1) {
+            event.preventDefault(); // 阻止默认行为
             var touch = event.changedTouches[0];
             addExplosionEffect(touch.clientX, touch.clientY);
         }
@@ -301,20 +288,23 @@ aboutSection.addEventListener('touchend', function(event) {
 
     console.log('Matter.js 多物体掉落效果初始化完成 - 设备倍数:', multiplier);
     
-    // 清理函数
-    window.matterCleanup = function() {
-        clearInterval(dropInterval);
-        Render.stop(render);
-        Runner.stop(runner);
-        Engine.clear(engine);
+    // 返回清理函数
+    return function cleanup() {
+        if (typeof dropInterval !== 'undefined') {
+            clearInterval(dropInterval);
+        }
+        if (typeof render !== 'undefined') {
+            Render.stop(render);
+            if (render.canvas) {
+                render.canvas.remove();
+            }
+        }
+        if (typeof runner !== 'undefined') {
+            Runner.stop(runner);
+        }
+        if (typeof engine !== 'undefined') {
+            Engine.clear(engine);
+        }
+        console.log('Matter.js instance cleaned up.');
     };
-}
-
-// 延迟一点时间确保DOM完全准备好
-setTimeout(function() {
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initMatter);
-    } else {
-        initMatter();
-    }
-}, 100);
+};

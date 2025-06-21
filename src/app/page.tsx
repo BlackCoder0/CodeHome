@@ -80,7 +80,7 @@ export default function Home() {
                       ${introReady && !showMain ? 'opacity-100' : 'opacity-0'} 
                       ${showMain ? 'pointer-events-none' : ''}
                       transition-opacity duration-700 ease-in-out`}
-          style={{ backgroundImage: 'url(/assets/bg_big.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}
+          style={{ backgroundImage: 'url(/assets/bg_big2.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}
         >
           <div className="backdrop-blur-sm bg-black/40 w-full h-full absolute top-0 left-0 -z-10" />
           <TextAnimate
