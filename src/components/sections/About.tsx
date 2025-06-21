@@ -1,5 +1,6 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
+import PlanetSystem from "@/components/PlanetSystem";
 
 // 声明全局Window接口扩展
 declare global {
@@ -7,6 +8,8 @@ declare global {
     matterCleanup?: () => void;
   }
 }
+
+
 
 const About: React.FC = () => {
   const sectionRef = useRef<HTMLElement>(null);
@@ -66,21 +69,16 @@ const About: React.FC = () => {
     <section 
       ref={sectionRef}
       id="about" 
-      className="relative py-16 bg-black min-h-[700px]" // 移除mt-20消除空白
+      className="relative py-16 bg-black min-h-[1200px] md:min-h-[1400px] lg:min-h-[1600px] no-zoom" // 移除mt-20消除空白，添加no-zoom防止双击缩放
     >
       {/* 内容层 - 位于物理引擎之上 */}
-      <div className="relative z-20 container mx-auto px-4">
-        <div className="text-center text-white">
-          <h2 className="text-4xl font-bold mb-8">About Me</h2>
-          <p className="text-lg mb-6 max-w-2xl mx-auto">
-            这里是关于我的介绍内容。背景中的物理引擎效果不会影响页面交互。
-          </p>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors">
-            了解更多
-          </button>
-        </div>
-      </div>
-      
+      <div className="text-center text-white">
+  <h2 className="text-4xl font-bold mb-8">About Me</h2>
+
+</div>
+<div className="absolute top-0 right-0 w-[800px] h-[800px] -translate-y-1/4 translate-x-1/4 pointer-events-none">
+    <PlanetSystem />
+  </div>
       {/* Matter.js 物理引擎将在这里渲染 - 位于最底层 */}
     </section>
   );

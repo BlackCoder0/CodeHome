@@ -109,8 +109,8 @@ function initMatter() {
     canvas.style.width = '100%';
     canvas.style.height = '100%';
     canvas.style.zIndex = '1';
-    // 启用交互但不阻止页面滚动
-    canvas.style.pointerEvents = 'auto';
+    // 只在需要时启用交互，默认允许页面滚动
+    canvas.style.pointerEvents = 'none';
     
     // 添加鼠标/触摸控制
     var mouse = Mouse.create(render.canvas);
@@ -126,6 +126,39 @@ function initMatter() {
     
     Composite.add(engine.world, mouseConstraint);
     render.mouse = mouse;
+    
+    // 动态控制pointer events
+    var isInteracting = false;
+    
+    // 鼠标按下时启用交互
+    canvas.addEventListener('mousedown', function(event) {
+        canvas.style.pointerEvents = 'auto';
+        isInteracting = true;
+    }, { passive: true });
+    
+    // 鼠标释放时禁用交互
+    canvas.addEventListener('mouseup', function(event) {
+        canvas.style.pointerEvents = 'none';
+        isInteracting = false;
+    }, { passive: true });
+    
+    // 触摸开始时启用交互
+    canvas.addEventListener('touchstart', function(event) {
+        canvas.style.pointerEvents = 'auto';
+        isInteracting = true;
+    }, { passive: true });
+    
+    // 触摸结束时禁用交互
+    canvas.addEventListener('touchend', function(event) {
+        canvas.style.pointerEvents = 'none';
+        isInteracting = false;
+    }, { passive: true });
+    
+    // 鼠标离开canvas时禁用交互
+    canvas.addEventListener('mouseleave', function(event) {
+        canvas.style.pointerEvents = 'none';
+        isInteracting = false;
+    }, { passive: true });
     
     // 防止canvas阻止页面滚动
     canvas.addEventListener('wheel', function(event) {
@@ -222,20 +255,33 @@ function initMatter() {
         });
     }
     
-    // 双击/双击触摸爆炸效果
-    var lastClickTime = 0;
-    canvas.addEventListener('click', function(event) {
-        var currentTime = Date.now();
-        if (currentTime - lastClickTime < 300) {
-            // 双击触发爆炸
-            addExplosionEffect(event.clientX, event.clientY);
-        }
-        lastClickTime = currentTime;
-    });
+// 双击爆炸效果 - 阻止默认缩放行为
+var lastClickTime = 0;
+aboutSection.addEventListener('click', function(event) {
+    var currentTime = Date.now();
+    if (currentTime - lastClickTime < 300) {
+        // 双击触发爆炸
+        event.preventDefault(); // 阻止默认行为
+        addExplosionEffect(event.clientX, event.clientY);
+    }
+    lastClickTime = currentTime;
+});
+
+// 触摸双击效果 - 阻止默认缩放
+var lastTouchTime = 0;
+aboutSection.addEventListener('touchend', function(event) {
+    var currentTime = Date.now();
+    if (currentTime - lastTouchTime < 300 && event.changedTouches.length === 1) {
+        event.preventDefault(); // 阻止默认行为
+        var touch = event.changedTouches[0];
+        addExplosionEffect(touch.clientX, touch.clientY);
+    }
+    lastTouchTime = currentTime;
+});
     
     // 触摸双击效果
     var lastTouchTime = 0;
-    canvas.addEventListener('touchend', function(event) {
+    aboutSection.addEventListener('touchend', function(event) {
         var currentTime = Date.now();
         if (currentTime - lastTouchTime < 300 && event.changedTouches.length === 1) {
             var touch = event.changedTouches[0];

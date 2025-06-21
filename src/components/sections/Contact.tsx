@@ -1,5 +1,6 @@
 // src/components/sections/Contact.tsx
 import React from 'react';
+import { OrbitingCircles } from "@/components/magicui/orbiting-circles";
 
 const Contact: React.FC = () => {
   return (

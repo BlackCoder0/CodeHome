@@ -60,6 +60,15 @@
     transform: translateY(calc(-100% - var(--gap)));
     }
   }
+  --animate-orbit: orbit calc(var(--duration)*1s) linear infinite;
+  @keyframes orbit {
+    0% {
+      transform: rotate(calc(var(--angle) * 1deg)) translateY(calc(var(--radius) * 1px)) rotate(calc(var(--angle) * -1deg));
+    }
+    100% {
+      transform: rotate(calc(var(--angle) * 1deg + 360deg)) translateY(calc(var(--radius) * 1px)) rotate(calc((var(--angle) * -1deg) - 360deg));
+    }
+  }
 }
 
 :root {
@@ -131,11 +140,90 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* 全局动画定义 */
+@keyframes rotateRing {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
+  }
+  
+  /* 防止移动端双击缩放 */
+  .no-zoom {
+    touch-action: manipulation; /* 禁用双击缩放，保留其他触摸手势 */
+    user-select: none; /* 防止文本选择 */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+}
+
+@layer utilities {
+  /* 动态生成 orbit 动画 */
+  @keyframes orbit-0-0 {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes orbit-0-1 {
+    from {
+      transform: rotate(180deg);
+    }
+    to {
+      transform: rotate(540deg);
+    }
+  }
+  @keyframes orbit-1-0 {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes orbit-1-1 {
+    from {
+      transform: rotate(120deg);
+    }
+    to {
+      transform: rotate(480deg);
+    }
+  }
+  @keyframes orbit-1-2 {
+    from {
+      transform: rotate(240deg);
+    }
+    to {
+      transform: rotate(600deg);
+    }
+  }
+  @keyframes orbit-2-0 {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes orbit-2-1 {
+    from {
+      transform: rotate(180deg);
+    }
+    to {
+      transform: rotate(540deg);
+    }
   }
 }
