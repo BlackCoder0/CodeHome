@@ -179,9 +179,16 @@ const About: React.FC = () => {
       id="about" 
       className="relative py-16 bg-black min-h-[1200px] md:min-h-[1400px] lg:min-h-[1600px] no-zoom overflow-hidden" // 移除mt-20消除空白，添加no-zoom防止双击缩放
       style={{
-        background: 'radial-gradient(ellipse 800px 600px at 20% 20%, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 30%, rgba(0, 0, 0, 1) 70%)',
-        backgroundBlendMode: 'overlay'
-      }}
+         background: 'radial-gradient(ellipse 800px 600px at 20% 20%, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 30%, rgba(0, 0, 0, 1) 70%)',
+         backgroundBlendMode: 'overlay'
+      //   background: `linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)),url('/assets/bg/star2.jpg')
+      // `,
+         
+      //   backgroundSize: "cover",
+      //   backgroundPosition: "center",
+      //   backgroundRepeat: "no-repeat",
+      //   backgroundAttachment: "cover" // 可选，固定背景
+       }}
     >
       {/* 响应式布局：移动端顺序为PlanetSystem/"About Me"文字/DeskLamp3D/AnimatedTestimonials */}
       <div className="block md:hidden relative w-full h-[320px] mb-8">

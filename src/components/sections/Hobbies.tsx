@@ -5,6 +5,7 @@ import { articles, getArticlesByCategory, categories, Article } from '@/lib/arti
 import ArticleCard from '@/components/ArticleCard';
 
 
+
 const Hobbies: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
   const [activeCategory, setActiveCategory] = useState<Article['category']>('game');
@@ -61,9 +62,18 @@ const Hobbies: React.FC = () => {
   const filteredArticles = getArticlesByCategory(activeCategory);
 
   return (
-    <section id="hobbies" className="relative min-h-screen py-8 bg-gradient-to-b from-[#2e3346] to-black">
+     <section id="hobbies" className="relative min-h-screen py-8 bg-gradient-to-b from-[#2e3346] to-black">
+     {/* <section id="hobbies" className="relative min-h-screen py-8"
+  style={{
+    backgroundImage: "url('/assets/bg/sea2.jpg')",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
+    backgroundAttachment: "fixed"
+  }}
+> */}
       <Particles
-        className="fixed inset-0 z-0"
+        className="absolute inset-0 z-0"
         quantity={300}
         ease={80}
         size={1.5}

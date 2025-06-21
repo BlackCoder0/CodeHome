@@ -13,7 +13,7 @@ const navLinks = [
   { label: "项目", href: "#projects", icon: Folder },
   { label: "爱好", href: "#hobbies", icon: Paintbrush2 },
   { label: "关于", href: "#about", icon: User },
-  { label: "联系", href: "#contact", icon: Mail },
+  // { label: "联系", href: "#contact", icon: Mail },
   { label: "友链", href: "#friends", icon: Handshake }
 ];
 

@@ -114,7 +114,7 @@ export default function Home() {
         <Hobbies />
         <About />
         <Contact />
-        <Friends />
+        {/* <Friends /> */}
       </div>
       <Navbar show={!loading && showMain && showContent} />
     </div>
