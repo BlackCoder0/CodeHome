@@ -4,6 +4,7 @@ import PlanetSystem from "@/components/PlanetSystem";
 import { AnimatedTestimonials } from "@/components/ui/animated-testimonials";
 import DeskLamp3D from "@/lib/three-examples/DeskLamp3D";
 
+
 // 声明全局Window接口扩展
 // declare global {
 //   interface Window {
@@ -70,6 +71,63 @@ const testimonials = [
   },
 ];
 
+
+// 流星雨组件
+const MeteorShower: React.FC = () => {
+  const [meteors, setMeteors] = useState<Array<{
+    id: number;
+    delay: number;
+    duration: number;
+    left: number;
+    angle: number;
+  }>>([]);
+
+  useEffect(() => {
+    // 只在客户端生成随机值，避免水合错误
+    // 增加流星数量，并让一部分流星集中在右侧中部和右下部
+    const meteorData = Array.from({ length: 16 }, (_, i) => {
+      let left;
+      if (i < 6) {
+        // 右侧中部 60%~90%
+        left = 60 + Math.random() * 30;
+      } else if (i < 10) {
+        // 右下部 70%~100%
+        left = 70 + Math.random() * 30;
+      } else {
+        // 其余随机分布
+        left = Math.random() * 100;
+      }
+      return {
+        id: i,
+        delay: Math.random() * 10,
+        duration: 18 + Math.random() * 14,
+        left,
+        angle: -30,
+      };
+    });
+    setMeteors(meteorData);
+  }, []);
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      {meteors.map((meteor) => (
+        <div
+          key={meteor.id}
+          className="meteor"
+          style={{
+            left: `${meteor.left}%`,
+            top: `${Math.random() * 100}%`, // 随机起始位置，或指定为某个范围，如 60%~100%
+            animationDelay: `${meteor.delay}s`,
+            animationDuration: `${meteor.duration}s`,
+            transform: `rotate(${meteor.angle}deg)`,
+          }}
+        >
+          <div className="meteor-tail" />
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const About: React.FC = () => {
   const sectionRef = useRef<HTMLElement>(null);
@@ -174,27 +232,29 @@ const About: React.FC = () => {
   //   };
   // }, []);
 
-  const sectionClass = lampLightOn 
-  ? 'lamp-light-mobile lamp-light-desktop'
-  : 'lamp-off-mobile lamp-off-desktop';
+  const sectionClass = lampLightOn
+    ? 'lamp-light-mobile lamp-light-desktop'
+    : 'lamp-off-mobile lamp-off-desktop';
 
-return (
-  <section 
-    ref={sectionRef}
-    id="about"
-    className={`relative py-16 bg-black min-h-[1200px] md:min-h-[1400px] lg:min-h-[1300px] no-zoom overflow-hidden ${sectionClass}`}
-    style={{ backgroundBlendMode: 'overlay' }}
-  >
+  return (
+    <section
+      ref={sectionRef}
+      id="about"
+      className={`relative py-16 bg-black min-h-[1200px] md:min-h-[1400px] lg:min-h-[1300px] no-zoom overflow-hidden ${sectionClass}`}
+      style={{ backgroundBlendMode: 'overlay' }}
+    >
+      {/* 白色流星雨背景效果 */}
+      <MeteorShower />
       {/* 响应式布局：移动端顺序为PlanetSystem/"About Me"文字/DeskLamp3D/AnimatedTestimonials */}
       <div className="block md:hidden relative w-full h-[320px] mb-8 z-[200]">
         <PlanetSystem />
       </div>
-      
+
       {/* 移动端 About Me 标题 */}
       <div className="block md:hidden text-center text-white drop-shadow-2xl relative z-10 mb-16 mt-60 ">
         <h2 className="text-4xl font-bold drop-shadow-lg filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.8)] transition-all duration-300 hover:text-yellow-100">About Me</h2>
       </div>
-      
+
       <div className="block md:hidden relative w-full h-[320px] mb-8">
         <DeskLamp3D onToggleLight={setLampLightOn} />
       </div>
@@ -208,37 +268,37 @@ return (
       </div>
 
 
-      
+
       {/* 内容层 - 位于物理引擎之上，添加阴影效果 - 仅桌面端显示 */}
       <div className="hidden md:block text-center relative z-10 mt-48 text-xl mx-auto max-w-2xl">
-  <h1
-    className="text-6xl font-bold mb-8 transition-all duration-300 hover:text-yellow-100
+        <h1
+          className="text-6xl font-bold mb-8 transition-all duration-300 hover:text-yellow-100
                bg-gradient-to-r from-black via-white to-white bg-clip-text text-transparent
                inline-block w-full
                drop-shadow-[2px_2px_4px_rgba(0,0,0,0.6)]"
-  >
-    About Me
-  </h1>
+        >
+          About Me
+        </h1>
 
-  <h2
-    className="text-2xl font-bold transition-all duration-300 hover:text-yellow-100
+        <h2
+          className="text-2xl font-bold transition-all duration-300 hover:text-yellow-100
                bg-gradient-to-r from-black via-white to-white bg-clip-text text-transparent
                inline-block w-full
                drop-shadow-[1px_1px_0_rgba(0,0,0,0.8)] drop-shadow-[2px_2px_4px_rgba(0,0,0,0.5)]"
-  >
-    在右侧，你可以看见我的互联网生活，以及友链
-  </h2>
+        >
+          在右侧，你可以看见我的互联网生活，以及友链
+        </h2>
 
-  <h3
-    className="text-2xl font-bold transition-all duration-300 hover:text-yellow-100
+        <h3
+          className="text-2xl font-bold transition-all duration-300 hover:text-yellow-100
                bg-gradient-to-r from-black via-white to-white bg-clip-text text-transparent
                inline-block w-full
                drop-shadow-[1px_1px_0_rgba(0,0,0,0.8)] drop-shadow-[2px_2px_4px_rgba(0,0,0,0.5)]
 "
-  >
-    在下方的是我的自设，以及为她约稿设计的各种衣服
-  </h3>
-</div>
+        >
+          在下方的是我的自设，以及为她约稿设计的各种衣服
+        </h3>
+      </div>
 
 
 
@@ -254,10 +314,10 @@ return (
       </div>
 
 
-      
+
       {/* 额外的暖光效果 - 仅在台灯开启时显示 */}
       {lampLightOn && (
-        <div 
+        <div
           className="absolute top-20 left-20 w-80 h-80 pointer-events-none opacity-20 transition-opacity duration-1000 ease-in-out"
           style={{
             background: 'radial-gradient(circle, rgba(255, 200, 100, 0.3) 0%, rgba(255, 230, 150, 0.1) 50%, transparent 80%)',
