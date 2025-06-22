@@ -21,11 +21,11 @@ class Particle {
     this.baseColor = color;
   }
 
-  update(mouseX: number, mouseY: number) {
+  update(mouseX: number, mouseY: number, isMobile: boolean = false) {
     const dx = this.x - mouseX;
     const dy = this.y - mouseY;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    const repulsionRadius = 100; // 增大影响范围
+    const repulsionRadius = isMobile ? 60 : 100; // 移动端减小排斥范围
     const repulsionForce = 2.5; // 增强排斥力
     const friction = 0.08; // 减小摩擦力，让运动更流畅
     const returnSpeed = 0.01; // 增加回弹速度
@@ -66,6 +66,7 @@ const Contact: React.FC = () => {
   const [uptime, setUptime] = useState('');
   const [visitorCount, setVisitorCount] = useState(851);
   const [onlineUsers, setOnlineUsers] = useState(2);
+  const [isMobile, setIsMobile] = useState(false);
   const desktopCanvasRef = useRef<HTMLCanvasElement>(null);
   const mobileCanvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
@@ -108,11 +109,11 @@ const Contact: React.FC = () => {
 
     const generateParticles = () => {
       particlesRef.current = [];
-      const spacing = 6;
-      const offsetX = canvas.width * 0.05;
-      const offsetY = canvas.height * 0.05;
-      const maxWidth = canvas.width * 0.9;
-      const maxHeight = canvas.height * 0.9;
+      const spacing = 4; // 减小间距使点阵更密集
+      const offsetX = canvas.width * 0.02; // 减小偏移量使图案更大
+      const offsetY = canvas.height * 0.02;
+      const maxWidth = canvas.width * 0.96; // 增大可用区域
+      const maxHeight = canvas.height * 0.96;
       const img = new window.Image();
       img.crossOrigin = 'anonymous';
       img.onload = () => {
@@ -120,7 +121,7 @@ const Contact: React.FC = () => {
         const tempCanvas = document.createElement('canvas');
         const tempCtx = tempCanvas.getContext('2d');
         if (!tempCtx) return;
-        const scale = Math.min(maxWidth / img.width, maxHeight / img.height) * 0.8;
+        const scale = Math.min(maxWidth / img.width, maxHeight / img.height) * 0.95; // 增大缩放比例
         tempCanvas.width = img.width * scale;
         tempCanvas.height = img.height * scale;
         tempCtx.drawImage(img, 0, 0, tempCanvas.width, tempCanvas.height);
@@ -173,7 +174,7 @@ const Contact: React.FC = () => {
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       particlesRef.current.forEach(particle => {
-        particle.update(mouseRef.current.x, mouseRef.current.y);
+        particle.update(mouseRef.current.x, mouseRef.current.y, true);
         particle.draw(ctx);
       });
       animationRef.current = requestAnimationFrame(animate);
@@ -299,7 +300,7 @@ const Contact: React.FC = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       particlesRef.current.forEach(particle => {
-        particle.update(mouseRef.current.x, mouseRef.current.y);
+        particle.update(mouseRef.current.x, mouseRef.current.y, false);
         particle.draw(ctx);
       });
 
@@ -463,12 +464,16 @@ const Contact: React.FC = () => {
           </div>
 
           {/* 点阵图 */}
-          <div className="relative h-64 md:h-80 mb-8">
+          <div className="relative h-80 md:h-96 mb-8">
             <canvas
               ref={mobileCanvasRef}
               className="w-full h-full cursor-crosshair"
               onMouseMove={handleMouseMove}
+              onTouchStart={(e) => {
+                e.preventDefault(); // 阻止默认触摸行为
+              }}
               onTouchMove={(e) => {
+                e.preventDefault(); // 阻止滚动
                 const canvas = mobileCanvasRef.current;
                 if (!canvas) return;
                 const rect = canvas.getBoundingClientRect();
@@ -478,8 +483,12 @@ const Contact: React.FC = () => {
                   y: touch.clientY - rect.top
                 };
               }}
+              onTouchEnd={(e) => {
+                e.preventDefault(); // 阻止默认触摸行为
+                mouseRef.current = { x: -1000, y: -1000 };
+              }}
               onMouseLeave={() => mouseRef.current = { x: -1000, y: -1000 }}
-              onTouchEnd={() => mouseRef.current = { x: -1000, y: -1000 }}
+              style={{ touchAction: 'none' }} // CSS属性阻止触摸滚动
             />
           </div>
 
@@ -493,7 +502,7 @@ const Contact: React.FC = () => {
                
                <div className="space-y-4 text-amber-800">
                  <div className="flex justify-between items-center border-b border-amber-300 pb-2">
-                   <span className="text-base md:text-lg font-semibold">运行时长:</span>
+                   <span className="text-base md:text-lg font-semibold">网站亲吻这个世界以来:</span>
                    <span className="font-mono text-base md:text-lg bg-amber-200 px-2 py-1 rounded border border-amber-400">{uptime}</span>
                  </div>
                  

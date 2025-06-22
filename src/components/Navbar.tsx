@@ -203,7 +203,7 @@ observer.current = new IntersectionObserver(
       } group`}
     >
       <div className="bg-white/0 backdrop-blur-md shadow-lg rounded-2xl p-2 md:p-3">
-      <Dock className="flex flex-col gap-2 md:gap-6 !bg-transparent border-none p-0 h-auto w-auto group">
+      <Dock className="flex flex-col gap-5 md:gap-6 !bg-transparent border-none p-0 h-auto w-auto group">
           {navLinks.map(link => {
             const Icon = link.icon;
             const isActive = current === link.href;
@@ -230,8 +230,8 @@ observer.current = new IntersectionObserver(
                   onClick={e => handleNavClick(e, link.href)}
                   className={`flex flex-col items-center transition-colors group/icon ${getIconColorClass()}`}
                 >
-                  <span className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 mb-1 rounded-full transition-all duration-200 group-hover/icon:bg-gray-200/20">
-                    <Icon className="w-6 h-6 md:w-8 md:h-8 group-hover:scale-110 transition-transform" />
+                  <span className="flex items-center justify-center w-12 h-12 md:w-12 md:h-12 mb-1 rounded-full transition-all duration-200 group-hover/icon:bg-gray-200/20">
+                    <Icon className="w-8 h-8 md:w-8 md:h-8 group-hover:scale-110 transition-transform" />
                   </span>
                   <span
                     className="text-xs opacity-0 group-hover:opacity-100 group-hover:translate-y-1 transition-all duration-300 pointer-events-none select-none"
