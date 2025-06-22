@@ -14,7 +14,8 @@ const navLinks = [
   { label: "爱好", href: "#hobbies", icon: Paintbrush2 },
   { label: "关于", href: "#about", icon: User },
   // { label: "联系", href: "#contact", icon: Mail },
-  { label: "友链", href: "#friends", icon: Handshake }
+  //{ label: "友链", href: "#friends", icon: Handshake }
+  { label: "友链", href: "#contact", icon: Handshake }
 ];
 
 const Navbar: React.FC<{ show: boolean }> = ({ show }) => {
@@ -105,17 +106,25 @@ const Navbar: React.FC<{ show: boolean }> = ({ show }) => {
 
   useEffect(() => {
     // 初始化 IntersectionObserver
-    observer.current = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.5) { // 当区块一半以上可见时
-            setCurrent(`#${entry.target.id}`);
-            window.history.replaceState(null, "", `#${entry.target.id}`);
-          }
-        });
-      },
-      { threshold: 0.5 } // 可见性阈值
-    );
+// 降低阈值，让projects section更容易被检测到
+observer.current = new IntersectionObserver(
+  (entries) => {
+    // 找到最靠近顶部且可见的section
+    const visibleEntries = entries.filter(entry => entry.isIntersecting);
+    if (visibleEntries.length > 0) {
+      // 按照在页面中的位置排序，选择最靠近顶部的
+      const topMostEntry = visibleEntries.reduce((prev, current) => {
+        return prev.boundingClientRect.top < current.boundingClientRect.top ? prev : current;
+      });
+      setCurrent(`#${topMostEntry.target.id}`);
+      window.history.replaceState(null, "", `#${topMostEntry.target.id}`);
+    }
+  },
+  { 
+    threshold: [0.1, 0.3, 0.5], // 多个阈值
+    rootMargin: '-10% 0px -10% 0px' // 只有中间60%区域的内容才算"活跃"
+  }
+);
 
     // 观察所有导航链接对应的区块
     navLinks.forEach(link => {

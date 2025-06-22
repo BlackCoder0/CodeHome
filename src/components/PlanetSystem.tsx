@@ -59,7 +59,7 @@ const PlanetSystem = () => {
   const [hoveredIcon, setHoveredIcon] = useState<string | null>(null);
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full pointer-events-none">
       {ringData.map((ring, ringIndex) => {
         const iconCount = ring.icons.length;
 

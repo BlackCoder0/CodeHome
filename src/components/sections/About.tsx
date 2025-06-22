@@ -174,25 +174,24 @@ const About: React.FC = () => {
   //   };
   // }, []);
 
-  return (
-    <section 
-      ref={sectionRef}
-      id="about" 
-      className="relative py-16 bg-black min-h-[1200px] md:min-h-[1400px] lg:min-h-[1300px] no-zoom overflow-hidden" // 移除mt-20消除空白，添加no-zoom防止双击缩放
-      style={{
-        background: lampLightOn
-          ? 'radial-gradient(ellipse 800px 600px at 20% 20%, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 30%, rgba(0, 0, 0, 1) 70%)'
-          : 'radial-gradient(ellipse 800px 600px at 20% 20%, rgba(0, 0, 0, 1) 100%, rgba(0, 0, 0, 1) 100%)',
-        backgroundBlendMode: 'overlay'
-      }}
-    >
+  const sectionClass = lampLightOn 
+  ? 'lamp-light-mobile lamp-light-desktop'
+  : 'lamp-off-mobile lamp-off-desktop';
+
+return (
+  <section 
+    ref={sectionRef}
+    id="about"
+    className={`relative py-16 bg-black min-h-[1200px] md:min-h-[1400px] lg:min-h-[1300px] no-zoom overflow-hidden ${sectionClass}`}
+    style={{ backgroundBlendMode: 'overlay' }}
+  >
       {/* 响应式布局：移动端顺序为PlanetSystem/"About Me"文字/DeskLamp3D/AnimatedTestimonials */}
-      <div className="block md:hidden relative w-full h-[320px] mb-8">
+      <div className="block md:hidden relative w-full h-[320px] mb-8 z-[200]">
         <PlanetSystem />
       </div>
       
       {/* 移动端 About Me 标题 */}
-      <div className="block md:hidden text-center text-white drop-shadow-2xl relative z-10 mb-16">
+      <div className="block md:hidden text-center text-white drop-shadow-2xl relative z-10 mb-16 mt-60 ">
         <h2 className="text-4xl font-bold drop-shadow-lg filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.8)] transition-all duration-300 hover:text-yellow-100">About Me</h2>
       </div>
       
@@ -211,13 +210,38 @@ const About: React.FC = () => {
 
       
       {/* 内容层 - 位于物理引擎之上，添加阴影效果 - 仅桌面端显示 */}
-      <div className="hidden md:block text-center text-white drop-shadow-2xl relative z-10 mt-48 text-xl mx-auto max-w-2xl">
-  <h1 className="text-6xl font-bold mb-8 drop-shadow-lg filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.8)] transition-all duration-300 hover:text-yellow-100">
+      <div className="hidden md:block text-center relative z-10 mt-48 text-xl mx-auto max-w-2xl">
+  <h1
+    className="text-6xl font-bold mb-8 transition-all duration-300 hover:text-yellow-100
+               bg-gradient-to-r from-black via-white to-white bg-clip-text text-transparent
+               inline-block w-full
+               drop-shadow-[2px_2px_4px_rgba(0,0,0,0.6)]"
+  >
     About Me
   </h1>
-  <h3 className="text-2xl">在右侧，你可以看见我的互联网生活，以及友链</h3>
-  <h3 className="text-2xl">在下方的是我的自设，以及为她约稿设计的各种衣服</h3>
+
+  <h2
+    className="text-2xl font-bold transition-all duration-300 hover:text-yellow-100
+               bg-gradient-to-r from-black via-white to-white bg-clip-text text-transparent
+               inline-block w-full
+               drop-shadow-[1px_1px_0_rgba(0,0,0,0.8)] drop-shadow-[2px_2px_4px_rgba(0,0,0,0.5)]"
+  >
+    在右侧，你可以看见我的互联网生活，以及友链
+  </h2>
+
+  <h3
+    className="text-2xl font-bold transition-all duration-300 hover:text-yellow-100
+               bg-gradient-to-r from-black via-white to-white bg-clip-text text-transparent
+               inline-block w-full
+               drop-shadow-[1px_1px_0_rgba(0,0,0,0.8)] drop-shadow-[2px_2px_4px_rgba(0,0,0,0.5)]
+"
+  >
+    在下方的是我的自设，以及为她约稿设计的各种衣服
+  </h3>
 </div>
+
+
+
 
       {/* 行星系统 - 桌面端 */}
       <div className="hidden md:block absolute top-[-100px] right-[-100px] w-[600px] h-[600px] md:w-[1000px] md:h-[1000px] md:-translate-y-1/4 md:translate-x-1/4 pointer-events-none drop-shadow-2xl filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.6)] transition-all duration-500 hover:brightness-110">
@@ -229,20 +253,7 @@ const About: React.FC = () => {
         <AnimatedTestimonials testimonials={testimonials} />
       </div>
 
-      {/* 台灯光晕效果 - 与台灯联动 */}
-      {/* {lampLightOn && (
-        <div 
-          className="absolute top-4 left-4 w-96 h-96 pointer-events-none transition-all duration-1000 ease-in-out opacity-40"
-          style={{
-            background: 'radial-gradient(circle, rgba(255, 215, 0, 0.4) 0%, rgba(255, 255, 255, 0.15) 30%, transparent 70%)',
-            filter: 'blur(25px)',
-            animation: 'pulse 2s ease-in-out infinite',
-            opacity: 0.4,
-            visibility: 'visible',
-            transition: 'opacity 1s, visibility 1s'
-          }}
-        />
-      )} */}
+
       
       {/* 额外的暖光效果 - 仅在台灯开启时显示 */}
       {lampLightOn && (
