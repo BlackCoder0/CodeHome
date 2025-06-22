@@ -64,8 +64,8 @@ class Particle {
 
 const Contact: React.FC = () => {
   const [uptime, setUptime] = useState('');
-  const [visitorCount, setVisitorCount] = useState(851);
-  const [onlineUsers, setOnlineUsers] = useState(2);
+  const [visitorCount, setVisitorCount] = useState('？？？');
+  const [onlineUsers, setOnlineUsers] = useState('？');
   const [isMobile, setIsMobile] = useState(false);
   const desktopCanvasRef = useRef<HTMLCanvasElement>(null);
   const mobileCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -391,8 +391,8 @@ const Contact: React.FC = () => {
                   
                   <div className="mt-6 pt-4 border-t-2 border-amber-800">
                     <div className="text-sm text-amber-700 space-y-1">
-                      <p>© 2025 RainMorime</p>
-                      <p>Powered by Next.js</p>
+                      <p>© 2025 CodeRains</p>
+                      <p>爱与奇迹的魔法是存在的</p>
                     </div>
                   </div>
                 </div>

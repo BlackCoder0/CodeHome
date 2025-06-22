@@ -15,57 +15,57 @@ import DeskLamp3D from "@/lib/three-examples/DeskLamp3D";
 const testimonials = [
   {
     quote:
-      "The attention to detail and innovative features have completely transformed our workflow. This is exactly what we've been looking for.",
-    name: "Sarah Chen",
-    designation: "Product Manager at TechFlow",
+      "时间已经过去太久，已经记不清当时的心情了\n当时有一个比较朦胧的想法，在朋友的介绍下认识了[墨间黑沢](https://space.bilibili.com/24271342/dynamic)老师，很快便有了这第一件衣服\n看着脑子里面的想法从模糊到清晰，再到具体，是一种很奇妙的体验。我加入了很多我自己的喜好：白发、蓝瞳、和一点恰到好处的浅浅微笑\n幻象中诞生的少女从纸上走来，很惭愧，我至今没用为她想好一个合适的名字，既然是二次元的“我”，那就以本名 “阵雨” 暂且称呼吧",
+    name: "初始之服",
+    designation: "阵雨的第一件衣服",
     src: "assets/oc/oc1.png",
   },
   {
     quote:
-      "Implementation was seamless and the results exceeded our expectations. The platform's flexibility is remarkable.",
-    name: "Michael Rodriguez",
-    designation: "CTO at InnovateSphere",
+      "旗袍的形象很经典，虽其历史不过区区百年，但其展现的温婉曲线美是近乎无可替代的\n由于其发色瞳色，衣服的形象便也非常自然的确定为蓝白色了，青花瓷的一般的少女也应运而生，微微扎起的头发及垂落的鬓尾更将其含蓄而内敛展现地淋漓尽致\n天青色等烟雨，而我在等你",
+    name: "旗袍",
+    designation: "青花瓷",
     src: "assets/oc/oc2.png",
   },
   {
     quote:
       "This solution has significantly improved our team's productivity. The intuitive interface makes complex tasks simple.",
-    name: "Emily Watson",
+    name: "泳装",
     designation: "Operations Director at CloudScale",
     src: "assets/oc/oc3.png",
   },
   {
     quote:
       "Outstanding support and robust features. It's rare to find a product that delivers on all its promises.",
-    name: "James Kim",
+    name: "黑客服",
     designation: "Engineering Lead at DataPro",
     src: "assets/oc/oc4.png",
   },
   {
     quote:
       "The scalability and performance have been game-changing for our organization. Highly recommend to any growing business.",
-    name: "Lisa Thompson",
+    name: "赛车服",
     designation: "VP of Technology at FutureNet",
     src: "assets/oc/oc5.png",
   },
   {
     quote:
       "The scalability and performance have been game-changing for our organization. Highly recommend to any growing business.",
-    name: "Lisa Thompson",
+    name: "校服",
     designation: "VP of Technology at FutureNet",
     src: "assets/oc/oc6.png",
   },
   {
     quote:
       "The scalability and performance have been game-changing for our organization. Highly recommend to any growing business.",
-    name: "Lisa Thompson",
+    name: "礼服",
     designation: "VP of Technology at FutureNet",
     src: "assets/oc/oc7.png",
   },
   {
     quote:
       "The scalability and performance have been game-changing for our organization. Highly recommend to any growing business.",
-    name: "Lisa Thompson",
+    name: "实验室服",
     designation: "VP of Technology at FutureNet",
     src: "assets/oc/oc8.png",
   },

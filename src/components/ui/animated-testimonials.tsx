@@ -11,6 +11,19 @@ type Testimonial = {
   designation: string;
   src: string;
 };
+
+type TextPart = {
+  type: 'text';
+  content: string;
+};
+
+type LinkPart = {
+  type: 'link';
+  text: string;
+  url: string;
+};
+
+type ParsedPart = TextPart | LinkPart;
 export const AnimatedTestimonials = ({
   testimonials,
   autoplay = false,
@@ -142,9 +155,46 @@ export const AnimatedTestimonials = ({
             {testimonials[active].designation}
           </p>
           <motion.p className="text-base text-gray-500 dark:text-neutral-300">
-            {testimonials[active].quote.split(" ").map((word, index) => (
-              <motion.span
-                key={index}
+  {testimonials[active].quote.split('\n').map((line, lineIndex) => {
+    // 解析链接格式 [文本](URL)
+    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    const parts: ParsedPart[] = [];
+    let lastIndex = 0;
+    let match;
+    
+    while ((match = linkRegex.exec(line)) !== null) {
+      // 添加链接前的文本
+      if (match.index > lastIndex) {
+        parts.push({ type: 'text', content: line.slice(lastIndex, match.index) });
+      }
+      // 添加链接
+      parts.push({ type: 'link', text: match[1], url: match[2] });
+      lastIndex = match.index + match[0].length;
+    }
+    
+    // 添加剩余文本
+    if (lastIndex < line.length) {
+      parts.push({ type: 'text', content: line.slice(lastIndex) });
+    }
+    
+    // 如果没有链接，直接处理为文本
+    if (parts.length === 0) {
+      parts.push({ type: 'text', content: line });
+    }
+    
+    let wordIndex = 0;
+    
+    return (
+      <span key={lineIndex}>
+        {parts.map((part, partIndex) => {
+          if (part.type === 'link') {
+            const currentWordIndex = wordIndex++;
+            return (
+              <motion.a
+                key={`${lineIndex}-${partIndex}`}
+                href={part.url}
+                target="_blank"
+                rel="noopener noreferrer"
                 initial={{
                   filter: "blur(10px)",
                   opacity: 0,
@@ -158,14 +208,48 @@ export const AnimatedTestimonials = ({
                 transition={{
                   duration: 0.2,
                   ease: "easeInOut",
-                  delay: 0.02 * index,
+                  delay: 0.02 * (lineIndex * 10 + currentWordIndex),
                 }}
-                className="inline-block"
+                className="inline-block text-blue-400 hover:text-blue-300 underline transition-colors"
               >
-                {word}&nbsp;
-              </motion.span>
-            ))}
-          </motion.p>
+                {part.text}
+              </motion.a>
+            );
+          } else {
+            return (part as TextPart).content.split(" ").map((word, wordIdx) => {
+              if (word === '') return null;
+              const currentWordIndex = wordIndex++;
+              return (
+                <motion.span
+                  key={`${lineIndex}-${partIndex}-${wordIdx}`}
+                  initial={{
+                    filter: "blur(10px)",
+                    opacity: 0,
+                    y: 5,
+                  }}
+                  animate={{
+                    filter: "blur(0px)",
+                    opacity: 1,
+                    y: 0,
+                  }}
+                  transition={{
+                    duration: 0.2,
+                    ease: "easeInOut",
+                    delay: 0.02 * (lineIndex * 10 + currentWordIndex),
+                  }}
+                  className="inline-block"
+                >
+                  {word}&nbsp;
+                </motion.span>
+              );
+            });
+          }
+        })}
+        {lineIndex < testimonials[active].quote.split('\n').length - 1 && <br />}
+      </span>
+    );
+  })}
+</motion.p>
         </motion.div>
       </div>
       
@@ -248,29 +332,100 @@ export const AnimatedTestimonials = ({
                 {testimonials[active].designation}
               </p>
               <motion.p className="mt-8 text-lg text-gray-500 dark:text-neutral-300">
-                {testimonials[active].quote.split(" ").map((word, index) => (
-                  <motion.span
-                    key={index}
-                    initial={{
-                      filter: "blur(10px)",
-                      opacity: 0,
-                      y: 5,
-                    }}
-                    animate={{
-                      filter: "blur(0px)",
-                      opacity: 1,
-                      y: 0,
-                    }}
-                    transition={{
-                      duration: 0.2,
-                      ease: "easeInOut",
-                      delay: 0.02 * index,
-                    }}
-                    className="inline-block"
-                  >
-                    {word}&nbsp;
-                  </motion.span>
-                ))}
+                {testimonials[active].quote.split('\n').map((line, lineIndex) => {
+                  // 解析链接格式 [文本](URL)
+                  const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+                  const parts: ParsedPart[] = [];
+                  let lastIndex = 0;
+                  let match;
+                  
+                  while ((match = linkRegex.exec(line)) !== null) {
+                    // 添加链接前的文本
+                    if (match.index > lastIndex) {
+                      parts.push({ type: 'text', content: line.slice(lastIndex, match.index) });
+                    }
+                    // 添加链接
+                    parts.push({ type: 'link', text: match[1], url: match[2] });
+                    lastIndex = match.index + match[0].length;
+                  }
+                  
+                  // 添加剩余文本
+                  if (lastIndex < line.length) {
+                    parts.push({ type: 'text', content: line.slice(lastIndex) });
+                  }
+                  
+                  // 如果没有链接，直接处理为文本
+                  if (parts.length === 0) {
+                    parts.push({ type: 'text', content: line });
+                  }
+                  
+                  let wordIndex = 0;
+                  
+                  return (
+                    <span key={lineIndex}>
+                      {parts.map((part, partIndex) => {
+                        if (part.type === 'link') {
+                          const currentWordIndex = wordIndex++;
+                          return (
+                            <motion.a
+                              key={`${lineIndex}-${partIndex}`}
+                              href={part.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              initial={{
+                                filter: "blur(10px)",
+                                opacity: 0,
+                                y: 5,
+                              }}
+                              animate={{
+                                filter: "blur(0px)",
+                                opacity: 1,
+                                y: 0,
+                              }}
+                              transition={{
+                                duration: 0.2,
+                                ease: "easeInOut",
+                                delay: 0.02 * (lineIndex * 10 + currentWordIndex),
+                              }}
+                              className="inline-block text-blue-400 hover:text-blue-300 underline transition-colors"
+                            >
+                              {part.text}
+                            </motion.a>
+                          );
+                        } else {
+                          return (part as TextPart).content.split(" ").map((word, wordIdx) => {
+                            if (word === '') return null;
+                            const currentWordIndex = wordIndex++;
+                            return (
+                              <motion.span
+                                key={`${lineIndex}-${partIndex}-${wordIdx}`}
+                                initial={{
+                                  filter: "blur(10px)",
+                                  opacity: 0,
+                                  y: 5,
+                                }}
+                                animate={{
+                                  filter: "blur(0px)",
+                                  opacity: 1,
+                                  y: 0,
+                                }}
+                                transition={{
+                                  duration: 0.2,
+                                  ease: "easeInOut",
+                                  delay: 0.02 * (lineIndex * 10 + currentWordIndex),
+                                }}
+                                className="inline-block"
+                              >
+                                {word}&nbsp;
+                              </motion.span>
+                            );
+                          });
+                        }
+                      })}
+                      {lineIndex < testimonials[active].quote.split('\n').length - 1 && <br />}
+                    </span>
+                  );
+                })}
               </motion.p>
             </motion.div>
             <div className="flex gap-4 pt-12 justify-start">
