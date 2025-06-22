@@ -28,7 +28,7 @@ class Particle {
     const repulsionRadius = 100; // 增大影响范围
     const repulsionForce = 2.5; // 增强排斥力
     const friction = 0.08; // 减小摩擦力，让运动更流畅
-    const returnSpeed = 0.05; // 增加回弹速度
+    const returnSpeed = 0.01; // 增加回弹速度
 
     // 排斥效果
     if (distance < repulsionRadius) {
