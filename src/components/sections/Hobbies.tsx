@@ -42,7 +42,7 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
     }
 
     // 检查脚本是否已加载
-    const existingScript = document.querySelector('script[src="./js/embed.dist.js"]');
+    const existingScript = document.querySelector('script[src="/CodeHome/js/embed.dist.js"]');
 
     if (existingScript && typeof (window as any).LivereTower === 'function') {
       // 脚本已存在且已加载完成，直接标记为已加载
@@ -53,7 +53,7 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
     } else if (!existingScript) {
       // 动态加载来必力脚本
       const script = document.createElement('script');
-      script.src = './js/embed.dist.js';
+      script.src = '/CodeHome/js/embed.dist.js';
       script.async = true;
 
       script.onload = () => {
