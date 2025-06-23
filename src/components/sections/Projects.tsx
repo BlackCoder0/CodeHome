@@ -32,7 +32,7 @@ const projectsData: ProjectData[] = [
     description: '软件构件与中间件技术',
     detailedDescription: '本项目为为【仿Bilibili】的前端，项目采用前后端分离设计\n实现了用户认证；视频播放；弹幕发送和滚动等功能\n基于Vue.js框架，结合Element UI组件库构建了美观且交互性强的用户界面。弹幕功能通过自定义Barrage类实现多轨道弹幕的动态渲染与轨迹管理，提升用户体验。通过RESTful API与后端高效通信，利用本地存储管理用户状态',
     technologies: ['Vue.js','Element UI','JavaScript','Less','Axios'],
-    image: '/CodeHome/assets/project/bilibili_vue.png',
+    image: '/CodeHome/CodeHome/assets/project/bilibili_vue.png',
     // demoUrl: 'https://ui.aceternity.com',
     githubUrl: 'https://github.com/BlackCoder0/bilibili_vue',
     giteeUrl: 'https://gitee.com/code-liang/1215bilibili',
@@ -58,7 +58,7 @@ const projectsData: ProjectData[] = [
     description: '安卓开发',
     detailedDescription: '本项目是一款基于Android的日记应用，实现《你的名字》电影内的日记创建、编辑、浏览与管理。极其内容维度管理和消失动画\n利用高德SDK集成，通过高德地图与定位服务实现地理位置标注等功能。',
     technologies: ['Android原生开发（Java）', '高德地图与定位SDK', 'Gradle'],
-    image: '/CodeHome/assets/project/mydiary.jpg',
+    image: '/CodeHome/CodeHome/assets/project/mydiary.jpg',
     demoUrl: '【《你的名字》日记软件复刻-安卓课设展示】 https://www.bilibili.com/video/BV1wdEYzfEYd/?share_source=copy_web&vd_source=01f661ab4de21d2681871c419ca383e9',
     githubUrl: 'https://github.com/BlackCoder0/myDiary',
     giteeUrl: 'https://gitee.com/code-liang/myDiary',
@@ -71,7 +71,7 @@ const projectsData: ProjectData[] = [
     description: 'javaweb课程设计',
     detailedDescription: '本项目为基于JavaWeb的学生选课与管理系统，采用MVC架构，通过JSP页面进行前端展示，Servlet负责业务逻辑处理，结合JDBC实现与后端数据库的高效交互。\n项目注重模块化设计，涵盖学生、教师、课程、班级等多维度管理，支持用户认证、权限分级、数据分页与动态查询，提升了系统的可扩展性与安全性',
     technologies: ['Java', 'Servlet', 'JDBC', 'MySQL'],
-    image: '/CodeHome/assets/project/stusym.png',
+    image: '/CodeHome/CodeHome/assets/project/stusym.png',
     githubUrl: 'https://github.com/BlackCoder0/Wuyi_StuSym',
     giteeUrl: 'https://gitee.com/code-liang/wuyi_stusym',
     status: 'completed',
@@ -83,7 +83,7 @@ const projectsData: ProjectData[] = [
     description: '《明日方舟》官网特效模拟',
     detailedDescription: '本项目是明日方舟为主题的静态网页展示平台，复刻其官网的粒子特效效果，并在其基础上拓展以实现更丰富的交互\n项目经cloudflare静态部署，可直接访问，响应式设计使得移动端体验友好\n上线三个月以后破10w浏览',
     technologies: ['HTML', 'JavaScript'],
-    image: '/CodeHome/assets/project/arkpoints.png',
+    image: '/CodeHome/CodeHome/assets/project/arkpoints.png',
     demoUrl: 'arkpoints.top',
     githubUrl: 'https://github.com/BlackCoder0/Arknights-FlowingPoints',
     giteeUrl: 'https://gitee.com/code-liang/arknights-flowing-points',
@@ -96,7 +96,7 @@ const projectsData: ProjectData[] = [
     description: '《魔法少女小圆》同人工具站',
     detailedDescription: '本项目是以魔法少女小圆为主题的前端可视化网站，前端基于Vue 3+Vite，实现高效的组件化开发与热模块替换。\n项目通过响应式数据驱动地图、路径与交互动画，动态绘制角色行动轨迹，并通过精细的CSS保证多端适配和视觉一致性。\n字体生成器支持用户自定义字体大小和颜色，并通过 HTML5 canvas将转换后的文本渲染为图片，实现一键导出无背景字体截图',
     technologies: ['Vue 3', 'JavaScript'],
-    image: '/CodeHome/assets/project/MadokaRunes.png',
+    image: '/CodeHome/CodeHome/assets/project/MadokaRunes.png',
     demoUrl: 'madorunes.cn',
     githubUrl: 'https://github.com/BlackCoder0/Madoka-Runes',
     giteeUrl: 'https://gitee.com/code-liang/Madoka-Runes',
@@ -316,7 +316,7 @@ const Projects: React.FC = () => {
             <Badge className="h-10 w-10 transform -rotate-12" />
           </a>
         }
-        src={`/assets/project/github_page.png`}
+        src={`/CodeHome/assets/project/github_page.png`}
         showGradient={false}
       />
           <div className="relative h-[120px] w-full overflow-hidden text-center mb-1">
