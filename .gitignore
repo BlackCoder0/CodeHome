@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# 构造白名单
+!docs/_next/
+!docs/_next/static/
+!docs/_next/static/css/
+!docs/_next/static/chunks/
