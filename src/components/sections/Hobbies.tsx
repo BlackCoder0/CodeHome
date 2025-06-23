@@ -20,8 +20,14 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
     // 清理之前的评论实例
     if (commentRef.current) {
       // 安全地清理子元素
-      while (commentRef.current.firstChild) {
-        commentRef.current.removeChild(commentRef.current.firstChild);
+      try {
+        while (commentRef.current.firstChild) {
+          commentRef.current.removeChild(commentRef.current.firstChild);
+        }
+      } catch (error) {
+        // 忽略清理错误，让React处理
+        console.warn('Comment cleanup warning:', error);
+        commentRef.current.innerHTML = '';
       }
     }
 
@@ -43,7 +49,7 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
     }
 
     // 检查脚本是否已加载
-    const existingScript = document.querySelector('script[src="./js/embed.dist.js"]');
+    const existingScript = document.querySelector('script[src="/CodeHome/js/embed.dist.js"]');
     
     if (existingScript) {
       // 脚本已存在，等待加载完成
@@ -58,7 +64,7 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
     } else {
       // 动态加载来必力脚本
       const script = document.createElement('script');
-      script.src = './js/embed.dist.js';
+      script.src = '/CodeHome/js/embed.dist.js';
       script.async = true;
       
       script.onload = () => {
@@ -86,15 +92,9 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
   // 组件卸载时的清理
   useEffect(() => {
     return () => {
-      if (commentRef.current && containerRef.current) {
-        try {
-          if (commentRef.current.contains(containerRef.current)) {
-            commentRef.current.removeChild(containerRef.current);
-          }
-        } catch (error) {
-          // 忽略移除错误
-          console.warn('Comment container cleanup warning:', error);
-        }
+      // 简化清理逻辑，避免DOM操作冲突
+      if (containerRef.current) {
+        containerRef.current = null;
       }
     };
   }, []);
