@@ -4,7 +4,120 @@ import { Particles } from "@/components/magicui/Fparticles";
 import { articles, getArticlesByCategory, categories, Article } from '@/lib/articles';
 import ArticleCard from '@/components/ArticleCard';
 
+// 来必力评论组件
+interface LivereCommentProps {
+  articleId: string;
+}
 
+const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
+  const commentRef = useRef<HTMLDivElement>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    
+    // 清理之前的评论实例
+    if (commentRef.current) {
+      // 安全地清理子元素
+      while (commentRef.current.firstChild) {
+        commentRef.current.removeChild(commentRef.current.firstChild);
+      }
+    }
+
+    // 为每个文章创建唯一的容器ID
+    const containerId = `lv-container-${articleId}`;
+    
+    // 创建评论容器
+    const container = document.createElement('div');
+    container.id = containerId;
+    container.setAttribute('data-id', 'city');
+    container.setAttribute('data-uid', 'MTAyMC82MDc1Ni8zNzIyNw==');
+    container.setAttribute('data-consult', articleId);
+    
+    // 保存容器引用
+    containerRef.current = container;
+    
+    if (commentRef.current && mounted) {
+      commentRef.current.appendChild(container);
+    }
+
+    // 检查脚本是否已加载
+    const existingScript = document.querySelector('script[src="/js/embed.dist.js"]');
+    
+    if (existingScript) {
+      // 脚本已存在，等待加载完成
+      if (typeof (window as any).LivereTower === 'function') {
+        if (mounted) setIsLoaded(true);
+      } else {
+        // 监听脚本加载完成
+        existingScript.addEventListener('load', () => {
+          if (mounted) setIsLoaded(true);
+        });
+      }
+    } else {
+      // 动态加载来必力脚本
+      const script = document.createElement('script');
+      script.src = '/js/embed.dist.js';
+      script.async = true;
+      
+      script.onload = () => {
+        if (mounted) {
+          setIsLoaded(true);
+        }
+      };
+      
+      script.onerror = () => {
+        console.error('Failed to load Livere comment system');
+      };
+      
+      // 插入脚本到页面头部
+      document.head.appendChild(script);
+    }
+
+    // 清理函数
+    return () => {
+      mounted = false;
+      // 不在这里清理DOM，让React自然处理
+      containerRef.current = null;
+    };
+  }, [articleId]);
+
+  // 组件卸载时的清理
+  useEffect(() => {
+    return () => {
+      if (commentRef.current && containerRef.current) {
+        try {
+          if (commentRef.current.contains(containerRef.current)) {
+            commentRef.current.removeChild(containerRef.current);
+          }
+        } catch (error) {
+          // 忽略移除错误
+          console.warn('Comment container cleanup warning:', error);
+        }
+      }
+    };
+  }, []);
+
+  return (
+    <div className="mt-8 pt-6 border-t border-white/20">
+      <h3 className="text-xl font-bold text-white mb-4">评论区</h3>
+      <div ref={commentRef} className="min-h-[200px]">
+        {!isLoaded && (
+          <div className="flex items-center justify-center h-32 text-white/60">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white/60 mr-3"></div>
+            评论系统加载中...
+          </div>
+        )}
+      </div>
+      <noscript>
+        <div className="text-white/60 text-center py-4">
+          为正常使用来必力评论功能请激活JavaScript
+        </div>
+      </noscript>
+    </div>
+  );
+};
 
 const Hobbies: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -24,7 +137,7 @@ const Hobbies: React.FC = () => {
     setSelectedArticle(article);
     setIsViewingArticle(true);
     setLoading(true);
-    
+
     // 加载文章内容
     fetch(article.htmlPath)
       .then(response => response.text())
@@ -189,10 +302,18 @@ const Hobbies: React.FC = () => {
                           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
                         </div>
                       ) : (
-                        <div 
-                          className="prose prose-invert max-w-none article-content"
-                          dangerouslySetInnerHTML={{ __html: htmlContent }}
-                        />
+                        <div className="max-w-none">
+                          {/* 文章正文 */}
+                          <div 
+                            className="prose prose-invert max-w-none article-content"
+                            dangerouslySetInnerHTML={{ __html: htmlContent }}
+                          />
+                          
+                          {/* 评论区 - 使用文章ID确保隔离 */}
+                          {selectedArticle && (
+                            <LivereComment key={selectedArticle.id} articleId={selectedArticle.id} />
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
