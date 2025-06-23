@@ -18,92 +18,53 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
 
   useEffect(() => {
     let mounted = true;
-    
+
     // 安全地清理之前的评论实例
     if (commentRef.current) {
-      try {
-        // 使用更安全的清理方式
-        const children = Array.from(commentRef.current.children);
-        children.forEach(child => {
-          if (commentRef.current && commentRef.current.contains(child)) {
-            commentRef.current.removeChild(child);
-          }
-        });
-      } catch (error) {
-        console.warn('Comment cleanup warning:', error);
-        // 如果removeChild失败，使用innerHTML清理
-        if (commentRef.current) {
-          commentRef.current.innerHTML = '';
-        }
-      }
+      commentRef.current.innerHTML = '';
     }
 
     // 为每个文章创建唯一的容器ID
     const containerId = `lv-container-${articleId}`;
-    
+
     // 创建评论容器
     const container = document.createElement('div');
     container.id = containerId;
     container.setAttribute('data-id', 'city');
     container.setAttribute('data-uid', 'MTAyMC82MDc1Ni8zNzIyNw==');
     container.setAttribute('data-consult', articleId);
-    
+
     // 保存容器引用
     containerRef.current = container;
-    
+
     if (commentRef.current && mounted) {
       commentRef.current.appendChild(container);
     }
 
     // 检查脚本是否已加载
-    const existingScript = document.querySelector('script[src="/CodeHome/js/embed.dist.js"]');
-    
-    if (existingScript && scriptLoadedRef.current) {
-      // 脚本已存在且已加载完成
-      if (typeof (window as any).LivereTower === 'function') {
-        try {
-          // 尝试初始化来必力评论系统
-          if (mounted) {
-            setIsLoaded(true);
-            setHasError(false);
-          }
-        } catch (error) {
-          console.error('Livere initialization error:', error);
-          if (mounted) {
-            setHasError(true);
-            setIsLoaded(false);
-          }
-        }
+    const existingScript = document.querySelector('script[src="./js/embed.dist.js"]');
+
+    if (existingScript && typeof (window as any).LivereTower === 'function') {
+      // 脚本已存在且已加载完成，直接标记为已加载
+      if (mounted) {
+        setIsLoaded(true);
+        setHasError(false);
       }
     } else if (!existingScript) {
       // 动态加载来必力脚本
       const script = document.createElement('script');
-      script.src = '/CodeHome/js/embed.dist.js';
+      script.src = './js/embed.dist.js';
       script.async = true;
-      
+
       script.onload = () => {
         scriptLoadedRef.current = true;
         if (mounted) {
-          try {
-            // 等待一小段时间确保脚本完全初始化
-            setTimeout(() => {
-              if (mounted && typeof (window as any).LivereTower === 'function') {
-                setIsLoaded(true);
-                setHasError(false);
-              } else if (mounted) {
-                setHasError(true);
-              }
-            }, 100);
-          } catch (error) {
-            console.error('Livere initialization error:', error);
-            if (mounted) {
-              setHasError(true);
-              setIsLoaded(false);
-            }
-          }
+          // 脚本加载完成后，来必力会自动初始化
+          setIsLoaded(true);
+          setHasError(false);
         }
       };
-      
+
       script.onerror = () => {
         console.error('Failed to load Livere comment system');
         if (mounted) {
@@ -111,7 +72,7 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
           setIsLoaded(false);
         }
       };
-      
+
       // 插入脚本到页面头部
       document.head.appendChild(script);
     }
@@ -119,7 +80,6 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
     // 清理函数
     return () => {
       mounted = false;
-      // 不在这里清理DOM，让React自然处理
       containerRef.current = null;
     };
   }, [articleId]);
@@ -217,8 +177,8 @@ const Hobbies: React.FC = () => {
   const filteredArticles = getArticlesByCategory(activeCategory);
 
   return (
-     <section id="hobbies" className="relative min-h-screen py-8 bg-gradient-to-b from-[#2e3346] to-black">
-     {/* <section id="hobbies" className="relative min-h-screen py-8"
+    <section id="hobbies" className="relative min-h-screen py-8 bg-gradient-to-b from-[#2e3346] to-black">
+      {/* <section id="hobbies" className="relative min-h-screen py-8"
   style={{
     backgroundImage: "url('./assets/bg/sea2.jpg')",
     backgroundSize: "cover",
@@ -244,15 +204,15 @@ const Hobbies: React.FC = () => {
               <div ref={mountRef} className="w-full h-full" style={{ background: 'transparent' }} />
             </div>
           </div>
-          
+
           {/* 右侧 - 文章区域 */}
-          <div className={`w-full flex flex-col ${isViewingArticle ? 'fixed inset-0 z-[300] h-screen bg-[#2e3346] overflow-hidden lg:static lg:h-full lg:z-auto lg:overflow-visible' : 'h-[90vh] sm:h-[95vh] lg:h-full max-h-[calc(100vh-2rem)]'}`} style={isViewingArticle ? {overscrollBehavior: 'contain'} : {}}>
+          <div className={`w-full flex flex-col ${isViewingArticle ? 'fixed inset-0 z-[300] h-screen bg-[#2e3346] overflow-hidden lg:static lg:h-full lg:z-auto lg:overflow-visible' : 'h-[90vh] sm:h-[95vh] lg:h-full max-h-[calc(100vh-2rem)]'}`} style={isViewingArticle ? { overscrollBehavior: 'contain' } : {}}>
             <div className="h-full bg-black/40 backdrop-blur-sm border-2 border-white/20 shadow-2xl relative z-10 flex flex-col"
-                 style={{
-                   clipPath: 'polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px))',
-                   background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
-                   ...(isViewingArticle ? {touchAction: 'none', overscrollBehavior: 'contain'} : {})
-                 }}>
+              style={{
+                clipPath: 'polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px))',
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+                ...(isViewingArticle ? { touchAction: 'none', overscrollBehavior: 'contain' } : {})
+              }}>
               {!isViewingArticle ? (
                 <>
                   {/* 标签栏 */}
@@ -262,13 +222,12 @@ const Hobbies: React.FC = () => {
                         <button
                           key={category.value}
                           onClick={() => setActiveCategory(category.value)}
-                          className={`px-6 py-4 text-sm font-bold whitespace-nowrap transition-all duration-300 relative ${
-                            activeCategory === category.value
+                          className={`px-6 py-4 text-sm font-bold whitespace-nowrap transition-all duration-300 relative ${activeCategory === category.value
                               ? 'text-white bg-white/20 shadow-inner'
                               : 'text-white/70 hover:text-white hover:bg-white/10'
-                          }`}
+                            }`}
                           style={{
-                            clipPath: activeCategory === category.value 
+                            clipPath: activeCategory === category.value
                               ? 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))'
                               : 'none'
                           }}
@@ -281,14 +240,14 @@ const Hobbies: React.FC = () => {
                       ))}
                     </div>
                   </div>
-                  
+
                   {/* 文章列表 */}
                   <div className="flex-1 p-6 overflow-hidden">
-                    <div className="h-full max-w-screen-md mx-auto overflow-y-auto space-y-4 pr-2" 
-                         style={{
-                           scrollbarWidth: 'thin',
-                           scrollbarColor: 'rgba(255,255,255,0.3) transparent'
-                         }}>
+                    <div className="h-full max-w-screen-md mx-auto overflow-y-auto space-y-4 pr-2"
+                      style={{
+                        scrollbarWidth: 'thin',
+                        scrollbarColor: 'rgba(255,255,255,0.3) transparent'
+                      }}>
                       {filteredArticles.length > 0 ? (
                         filteredArticles.map((article) => (
                           <ArticleCard
@@ -328,17 +287,17 @@ const Hobbies: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* 文章内容 */}
-                  <div className="flex-1 p-6 overflow-hidden" style={{touchAction: 'none'}}>
-                    <div className="h-full overflow-y-auto pr-2" 
-       style={{
-        WebkitOverflowScrolling: 'touch',
-        overscrollBehavior: 'contain',
-        touchAction: 'pan-y',
-        scrollbarWidth: 'thin',
-        scrollbarColor: 'rgba(255,255,255,0.3) transparent'
-      }}>
+                  <div className="flex-1 p-6 overflow-hidden" style={{ touchAction: 'none' }}>
+                    <div className="h-full overflow-y-auto pr-2"
+                      style={{
+                        WebkitOverflowScrolling: 'touch',
+                        overscrollBehavior: 'contain',
+                        touchAction: 'pan-y',
+                        scrollbarWidth: 'thin',
+                        scrollbarColor: 'rgba(255,255,255,0.3) transparent'
+                      }}>
                       {loading ? (
                         <div className="flex items-center justify-center h-full">
                           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
@@ -346,11 +305,11 @@ const Hobbies: React.FC = () => {
                       ) : (
                         <div className="max-w-none">
                           {/* 文章正文 */}
-                          <div 
+                          <div
                             className="prose prose-invert max-w-none article-content"
                             dangerouslySetInnerHTML={{ __html: htmlContent }}
                           />
-                          
+
                           {/* 评论区 - 使用文章ID确保隔离 */}
                           {selectedArticle && (
                             <LivereComment key={selectedArticle.id} articleId={selectedArticle.id} />
@@ -365,7 +324,7 @@ const Hobbies: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
 
     </section>
   );
