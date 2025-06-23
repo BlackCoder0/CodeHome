@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CodeのHome",
+  title: "晓雨 - CodeRains",
   description: "小小休憩之处",
 };
 
