@@ -6,7 +6,9 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true
   },
-  distDir: 'docs'
+  distDir: 'docs',
+  basePath: '/CodeHome',
+  assetPrefix: '/CodeHome/',
 };
 
 export default nextConfig;
