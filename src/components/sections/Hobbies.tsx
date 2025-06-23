@@ -43,7 +43,7 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
     }
 
     // 检查脚本是否已加载
-    const existingScript = document.querySelector('script[src="/js/embed.dist.js"]');
+    const existingScript = document.querySelector('script[src="./js/embed.dist.js"]');
     
     if (existingScript) {
       // 脚本已存在，等待加载完成
@@ -58,7 +58,7 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
     } else {
       // 动态加载来必力脚本
       const script = document.createElement('script');
-      script.src = '/js/embed.dist.js';
+      script.src = './js/embed.dist.js';
       script.async = true;
       
       script.onload = () => {
