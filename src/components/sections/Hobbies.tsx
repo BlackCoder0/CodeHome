@@ -4,113 +4,104 @@ import { Particles } from "@/components/magicui/Fparticles";
 import { articles, getArticlesByCategory, categories, Article } from '@/lib/articles';
 import ArticleCard from '@/components/ArticleCard';
 
+let livereScriptPromise: Promise<void> | null = null;
+
+const loadLivereScript = () => {
+  if (!livereScriptPromise) {
+    livereScriptPromise = new Promise((resolve, reject) => {
+      const scriptSrc = '/CodeHome/js/embed.dist.js';
+      const existingScript = document.querySelector(`script[src="${scriptSrc}"]`);
+
+      if (existingScript && (window as any).LivereTower) {
+        resolve();
+        return;
+      }
+
+      const script = (existingScript as HTMLScriptElement) || document.createElement('script');
+
+      if (!existingScript) {
+        script.src = scriptSrc;
+        script.async = true;
+        document.head.appendChild(script);
+      }
+
+      const onLoad = () => resolve();
+      const onError = () => reject('Failed to load Livere script');
+
+      script.addEventListener('load', onLoad);
+      script.addEventListener('error', onError);
+    });
+  }
+  return livereScriptPromise;
+};
+
 // 来必力评论组件
 interface LivereCommentProps {
   articleId: string;
 }
 
 const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
-  const commentRef = useRef<HTMLDivElement>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [hasError, setHasError] = useState(false);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const scriptLoadedRef = useRef(false);
+  const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    let mounted = true;
+    let isMounted = true;
+    const container = containerRef.current;
 
-    // 安全地清理之前的评论实例
-    if (commentRef.current) {
-      commentRef.current.innerHTML = '';
-    }
+    if (!container) return;
 
-    // 为每个文章创建唯一的容器ID
-    const containerId = `lv-container-${articleId}`;
-
-    // 创建评论容器
-    const container = document.createElement('div');
-    container.id = containerId;
-    container.setAttribute('data-id', 'city');
-    container.setAttribute('data-uid', 'MTAyMC82MDc1Ni8zNzIyNw==');
-    container.setAttribute('data-consult', articleId);
-
-    // 保存容器引用
-    containerRef.current = container;
-
-    if (commentRef.current && mounted) {
-      commentRef.current.appendChild(container);
-    }
-
-    // 检查脚本是否已加载
-    const existingScript = document.querySelector('script[src="/CodeHome/js/embed.dist.js"]');
-
-    if (existingScript && typeof (window as any).LivereTower === 'function') {
-      // 脚本已存在且已加载完成，直接标记为已加载
-      if (mounted) {
-        setIsLoaded(true);
-        setHasError(false);
-      }
-    } else if (!existingScript) {
-      // 动态加载来必力脚本
-      const script = document.createElement('script');
-      script.src = '/CodeHome/js/embed.dist.js';
-      script.async = true;
-
-      script.onload = () => {
-        scriptLoadedRef.current = true;
-        if (mounted) {
-          // 脚本加载完成后，来必力会自动初始化
-          setIsLoaded(true);
-          setHasError(false);
+    loadLivereScript()
+      .then(() => {
+        if (isMounted && (window as any).LivereTower) {
+          try {
+            (window as any).LivereTower.init();
+            if (isMounted) setStatus('loaded');
+          } catch (e) {
+            console.error("Livere init failed", e);
+            if (isMounted) setStatus('error');
+          }
+        } else if (isMounted) {
+          setStatus('error');
         }
-      };
+      })
+      .catch(() => {
+        if (isMounted) setStatus('error');
+      });
 
-      script.onerror = () => {
-        console.error('Failed to load Livere comment system');
-        if (mounted) {
-          setHasError(true);
-          setIsLoaded(false);
-        }
-      };
-
-      // 插入脚本到页面头部
-      document.head.appendChild(script);
-    }
-
-    // 清理函数
     return () => {
-      mounted = false;
-      containerRef.current = null;
-    };
-  }, [articleId]);
-
-  // 组件卸载时的清理
-  useEffect(() => {
-    return () => {
-      // 简化清理逻辑，避免DOM操作冲突
-      if (containerRef.current) {
-        containerRef.current = null;
+      isMounted = false;
+      if (container) {
+        container.innerHTML = '';
       }
     };
-  }, []);
+  }, []); // Empty dependency array, relies on parent's key prop for re-mounting
 
   return (
     <div className="mt-8 pt-6 border-t border-white/20">
       <h3 className="text-xl font-bold text-white mb-4">评论区</h3>
-      <div ref={commentRef} className="min-h-[200px]">
-        {hasError ? (
+      <div className="min-h-[200px]">
+        {status === 'loading' && (
+          <div className="flex items-center justify-center h-32 text-white/60">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white/60 mr-3"></div>
+            评论系统加载中...
+          </div>
+        )}
+        {status === 'error' && (
           <div className="flex items-center justify-center h-32 text-white/60">
             <div className="text-center">
               <div className="text-red-400 mb-2">评论系统加载失败</div>
               <div className="text-sm">请刷新页面重试</div>
             </div>
           </div>
-        ) : !isLoaded ? (
-          <div className="flex items-center justify-center h-32 text-white/60">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white/60 mr-3"></div>
-            评论系统加载中...
-          </div>
-        ) : null}
+        )}
+        <div
+          ref={containerRef}
+          style={{ display: status === 'loaded' ? 'block' : 'none' }}
+          id="lv-container"
+          data-id="city"
+          data-uid="MTAyMC82MDc1Ni8zNzIyNw=="
+          data-consult={articleId}
+        />
       </div>
       <noscript>
         <div className="text-white/60 text-center py-4">
