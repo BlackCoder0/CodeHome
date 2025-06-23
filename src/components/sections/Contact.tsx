@@ -335,7 +335,7 @@ const Contact: React.FC = () => {
 
   // { name: 'Alice', description: '前端开发者', url: '#', avatar: '/assets/logo/logo_0.jpg', subAvatar: '/assets/logo/logo_0.jpg' },
   const friendLinks = [
-    { name: 'A', description: '会是谁呢', url: '#', avatar: undefined, subAvatar: undefined},
+    { name: '墨间黑沢', description: '“阵雨”的作者', url: 'https://space.bilibili.com/24271342', avatar: '/assets/friend/墨间黑沢.jpg', subAvatar: undefined},
   ];
 
   return (

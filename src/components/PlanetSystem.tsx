@@ -7,7 +7,7 @@ const ringData = [
   {
     radius: 150,
     icons: [
-      { icon: <FaGithub />, link: 'https://github.com/' },
+      { icon: <FaGithub />, link: 'https://github.com/BlackCoder0' },
       {
         icon: (
           <img
@@ -16,7 +16,7 @@ const ringData = [
             style={{ width: 36, height: 36 }}
           />
         ),
-        link: 'https://gitee.com/',
+        link: 'https://gitee.com/code-liang',
       },
     ],
   },
@@ -31,9 +31,9 @@ const ringData = [
             style={{ width: 36, height: 36 }}
           />
         ),
-        link: 'https://bilibili.com/',
+        link: 'https://space.bilibili.com/335768850',
       },
-      { icon: <FaEnvelope />, link: 'mailto:your@email.com' },
+      { icon: <FaEnvelope />, link: 'mailto:2943984952@qq.com' },
       {
         icon: (
           <img
@@ -42,15 +42,15 @@ const ringData = [
             style={{ width: 36, height: 36 }}
           />
         ),
-        link: 'https://www.lofter.com/',
+        link: 'https://xinjinjumin4775442.lofter.com',
       },
     ],
   },
   {
     radius: 350,
     icons: [
-      { icon: <RiLinksLine />, link: 'https://yourfriendlink.com/' },
-      { icon: <FaSteam />, link: 'https://store.steampowered.com/' },
+      { icon: <RiLinksLine />, link: '#contact' },
+      { icon: <FaSteam />, link: 'https://steamcommunity.com/profiles/76561199350235965/' },
     ],
   },
 ];
@@ -103,8 +103,8 @@ const PlanetSystem = () => {
                 >
                   <a
                     href={item.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    target={item.link.startsWith('#') ? '_self' : '_blank'}
+                    rel={item.link.startsWith('#') ? undefined : 'noopener noreferrer'}
                     className="absolute text-white text-3xl flex items-center justify-center"
                     style={{
                       left: `${ring.radius - 20}px`,
@@ -117,6 +117,15 @@ const PlanetSystem = () => {
                     }}
                     onMouseEnter={() => setHoveredIcon(iconId)}
                     onMouseLeave={() => setHoveredIcon(null)}
+                    onClick={(e) => {
+                      if (item.link.startsWith('#')) {
+                        e.preventDefault();
+                        const target = document.querySelector(item.link);
+                        if (target) {
+                          target.scrollIntoView({ behavior: 'smooth' });
+                        }
+                      }
+                    }}
                   >
                     {item.icon}
                   </a>
