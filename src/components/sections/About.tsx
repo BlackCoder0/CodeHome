@@ -5,13 +5,6 @@ import { AnimatedTestimonials } from "@/components/ui/animated-testimonials";
 import DeskLamp3D from "@/lib/three-examples/DeskLamp3D";
 
 
-// 声明全局Window接口扩展
-// declare global {
-//   interface Window {
-//     matterCleanup?: () => void;
-//     initMatter?: () => (() => void) | void;
-//   }
-// }
 const testimonials = [
   {
     quote:
@@ -29,44 +22,44 @@ const testimonials = [
   },
   {
     quote:
-      "This solution has significantly improved our team's productivity. The intuitive interface makes complex tasks simple.",
+      "其实原本是有死库水的打算，但实在不符合年龄，最后墨间老师画了这种偏水手服风格的泳装\n说真的，我这辈子除游泳课外穿泳装的次数简直屈指可数（大夏天宅空调房不香吗真的是），南方的大火炉实在是太可怕了\n不过阵雨是美少女，美少女是不会被晒黑的（确信）\n相对保守的服饰很好遮住了上身，但空隙间展现的娇小可爱很完美的补足了少女感\n\n※设定上很怕水，刚开始学游泳时很艰难才克服溺水感",
     name: "泳装",
-    designation: "Operations Director at CloudScale",
+    designation: "正常人谁大夏天去沙滩啊",
     src: "assets/oc/oc3.png",
   },
   {
     quote:
-      "Outstanding support and robust features. It's rare to find a product that delivers on all its promises.",
+      "出于对影视作品里黑客的印象，加上对编程的喜好，便约了这套黑客服设\n高考完后也上了跟计算机相关的专业，虽然学得杂而不精，但看着想法用逻辑变成现实还是很有成就感\n阵雨这套衣服参考了我喜欢的一些黑客形象：宽松而厚的外套、较为凌乱的头发、以及不健康作息带来的黑眼圈\n...还有大腿绑带，大腿绑带是极好的！\n黑客是不愿意受管教和约束的存在，一个关着的门对于黑客来说是一种挑衅，一个锁着的门对黑客来说是一种侮辱。 \n\n这么飒气的女孩子，谁会想到她的算法课是被老师捞过的呢(*^_^*)",
     name: "黑客服",
-    designation: "Engineering Lead at DataPro",
+    designation: "喂喂，验证码发我一下",
     src: "assets/oc/oc4.png",
   },
   {
     quote:
-      "The scalability and performance have been game-changing for our organization. Highly recommend to any growing business.",
+      "赛车手是比较远离日常生活的形象，这套服设参考了[赛车服远坂凛](https://www.hpoi.net/hobby/36512)形象，经典的皮克外套及充满速度感的花纹，护目镜、手环等配饰也增添了赛车手的气质，少见的高马尾也是我很喜欢的一点。\n在网站开始页面是墨间老师为其绘制的一幅赠图，超！帅！的！",
     name: "赛车服",
-    designation: "VP of Technology at FutureNet",
+    designation: "昨晚我输给一辆AE86，他用惯性漂移过弯，他的车很快，我只看到他有个豆腐店的招牌。",
     src: "assets/oc/oc5.png",
   },
   {
     quote:
-      "The scalability and performance have been game-changing for our organization. Highly recommend to any growing business.",
+      "看起来很像贵族女子学校的校服（不过实际是什么学校我也还没想过）\n深色而典雅的长裙在运动时并不太方便，所以体育课时会换成更方便的款式\n面料舒适，保暖且透气，适合四季穿用\n但是不便清洗，经常不小心弄脏发阵雨只能买多套衣服以备用\n\n※除了校服外，学校对袜子、鞋子及发型也有相应要求，意外严苛",
     name: "校服",
-    designation: "VP of Technology at FutureNet",
+    designation: "贵安",
     src: "assets/oc/oc6.png",
   },
   {
     quote:
-      "The scalability and performance have been game-changing for our organization. Highly recommend to any growing business.",
+      "与初始之服相似，但更精炼大方，不对称的设计使其在人群中很容易脱颖而出\n初始服胸口的山荷叶挂饰被挂到腰间，走路时会随之轻轻摇摆。发型和绑带也换成更干练的，颇显成熟\n阵雨并不太习惯这身衣服，但出乎意料的是收到了众多好评，一改往日傻傻憨态的她以性格里另一面出场，着实吓到了不少人",
     name: "礼服",
-    designation: "VP of Technology at FutureNet",
+    designation: "用于出席重要场合的衣服",
     src: "assets/oc/oc7.png",
   },
   {
     quote:
-      "The scalability and performance have been game-changing for our organization. Highly recommend to any growing business.",
-    name: "实验室服",
-    designation: "VP of Technology at FutureNet",
+      "长下摆，对襟而长袖的白大褂，既用来保护实验服下的身体，也表示角色的知性美。\n话是这么说，可后半句在阵雨身上似乎不适用）\n请千万注意不要在实验室外（至少不要在实验楼外）穿着实验服，以避免将沾染的有毒有害物质带出造成污染\n虽不太符合实验规范，但高跟鞋子的不适让她始终提醒自己保持专注。当然，护目镜和扎起头发这两点仍然不能马虎",
+    name: "实验服",
+    designation: "为什么结果重复不出来啊/(ㄒoㄒ)/~~",
     src: "assets/oc/oc8.png",
   },
 ];
@@ -133,12 +126,12 @@ const About: React.FC = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [lampLightOn, setLampLightOn] = useState(true);
-  // const [matterInitialized, setMatterInitialized] = useState(false);
+
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting /* && !matterInitialized */) {
+        if (entry.isIntersecting) {
           setIsVisible(true);
         }
       },
@@ -157,80 +150,8 @@ const About: React.FC = () => {
         observer.unobserve(sectionRef.current);
       }
     };
-  }, [/* matterInitialized */]);
+  });
 
-  // useEffect(() => {
-  //   let matterCleanup: (() => void) | undefined;
-  //   let retryCount = 0;
-  //   const maxRetry = 3;
-
-  //   const loadMatter = async () => {
-  //     if (isVisible && !matterInitialized) {
-  //       try {
-  //         // 动态加载 matter.js
-  //         await new Promise<void>((resolve, reject) => {
-  //           const matterScript = document.createElement('script');
-  //           matterScript.src = '/matter/matter.min.js';
-  //           matterScript.async = true;
-  //           matterScript.onload = () => resolve();
-  //           matterScript.onerror = reject;
-  //           document.head.appendChild(matterScript);
-  //         });
-
-  //         // 动态加载 matter-example.js
-  //         await new Promise<void>((resolve, reject) => {
-  //           const exampleScript = document.createElement('script');
-  //           exampleScript.src = '/matter/matter-example.js';
-  //           exampleScript.async = true;
-  //           exampleScript.onload = () => {
-  //             function tryInitMatter() {
-  //               if (typeof window.initMatter === 'function') {
-  //                 const result = window.initMatter();
-  //                 if (typeof result === 'function') {
-  //                   matterCleanup = result;
-  //                 }
-  //                 setMatterInitialized(true);
-  //                 resolve();
-  //               } else if (retryCount < maxRetry) {
-  //                 retryCount++;
-  //                 setTimeout(tryInitMatter, 300);
-  //               } else {
-  //                 reject(new Error('initMatter function not found after retry'));
-  //               }
-  //             }
-  //             tryInitMatter();
-  //           };
-  //           exampleScript.onerror = reject;
-  //           document.head.appendChild(exampleScript);
-  //         });
-  //       } catch (error) {
-  //         console.error('Failed to load Matter.js scripts:', error);
-  //       }
-  //     }
-  //   };
-
-  //   loadMatter();
-
-  //   return () => {
-  //     if (matterCleanup) {
-  //       matterCleanup();
-  //     }
-  //     // 移除脚本
-  //     const scripts = document.querySelectorAll('script[src*="matter"]');
-  //     scripts.forEach(script => script.remove());
-  //   };
-  // }, [isVisible, matterInitialized]);
-
-  // useEffect(() => {
-  //   return () => {
-  //     // 清理Matter.js资源
-  //     if (window.matterCleanup) {
-  //       window.matterCleanup();
-  //     }
-  //     const scripts = document.querySelectorAll('script[src*="matter"]');
-  //     scripts.forEach(script => script.remove());
-  //   };
-  // }, []);
 
   const sectionClass = lampLightOn
     ? 'lamp-light-mobile lamp-light-desktop'
@@ -252,7 +173,27 @@ const About: React.FC = () => {
 
       {/* 移动端 About Me 标题 */}
       <div className="block md:hidden text-center text-white drop-shadow-2xl relative z-10 mb-16 mt-60 ">
-        <h2 className="text-4xl font-bold drop-shadow-lg filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.8)] transition-all duration-300 hover:text-yellow-100">About Me</h2>
+      <h1
+          className="text-4xl  font-bold drop-shadow-lg filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.8)] transition-all duration-300 hover:text-yellow-100"
+        >
+          About Me
+        </h1>
+
+        <h2
+          className="text-xl font-bold transition-all duration-300 hover:text-yellow-100
+               bg-clip-text text-white
+               inline-block w-full mt-4 px-15"
+        >
+          在上方，你可以看见我的互联网生活，以及友链
+        </h2>
+
+        <h2
+          className="text-xl font-bold transition-all duration-300 hover:text-yellow-100
+          bg-clip-text text-white
+          inline-block w-full mt-4 mx-4 px-15"
+        >
+          在下方的是我的自设，以及为她约稿设计的各种衣服
+        </h2>
       </div>
 
       <div className="block md:hidden relative w-full h-[320px] mb-8">
@@ -330,8 +271,6 @@ const About: React.FC = () => {
         />
       )}
 
-      {/* Matter.js 物理引擎将在这里渲染 - 位于最底层 */}
-      {/* Matter.js 相关代码已被注释 */}
     </section>
   );
 };

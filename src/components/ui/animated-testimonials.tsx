@@ -151,10 +151,10 @@ export const AnimatedTestimonials = ({
           <h3 className="text-xl font-bold text-white dark:text-white mb-2">
             {testimonials[active].name}
           </h3>
-          <p className="text-sm text-gray-500 dark:text-neutral-500 mb-4">
+          <p className="text-sm text-gray-400 dark:text-neutral-500 mb-4">
             {testimonials[active].designation}
           </p>
-          <motion.p className="text-base text-gray-500 dark:text-neutral-300">
+          <motion.p className="text-base text-gray-400 dark:text-neutral-300">
   {testimonials[active].quote.split('\n').map((line, lineIndex) => {
     // 解析链接格式 [文本](URL)
     const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
@@ -328,10 +328,10 @@ export const AnimatedTestimonials = ({
               <h3 className="text-2xl font-bold text-black dark:text-white">
                 {testimonials[active].name}
               </h3>
-              <p className="text-sm text-gray-500 dark:text-neutral-500">
+              <p className="text-m text-gray-400 dark:text-neutral-500">
                 {testimonials[active].designation}
               </p>
-              <motion.p className="mt-8 text-lg text-gray-500 dark:text-neutral-300">
+              <motion.p className="mt-8 text-lg text-gray-400 dark:text-neutral-300">
                 {testimonials[active].quote.split('\n').map((line, lineIndex) => {
                   // 解析链接格式 [文本](URL)
                   const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;

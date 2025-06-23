@@ -168,20 +168,20 @@
   }
 }
 .lamp-light-mobile {
-  background: radial-gradient(ellipse 250px 250px at 50% 11%, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.1) 30%, rgba(0, 0, 0, 1) 70%);
+  background: radial-gradient(ellipse 250px 250px at 50% 10%, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.1) 30%, rgba(0, 0, 0, 1) 70%);
 }
 
 .lamp-light-desktop {
-  background: radial-gradient(ellipse 250px 250px at 50% 11%, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.1) 30%, rgba(0, 0, 0, 1) 70%);
+  background: radial-gradient(ellipse 250px 250px at 50% 10%, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.1) 30%, rgba(0, 0, 0, 1) 70%);
 }
 
 
 .lamp-off-mobile {
-  background: radial-gradient(ellipse 250px 250px at 50% 11%, rgba(0, 0, 0, 1) 100%);
+  background: radial-gradient(ellipse 250px 250px at 50% 10%, rgba(0, 0, 0, 1) 100%);
 }
 
 .lamp-off-desktop {
-  background: radial-gradient(ellipse 250px 250px at 50% 11%, rgba(0, 0, 0, 1) 100%);
+  background: radial-gradient(ellipse 250px 250px at 50% 10%, rgba(0, 0, 0, 1) 100%);
 }
 
 @media (min-width: 768px) {
