@@ -221,7 +221,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, isOpen, onClose })
                       rel="noopener noreferrer"
                       className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors flex items-center gap-2"
                     >
-                      <img src="/assets/github.svg" alt="GitHub" width={32} height={32} className="inline-block align-middle" />
+                      <img src="./assets/github.svg" alt="GitHub" width={32} height={32} className="inline-block align-middle" />
                       <span className="sr-only">GitHub</span>
                     </a>
                   )}
@@ -232,7 +232,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, isOpen, onClose })
                       rel="noopener noreferrer"
                       className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors flex items-center gap-2"
                     >
-                      <img src="/assets/gitee.svg" alt="Gitee" width={32} height={32} className="inline-block align-middle" />
+                      <img src="./assets/gitee.svg" alt="Gitee" width={32} height={32} className="inline-block align-middle" />
                       <span className="sr-only">Gitee</span>
                     </a>
                   )}

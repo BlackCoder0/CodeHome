@@ -178,7 +178,7 @@ const Hobbies: React.FC = () => {
      <section id="hobbies" className="relative min-h-screen py-8 bg-gradient-to-b from-[#2e3346] to-black">
      {/* <section id="hobbies" className="relative min-h-screen py-8"
   style={{
-    backgroundImage: "url('/assets/bg/sea2.jpg')",
+    backgroundImage: "url('./assets/bg/sea2.jpg')",
     backgroundSize: "cover",
     backgroundPosition: "center",
     backgroundRepeat: "no-repeat",

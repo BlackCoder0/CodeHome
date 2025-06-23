@@ -15,7 +15,7 @@ export const articles: Article[] = [
     title: 'Hello World',
     subtitle: '你好啊',
     category: 'chat',
-    thumbnail: '/assets/bg_big.png',
+    thumbnail: './assets/bg_big.png',
     htmlPath: '/articles/chat/hello.html',
     publishDate: '2025-06-23',
     tags: ['打招呼', '碎碎念']

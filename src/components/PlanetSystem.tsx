@@ -11,7 +11,7 @@ const ringData = [
       {
         icon: (
           <img
-            src="/assets/gitee.svg"
+            src="./assets/gitee.svg"
             alt="Gitee"
             style={{ width: 36, height: 36 }}
           />
@@ -26,7 +26,7 @@ const ringData = [
       {
         icon: (
           <img
-            src="/assets/bilibili.svg"
+            src="./assets/bilibili.svg"
             alt="Bilibili"
             style={{ width: 36, height: 36 }}
           />
@@ -37,7 +37,7 @@ const ringData = [
       {
         icon: (
           <img
-            src="/assets/lofter.svg"
+            src="./assets/lofter.svg"
             alt="Lofter"
             style={{ width: 36, height: 36 }}
           />

@@ -168,7 +168,7 @@ const Contact: React.FC = () => {
           }
         }
       };
-      img.src = '/assets/logo/logo_0.jpg';
+      img.src = './assets/logo/logo_0.jpg';
     };
 
     const animate = () => {
@@ -293,7 +293,7 @@ const Contact: React.FC = () => {
       };
       
       // 加载指定的logo图片
-      img.src = '/assets/logo/logo_0.jpg';
+      img.src = './assets/logo/logo_0.jpg';
     };
 
     const animate = () => {
@@ -333,9 +333,9 @@ const Contact: React.FC = () => {
 
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // { name: 'Alice', description: '前端开发者', url: '#', avatar: '/assets/logo/logo_0.jpg', subAvatar: '/assets/logo/logo_0.jpg' },
+  // { name: 'Alice', description: '前端开发者', url: '#', avatar: './assets/logo/logo_0.jpg', subAvatar: './assets/logo/logo_0.jpg' },
   const friendLinks = [
-    { name: '墨间黑沢', description: '“阵雨”的作者', url: 'https://space.bilibili.com/24271342', avatar: '/assets/friend/墨间黑沢.jpg', subAvatar: undefined},
+    { name: '墨间黑沢', description: '"阵雨"的作者', url: 'https://space.bilibili.com/24271342', avatar: './assets/friend/墨间黑沢.jpg', subAvatar: undefined},
   ];
 
   return (
