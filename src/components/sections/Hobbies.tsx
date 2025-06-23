@@ -12,22 +12,29 @@ interface LivereCommentProps {
 const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
   const commentRef = useRef<HTMLDivElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const scriptLoadedRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
     
-    // 清理之前的评论实例
+    // 安全地清理之前的评论实例
     if (commentRef.current) {
-      // 安全地清理子元素
       try {
-        while (commentRef.current.firstChild) {
-          commentRef.current.removeChild(commentRef.current.firstChild);
-        }
+        // 使用更安全的清理方式
+        const children = Array.from(commentRef.current.children);
+        children.forEach(child => {
+          if (commentRef.current && commentRef.current.contains(child)) {
+            commentRef.current.removeChild(child);
+          }
+        });
       } catch (error) {
-        // 忽略清理错误，让React处理
         console.warn('Comment cleanup warning:', error);
-        commentRef.current.innerHTML = '';
+        // 如果removeChild失败，使用innerHTML清理
+        if (commentRef.current) {
+          commentRef.current.innerHTML = '';
+        }
       }
     }
 
@@ -51,30 +58,58 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
     // 检查脚本是否已加载
     const existingScript = document.querySelector('script[src="/CodeHome/js/embed.dist.js"]');
     
-    if (existingScript) {
-      // 脚本已存在，等待加载完成
+    if (existingScript && scriptLoadedRef.current) {
+      // 脚本已存在且已加载完成
       if (typeof (window as any).LivereTower === 'function') {
-        if (mounted) setIsLoaded(true);
-      } else {
-        // 监听脚本加载完成
-        existingScript.addEventListener('load', () => {
-          if (mounted) setIsLoaded(true);
-        });
+        try {
+          // 尝试初始化来必力评论系统
+          if (mounted) {
+            setIsLoaded(true);
+            setHasError(false);
+          }
+        } catch (error) {
+          console.error('Livere initialization error:', error);
+          if (mounted) {
+            setHasError(true);
+            setIsLoaded(false);
+          }
+        }
       }
-    } else {
+    } else if (!existingScript) {
       // 动态加载来必力脚本
       const script = document.createElement('script');
       script.src = '/CodeHome/js/embed.dist.js';
       script.async = true;
       
       script.onload = () => {
+        scriptLoadedRef.current = true;
         if (mounted) {
-          setIsLoaded(true);
+          try {
+            // 等待一小段时间确保脚本完全初始化
+            setTimeout(() => {
+              if (mounted && typeof (window as any).LivereTower === 'function') {
+                setIsLoaded(true);
+                setHasError(false);
+              } else if (mounted) {
+                setHasError(true);
+              }
+            }, 100);
+          } catch (error) {
+            console.error('Livere initialization error:', error);
+            if (mounted) {
+              setHasError(true);
+              setIsLoaded(false);
+            }
+          }
         }
       };
       
       script.onerror = () => {
         console.error('Failed to load Livere comment system');
+        if (mounted) {
+          setHasError(true);
+          setIsLoaded(false);
+        }
       };
       
       // 插入脚本到页面头部
@@ -103,12 +138,19 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
     <div className="mt-8 pt-6 border-t border-white/20">
       <h3 className="text-xl font-bold text-white mb-4">评论区</h3>
       <div ref={commentRef} className="min-h-[200px]">
-        {!isLoaded && (
+        {hasError ? (
+          <div className="flex items-center justify-center h-32 text-white/60">
+            <div className="text-center">
+              <div className="text-red-400 mb-2">评论系统加载失败</div>
+              <div className="text-sm">请刷新页面重试</div>
+            </div>
+          </div>
+        ) : !isLoaded ? (
           <div className="flex items-center justify-center h-32 text-white/60">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white/60 mr-3"></div>
             评论系统加载中...
           </div>
-        )}
+        ) : null}
       </div>
       <noscript>
         <div className="text-white/60 text-center py-4">
