@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { FaGithub, FaEnvelope, FaSteam } from 'react-icons/fa';
 import { RiLinksLine } from 'react-icons/ri';
 

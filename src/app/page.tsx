@@ -1,5 +1,5 @@
 "use client"
-import Image from "next/image";
+
 import { useEffect, useRef, useState } from "react";
 import { TextAnimate } from "@/components/magicui/text-animate";
 import LoadingCanvas from "@/components/LoadingCanvas";

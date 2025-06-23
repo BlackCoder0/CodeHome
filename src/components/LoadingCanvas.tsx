@@ -8,7 +8,6 @@ interface LoadingCanvasProps {
 
 const LoadingCanvas: React.FC<LoadingCanvasProps> = ({ onFinish }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [stage, setStage] = useState<'sketch' | 'color' | 'done'>('sketch');
   const [fadeOut, setFadeOut] = useState(false);
 
   useEffect(() => {
@@ -172,7 +171,6 @@ const LoadingCanvas: React.FC<LoadingCanvasProps> = ({ onFinish }) => {
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      setStage('color');
       let opacity = 0;
       const fadeIn = () => {
         opacity += 0.08;
@@ -215,7 +213,6 @@ const LoadingCanvas: React.FC<LoadingCanvasProps> = ({ onFinish }) => {
         ctx.globalAlpha = 1;
 
         if (opacity >= 1) {
-          setStage('done');
           setFadeOut(true);
           setTimeout(() => {
             setFadeOut(false);

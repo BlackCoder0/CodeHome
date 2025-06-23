@@ -4,7 +4,6 @@ import {
   Folder,
   Paintbrush2,
   User,
-  Mail,
   Handshake
 } from "lucide-react";
 import { useEffect, useState, useCallback, useRef } from "react";
