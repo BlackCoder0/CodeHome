@@ -83,23 +83,29 @@ export default function Home() {
           style={{ backgroundImage: 'url(/assets/bg_big2.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}
         >
           <div className="backdrop-blur-sm bg-black/40 w-full h-full absolute top-0 left-0 -z-10" />
-          <TextAnimate
-            animation="slideUp"
-            by="character"
-            as="h1"
-            className="text-7xl font-bold text-white mb-4 text-center"
-          >
-            Codeの家
-          </TextAnimate>
-          <TextAnimate
-            animation="slideUp"
-            by="line"
-            as="p"
-            delay={0.5}
-            className="text-3xl text-white text-center max-w-2xl mb-8"
-          >
-            ciallo~
-          </TextAnimate>
+          {introReady && (
+            <>
+              <TextAnimate
+                animation="slideUp"
+                by="character"
+                as="h1"
+                startOnView={false}
+                className="text-7xl font-bold text-white mb-4 text-center"
+              >
+                Codeの家
+              </TextAnimate>
+              <TextAnimate
+                animation="slideUp"
+                by="line"
+                as="p"
+                delay={0.5}
+                startOnView={false}
+                className="text-3xl text-white text-center max-w-2xl mb-8"
+              >
+                ciallo~
+              </TextAnimate>
+            </>
+          )}
           <div className="absolute bottom-10 flex flex-col items-center animate-bounce">
             <svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
             <span className="text-white mt-2">下滑进入</span>

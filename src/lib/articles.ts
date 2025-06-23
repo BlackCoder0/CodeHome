@@ -2,7 +2,7 @@ export interface Article {
   id: string;
   title: string;
   subtitle: string;
-  category: 'game' | 'travel' | 'art' | 'other';
+  category: 'chat' | 'study' | 'life' | 'other';
   thumbnail: string;
   htmlPath: string;
   publishDate: string;
@@ -11,49 +11,61 @@ export interface Article {
 
 export const articles: Article[] = [
   {
-    id: 'minecraft',
-    title: 'MINECRAFT',
-    subtitle: '我的启蒙，也愿成为我的始终。',
-    category: 'game',
+    id: 'First',
+    title: 'Hello World',
+    subtitle: '你好啊',
+    category: 'chat',
     thumbnail: '/assets/bg_big.png',
-    htmlPath: '/articles/game/minecraft.html',
-    publishDate: '2025-01-01',
-    tags: ['游戏', '沙盒', '建造']
+    htmlPath: '/articles/chat/hello.html',
+    publishDate: '2025-06-23',
+    tags: ['打招呼', '碎碎念']
   },
   {
-    id: 'jilin',
-    title: '吉林',
-    subtitle: '我出生的地方，我的故乡。',
-    category: 'travel',
-    thumbnail: '/assets/project/jilin-sunset.jpg',
-    htmlPath: '/articles/travel/jilin.html',
-    publishDate: '2024-12-15',
-    tags: ['故乡', '东北', '回忆']
+    id: 'aboutstudy',
+    title: '代码是毒药',
+    subtitle: '关于学习',
+    category: 'study',
+    thumbnail: '/articles_img/20250623-study-1.jpg',
+    htmlPath: '/articles/study/aboutstudy.html',
+    publishDate: '2025-06-23',
+    tags: ['校园', '成长', '回忆']
   },
   {
-    id: 'digital-art',
-    title: '数字艺术',
-    subtitle: '像素与创意的碰撞',
-    category: 'art',
-    thumbnail: '/assets/project/digital-art-banner.jpg',
-    htmlPath: '/articles/art/digital-art.html',
-    publishDate: '2024-11-20',
-    tags: ['数字艺术', '创意', '设计']
+    id: 'cos-cat',
+    title: 'cos与猫',
+    subtitle: '生活就像糖果，总要有什么甜的来支撑',
+    category: 'life',
+    thumbnail: '/articles_img/20250623-life-1.jpg',
+    htmlPath: '/articles/life/cos-cat.html',
+    publishDate: '2025-06-23',
+    tags: ['生活', '你这样可爱的猫猫是要被人吃干抹净的']
   },
   {
-    id: 'programming-journey',
-    title: '编程之路',
-    subtitle: '从零开始的代码人生',
+    id: 'PB',
+    title: '看完魔圆，关于鹿目圆和晓美焰写点感想',
+    subtitle: '粉＆黑',
     category: 'other',
-    thumbnail: '/assets/project/coding-setup.jpg',
-    htmlPath: '/articles/other/programming-journey.html',
-    publishDate: '2024-10-10',
-    tags: ['编程', '技术', '成长']
+    thumbnail: '/articles_img/20250623-other-1.jpg',
+    htmlPath: '/articles/other/PinkBlack.html',
+    publishDate: '2025-03-02',
+    tags: ['魔法少女小圆', '随笔']
+  },
+  {
+    id: 'GE',
+    title: '当焰魔看到金色美瞳的圆，会有怎么样的展开呢',
+    subtitle: '同人百合',
+    category: 'other',
+    thumbnail: '/articles_img/20250623-other-3.jpg',
+    htmlPath: '/articles/other/GoldEye.html',
+    publishDate: '2025-05-03',
+    tags: ['魔法少女小圆', '同人', '百合']
   }
 ];
 
 export const getArticlesByCategory = (category: Article['category']) => {
-  return articles.filter(article => article.category === category);
+  return articles
+    .filter(article => article.category === category)
+    .sort((a, b) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime());
 };
 
 export const getArticleById = (id: string) => {
@@ -61,8 +73,8 @@ export const getArticleById = (id: string) => {
 };
 
 export const categories = [
-  { label: '游戏', value: 'game' as const },
-  { label: '旅行', value: 'travel' as const },
-  { label: '艺术', value: 'art' as const },
+  { label: '杂谈', value: 'chat' as const },
+  { label: '学习', value: 'study' as const },
+  { label: '生活', value: 'life' as const },
   { label: '其他', value: 'other' as const }
 ];

@@ -8,7 +8,7 @@ import ArticleCard from '@/components/ArticleCard';
 
 const Hobbies: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
-  const [activeCategory, setActiveCategory] = useState<Article['category']>('game');
+  const [activeCategory, setActiveCategory] = useState<Article['category']>('chat');
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [isViewingArticle, setIsViewingArticle] = useState(false);
   const [htmlContent, setHtmlContent] = useState<string>('');
@@ -91,11 +91,12 @@ const Hobbies: React.FC = () => {
           </div>
           
           {/* 右侧 - 文章区域 */}
-          <div className={`w-full flex flex-col ${isViewingArticle ? 'fixed inset-0 z-50 h-screen bg-[#2e3346] lg:static lg:h-full' : 'h-[60vh] lg:h-full'}`}>
+          <div className={`w-full flex flex-col ${isViewingArticle ? 'fixed inset-0 z-[300] h-screen bg-[#2e3346] overflow-hidden lg:static lg:h-full lg:z-auto lg:overflow-visible' : 'h-[80vh] lg:h-full'}`} style={isViewingArticle ? {touchAction: 'none', overscrollBehavior: 'contain'} : {}}>
             <div className="h-full bg-black/40 backdrop-blur-sm border-2 border-white/20 shadow-2xl relative z-10 flex flex-col"
                  style={{
                    clipPath: 'polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px))',
-                   background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)'
+                   background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+                   ...(isViewingArticle ? {touchAction: 'none', overscrollBehavior: 'contain'} : {})
                  }}>
               {!isViewingArticle ? (
                 <>
@@ -174,11 +175,13 @@ const Hobbies: React.FC = () => {
                   </div>
                   
                   {/* 文章内容 */}
-                  <div className="flex-1 p-6 overflow-hidden">
+                  <div className="flex-1 p-6 overflow-hidden" style={{touchAction: 'none'}}>
                     <div className="h-full overflow-y-auto pr-2" 
                          style={{
                            scrollbarWidth: 'thin',
-                           scrollbarColor: 'rgba(255,255,255,0.3) transparent'
+                           scrollbarColor: 'rgba(255,255,255,0.3) transparent',
+                           touchAction: 'pan-y',
+                           overscrollBehavior: 'contain'
                          }}>
                       {loading ? (
                         <div className="flex items-center justify-center h-full">

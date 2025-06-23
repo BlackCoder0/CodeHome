@@ -331,8 +331,11 @@ const Contact: React.FC = () => {
     };
   };
 
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // { name: 'Alice', description: '前端开发者', url: '#', avatar: '/assets/logo/logo_0.jpg', subAvatar: '/assets/logo/logo_0.jpg' },
   const friendLinks = [
-    { name: 'A', description: '会是谁呢', url: '#', avatar: undefined },
+    { name: 'A', description: '会是谁呢', url: '#', avatar: undefined, subAvatar: undefined},
   ];
 
   return (
@@ -347,7 +350,7 @@ const Contact: React.FC = () => {
 
       <div className="relative z-10 h-full">
         {/* 桌面端布局 */}
-        <div className="hidden lg:flex h-full">
+        <div className="hidden lg:flex h-full relative">
           {/* 左侧 - 点阵图 */}
           <div className="flex-1 relative">
             <canvas
@@ -365,7 +368,7 @@ const Contact: React.FC = () => {
           </div>
 
           {/* 右侧 - 访客统计和友情链接 */}
-          <div className="w-96 bg-gradient-to-b from-amber-100/90 to-orange-100/90 backdrop-blur-sm border-l-4 border-amber-800 p-0 flex flex-col">
+          <div className="w-96 bg-gradient-to-b from-amber-100/90 to-orange-100/90 backdrop-blur-sm border-l-4 border-amber-800 p-0 flex flex-col relative z-20">
             {/* 访客统计 */}
             <div className="flex-1 p-8 border-b-4 border-amber-800">
               <div className="bg-amber-50/80 border-2 border-amber-800 p-6 rounded-none shadow-lg" style={{
@@ -401,58 +404,132 @@ const Contact: React.FC = () => {
 
             {/* 友情链接 */}
             <div className="flex-1 p-8">
-              <div className="bg-amber-50/80 border-2 border-amber-800 p-6 rounded-none shadow-lg h-full" style={{
-                boxShadow: '8px 8px 0px rgba(120, 53, 15, 0.3)'
+              <div className={`bg-amber-50/80 border-2 border-amber-800 p-6 rounded-none shadow-lg h-full transition-all duration-500 ${isExpanded ? 'w-[calc(100vw-200px)] absolute right-0 z-30' : ''}`} style={{
+                boxShadow: '8px 8px 0px rgba(120, 53, 15, 0.3)',
+                transform: isExpanded ? 'translateX(calc(-50% + 48%))' : 'translateX(0)',
+                transition: 'transform 0.5s ease-in-out, width 0.5s ease-in-out'
               }}>
-                <h2 className="text-3xl font-bold text-amber-900 mb-6 text-center" style={{ fontFamily: 'Times New Roman, serif' }}>友情链接</h2>
-                
-                <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {friendLinks.map((friend, index) => (
-                    <a
-                      key={index}
-                      href={friend.url}
-                      className="group block p-3 bg-orange-100 hover:bg-orange-200 border-2 border-amber-700 hover:border-amber-900 transition-all duration-300 hover:shadow-md"
-                      style={{
-                        boxShadow: '4px 4px 0px rgba(120, 53, 15, 0.2)',
-                        transform: 'translateZ(0)'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translate(-2px, -2px)';
-                        e.currentTarget.style.boxShadow = '6px 6px 0px rgba(120, 53, 15, 0.3)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateZ(0)';
-                        e.currentTarget.style.boxShadow = '4px 4px 0px rgba(120, 53, 15, 0.2)';
-                      }}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center text-white font-bold text-sm border border-amber-800 overflow-hidden">
-                          {friend.avatar ? (
-                            <img src={friend.avatar} alt={friend.name + '头像'} className="w-full h-full object-cover" />
-                          ) : (
-                            friend.name.charAt(0)
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-amber-900 font-bold text-sm group-hover:text-amber-700 transition-colors duration-300 truncate">
-                            {friend.name}
-                          </h3>
-                          <p className="text-amber-700 text-xs group-hover:text-amber-600 transition-colors duration-300 truncate">
-                            {friend.description}
-                          </p>
-                        </div>
-                        <div className="text-amber-600 group-hover:text-amber-800 transition-colors duration-300">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                        </div>
-                      </div>
-                    </a>
-                  ))}
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-3xl font-bold text-amber-900" style={{ fontFamily: 'Times New Roman, serif' }}>友情链接</h2>
+                  <button
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold border-2 border-amber-800 transition-all duration-300"
+                    style={{
+                      boxShadow: '2px 2px 0px rgba(120, 53, 15, 0.3)'
+                    }}
+                  >
+                    {isExpanded ? '收起' : '展开'}
+                  </button>
                 </div>
+                
+                {isExpanded ? (
+                   <div className="grid grid-cols-5 gap-4 max-h-80 overflow-y-auto pr-2" style={{
+                     scrollbarWidth: 'thin',
+                     scrollbarColor: 'rgba(180, 83, 9, 0.3) transparent'
+                   }}>
+                    {friendLinks.map((friend, index) => (
+                      <a
+                        key={index}
+                        href={friend.url}
+                        className="group block p-2 bg-orange-100 hover:bg-orange-200 border-2 border-amber-700 hover:border-amber-900 transition-all duration-300 hover:shadow-md"
+                        style={{
+                          boxShadow: '3px 3px 0px rgba(120, 53, 15, 0.2)',
+                          transform: 'translateZ(0)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translate(-1px, -1px)';
+                          e.currentTarget.style.boxShadow = '4px 4px 0px rgba(120, 53, 15, 0.3)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateZ(0)';
+                          e.currentTarget.style.boxShadow = '3px 3px 0px rgba(120, 53, 15, 0.2)';
+                        }}
+                      >
+                        <div className="flex flex-col items-center space-y-2">
+                          <div className="flex items-center space-x-1">
+                            <div className="w-8 h-8 bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center text-white font-bold text-sm border border-amber-800 overflow-hidden">
+                              {friend.avatar ? (
+                                <img src={friend.avatar} alt={friend.name + '头像'} className="w-full h-full object-cover" />
+                              ) : (
+                                friend.name.charAt(0)
+                              )}
+                            </div>
+                            {friend.subAvatar && (
+                              <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-sm border border-amber-700 overflow-hidden">
+                                <img src={friend.subAvatar} alt={friend.name + '副头像'} className="w-full h-full object-cover" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-center">
+                            <h3 className="text-amber-900 font-bold text-sm group-hover:text-amber-700 transition-colors duration-300 truncate">
+                              {friend.name}
+                            </h3>
+                            <p className="text-amber-700 text-xs group-hover:text-amber-600 transition-colors duration-300 truncate">
+                              {friend.description}
+                            </p>
+                          </div>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-4 max-h-80 overflow-y-auto">
+                    {friendLinks.map((friend, index) => (
+                      <a
+                        key={index}
+                        href={friend.url}
+                        className="group block p-3 bg-orange-100 hover:bg-orange-200 border-2 border-amber-700 hover:border-amber-900 transition-all duration-300 hover:shadow-md"
+                        style={{
+                          boxShadow: '4px 4px 0px rgba(120, 53, 15, 0.2)',
+                          transform: 'translateZ(0)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translate(-2px, -2px)';
+                          e.currentTarget.style.boxShadow = '6px 6px 0px rgba(120, 53, 15, 0.3)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateZ(0)';
+                          e.currentTarget.style.boxShadow = '4px 4px 0px rgba(120, 53, 15, 0.2)';
+                        }}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-10 h-10 bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center text-white font-bold text-lg border border-amber-800 overflow-hidden">
+                              {friend.avatar ? (
+                                <img src={friend.avatar} alt={friend.name + '头像'} className="w-full h-full object-cover" />
+                              ) : (
+                                friend.name.charAt(0)
+                              )}
+                            </div>
+                            {friend.subAvatar && (
+                              <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-lg border border-amber-700 overflow-hidden">
+                                <img src={friend.subAvatar} alt={friend.name + '副头像'} className="w-full h-full object-cover" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-amber-900 font-bold text-base group-hover:text-amber-700 transition-colors duration-300 truncate">
+                              {friend.name}
+                            </h3>
+                            <p className="text-amber-700 text-sm group-hover:text-amber-600 transition-colors duration-300 truncate">
+                              {friend.description}
+                            </p>
+                          </div>
+                          <div className="text-amber-600 group-hover:text-amber-800 transition-colors duration-300">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </div>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
+
+
         </div>
 
         {/* 移动端布局 */}
@@ -551,8 +628,19 @@ const Contact: React.FC = () => {
                      }}
                    >
                      <div className="flex items-center space-x-3">
-                       <div className="w-8 h-8 bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center text-white font-bold text-sm border border-amber-800">
-                         {friend.name.charAt(0)}
+                       <div className="flex items-center space-x-2">
+                         <div className="w-8 h-8 bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center text-white font-bold text-sm border border-amber-800 overflow-hidden">
+                           {friend.avatar ? (
+                             <img src={friend.avatar} alt={friend.name + '头像'} className="w-full h-full object-cover" />
+                           ) : (
+                             friend.name.charAt(0)
+                           )}
+                         </div>
+                         {friend.subAvatar && (
+                           <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-sm border border-amber-700 overflow-hidden">
+                             <img src={friend.subAvatar} alt={friend.name + '副头像'} className="w-full h-full object-cover" />
+                           </div>
+                         )}
                        </div>
                        <div className="flex-1 min-w-0">
                          <h3 className="text-amber-900 font-bold text-sm group-hover:text-amber-700 transition-colors duration-300 truncate">
