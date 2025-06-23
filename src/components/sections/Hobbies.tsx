@@ -43,6 +43,7 @@ interface LivereCommentProps {
 const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
   const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
   const containerRef = useRef<HTMLDivElement>(null);
+  const uniqueId = `lv-container-${articleId}`;
 
   useEffect(() => {
     let isMounted = true;
@@ -50,12 +51,31 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
 
     if (!container) return;
 
+    // 清理可能存在的旧评论实例
+    const existingContainers = document.querySelectorAll('[id^="lv-container"]');
+    existingContainers.forEach(el => {
+      if (el !== container) {
+        el.innerHTML = '';
+      }
+    });
+
+    // 设置当前容器的属性
+    container.id = uniqueId;
+    container.setAttribute('data-id', 'city');
+    container.setAttribute('data-uid', 'MTAyMC82MDc1Ni8zNzIyNw==');
+    container.setAttribute('data-consult', articleId);
+
     loadLivereScript()
       .then(() => {
         if (isMounted && (window as any).LivereTower) {
           try {
-            (window as any).LivereTower.init();
-            if (isMounted) setStatus('loaded');
+            // 延迟初始化，确保DOM已准备好
+            setTimeout(() => {
+              if (isMounted && container.id === uniqueId) {
+                (window as any).LivereTower.init();
+                setStatus('loaded');
+              }
+            }, 100);
           } catch (e) {
             console.error("Livere init failed", e);
             if (isMounted) setStatus('error');
@@ -72,9 +92,10 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
       isMounted = false;
       if (container) {
         container.innerHTML = '';
+        container.removeAttribute('id');
       }
     };
-  }, []); // Empty dependency array, relies on parent's key prop for re-mounting
+  }, [articleId, uniqueId]); // 依赖articleId，确保文章切换时重新初始化
 
   return (
     <div className="mt-8 pt-6 border-t border-white/20">
@@ -96,12 +117,32 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
         )}
         <div
           ref={containerRef}
-          style={{ display: status === 'loaded' ? 'block' : 'none' }}
-          id="lv-container"
-          data-id="city"
-          data-uid="MTAyMC82MDc1Ni8zNzIyNw=="
-          data-consult={articleId}
+          style={{ 
+            display: status === 'loaded' ? 'block' : 'none'
+          }}
+          className="livere-comment-container"
         />
+        <style jsx>{`
+          .livere-comment-container :global(*) {
+            color: white !important;
+          }
+          .livere-comment-container :global(iframe) {
+            filter: invert(1) hue-rotate(180deg) !important;
+          }
+          .livere-comment-container :global(.lv-comment-content),
+          .livere-comment-container :global(.lv-comment-text),
+          .livere-comment-container :global(.lv-comment-author),
+          .livere-comment-container :global(.lv-comment-time),
+          .livere-comment-container :global(input),
+          .livere-comment-container :global(textarea),
+          .livere-comment-container :global(span),
+          .livere-comment-container :global(div),
+          .livere-comment-container :global(p),
+          .livere-comment-container :global(a) {
+            color: white !important;
+            background-color: transparent !important;
+          }
+        `}</style>
       </div>
       <noscript>
         <div className="text-white/60 text-center py-4">
