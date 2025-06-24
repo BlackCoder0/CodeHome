@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import MessageBoard from '@/components/MessageBoard';
+import { useAnalytics } from '@/lib/analytics';
 
 
 // 粒子类
@@ -65,8 +66,7 @@ class Particle {
 
 const Contact: React.FC = () => {
   const [uptime, setUptime] = useState('');
-  const [visitorCount, setVisitorCount] = useState('？？？');
-  const [onlineUsers, setOnlineUsers] = useState('？');
+  const { visitorCount: realVisitorCount, onlineUsers: realOnlineUsers } = useAnalytics();
   const [isMobile, setIsMobile] = useState(false);
   const desktopCanvasRef = useRef<HTMLCanvasElement>(null);
   const mobileCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -385,12 +385,12 @@ const Contact: React.FC = () => {
                   
                   <div className="flex justify-between items-center border-b border-amber-300 pb-2">
                     <span className="text-lg font-semibold">访问量:</span>
-                    <span className="font-mono text-lg bg-amber-200 px-2 py-1 rounded border border-amber-400">{visitorCount}</span>
+                    <span className="font-mono text-lg bg-amber-200 px-2 py-1 rounded border border-amber-400">{realVisitorCount.toLocaleString()}</span>
                   </div>
                   
                   <div className="flex justify-between items-center border-b border-amber-300 pb-2">
                     <span className="text-lg font-semibold">在线用户:</span>
-                    <span className="font-mono text-lg bg-amber-200 px-2 py-1 rounded border border-amber-400">{onlineUsers}</span>
+                    <span className="font-mono text-lg bg-amber-200 px-2 py-1 rounded border border-amber-400">{realOnlineUsers}</span>
                   </div>
                   
                   <div className="mt-6 pt-4 border-t-2 border-amber-800">
@@ -529,11 +529,6 @@ const Contact: React.FC = () => {
               </div>
             </div>
           </div>
-          
-          {/* 留言板 */}
-          <div className="mt-8">
-            <MessageBoard />
-          </div>
 
         </div>
 
@@ -590,12 +585,12 @@ const Contact: React.FC = () => {
                  
                  <div className="flex justify-between items-center border-b border-amber-300 pb-2">
                    <span className="text-base md:text-lg font-semibold">访问量:</span>
-                   <span className="font-mono text-base md:text-lg bg-amber-200 px-2 py-1 rounded border border-amber-400">{visitorCount}</span>
+                   <span className="font-mono text-base md:text-lg bg-amber-200 px-2 py-1 rounded border border-amber-400">{realVisitorCount.toLocaleString()}</span>
                  </div>
                  
                  <div className="flex justify-between items-center border-b border-amber-300 pb-2">
                    <span className="text-base md:text-lg font-semibold">在线用户:</span>
-                   <span className="font-mono text-base md:text-lg bg-amber-200 px-2 py-1 rounded border border-amber-400">{onlineUsers}</span>
+                   <span className="font-mono text-base md:text-lg bg-amber-200 px-2 py-1 rounded border border-amber-400">{realOnlineUsers}</span>
                  </div>
                  
                  <div className="mt-6 pt-4 border-t-2 border-amber-800">
@@ -666,8 +661,20 @@ const Contact: React.FC = () => {
                </div>
              </div>
              
-             {/* 留言板 */}
-             <MessageBoard />
+             {/* 留言板 - 移动端优化版本 */}
+             <div className="bg-amber-50/80 border-2 border-amber-800 p-4 rounded-none shadow-lg" style={{
+               boxShadow: '8px 8px 0px rgba(120, 53, 15, 0.3)'
+             }}>
+               <h2 className="text-xl md:text-2xl font-bold text-amber-900 mb-4 text-center" style={{ fontFamily: 'Times New Roman, serif' }}>留言交流</h2>
+               <div className="bg-amber-100/50 border border-amber-600 p-3 rounded-none">
+                 <MessageBoard />
+               </div>
+               <div className="mt-3 pt-3 border-t border-amber-600">
+                 <div className="text-xs text-amber-700 text-center">
+                   <p>💬 欢迎留下你的足迹和想法</p>
+                 </div>
+               </div>
+             </div>
            </div>
          </div>
        </div>

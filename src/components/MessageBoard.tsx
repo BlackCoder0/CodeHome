@@ -62,43 +62,31 @@ const MessageBoard: React.FC = () => {
   
   return (
     <div className="w-full">
-      <div className="bg-amber-50/80 border-2 border-amber-800 p-6 rounded-none shadow-lg" style={{
-        boxShadow: '8px 8px 0px rgba(120, 53, 15, 0.3)'
-      }}>
-        <h2 className="text-3xl font-bold text-amber-900 mb-6 text-center" style={{ fontFamily: 'Times New Roman, serif' }}>留言板</h2>
-        
-        <div className="min-h-[400px]">
-          {status === 'loading' && (
-            <div className="flex items-center justify-center h-32 text-amber-700">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-700 mr-3"></div>
-              留言系统加载中...
-            </div>
-          )}
-          {status === 'error' && (
-            <div className="flex items-center justify-center h-32 text-amber-700">
-              <div className="text-center">
-                <div className="text-red-600 mb-2">留言系统加载失败</div>
-                <div className="text-sm">请刷新页面重试</div>
-              </div>
-            </div>
-          )}
-          <div
-            ref={containerRef}
-            style={{ display: status === 'loaded' ? 'block' : 'none' }}
-            className="w-full"
-          />
-        </div>
-        
-        <div className="mt-4 pt-4 border-t-2 border-amber-800">
-          <div className="text-sm text-amber-700 text-center">
-            <p>欢迎在此留言交流，分享你的想法和建议</p>
+      <div className="min-h-[300px]">
+        {status === 'loading' && (
+          <div className="flex items-center justify-center h-24 text-amber-700">
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-amber-700 mr-2"></div>
+            <span className="text-sm">加载中...</span>
           </div>
-        </div>
+        )}
+        {status === 'error' && (
+          <div className="flex items-center justify-center h-24 text-amber-700">
+            <div className="text-center">
+              <div className="text-red-600 mb-1 text-sm">加载失败</div>
+              <div className="text-xs">请刷新重试</div>
+            </div>
+          </div>
+        )}
+        <div
+          ref={containerRef}
+          style={{ display: status === 'loaded' ? 'block' : 'none' }}
+          className="w-full"
+        />
       </div>
       
       <noscript>
-        <div className="text-amber-700 text-center py-4 bg-amber-50 border border-amber-300 mt-4">
-          为正常使用留言功能请激活JavaScript
+        <div className="text-amber-700 text-center py-2 bg-amber-100/50 border border-amber-400 text-xs">
+          需要JavaScript支持
         </div>
       </noscript>
     </div>
