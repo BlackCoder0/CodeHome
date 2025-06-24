@@ -333,6 +333,7 @@ const Contact: React.FC = () => {
   };
 
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showMessageBoard, setShowMessageBoard] = useState(false);
 
   // { name: 'Alice', description: '前端开发者', url: '#', avatar: './assets/logo/logo_0.jpg', subAvatar: './assets/logo/logo_0.jpg' },
   const friendLinks = [
@@ -365,6 +366,28 @@ const Contact: React.FC = () => {
             <div className="absolute top-8 left-8 text-white">
               <h1 className="text-6xl font-bold mb-2" style={{ fontFamily: 'Times New Roman, serif' }}>CONTACT</h1>
               <p className="text-lg opacity-70">Interactive Particle System</p>
+            </div>
+            
+            {/* 左下角留言板按钮 */}
+            <div className="absolute bottom-8 left-8">
+              <button
+                onClick={() => setShowMessageBoard(!showMessageBoard)}
+                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold border-2 border-amber-800 transition-all duration-300 shadow-lg"
+                style={{
+                  boxShadow: '4px 4px 0px rgba(120, 53, 15, 0.3)',
+                  fontFamily: 'Times New Roman, serif'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translate(-2px, -2px)';
+                  e.currentTarget.style.boxShadow = '6px 6px 0px rgba(120, 53, 15, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateZ(0)';
+                  e.currentTarget.style.boxShadow = '4px 4px 0px rgba(120, 53, 15, 0.3)';
+                }}
+              >
+                💬 {showMessageBoard ? '关闭留言板' : '打开留言板'}
+              </button>
             </div>
           </div>
 
@@ -529,6 +552,39 @@ const Contact: React.FC = () => {
               </div>
             </div>
           </div>
+          
+          {/* 桌面端留言板弹出层 */}
+          {showMessageBoard && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+              <div className="bg-amber-50/95 border-4 border-amber-800 p-6 rounded-none shadow-2xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto" style={{
+                boxShadow: '12px 12px 0px rgba(120, 53, 15, 0.4)'
+              }}>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-3xl font-bold text-amber-900" style={{ fontFamily: 'Times New Roman, serif' }}>留言交流</h2>
+                  <button
+                    onClick={() => setShowMessageBoard(false)}
+                    className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white font-bold border-2 border-amber-800 transition-all duration-300"
+                    style={{
+                      boxShadow: '2px 2px 0px rgba(120, 53, 15, 0.3)'
+                    }}
+                  >
+                    ✕ 关闭
+                  </button>
+                </div>
+                
+                <div className="bg-amber-100/50 border-2 border-amber-600 p-4 rounded-none">
+                  <MessageBoard />
+                </div>
+                
+                <div className="mt-4 pt-4 border-t-2 border-amber-800">
+                  <div className="text-sm text-amber-700 text-center space-y-1">
+                    <p>💬 欢迎留下你的足迹和想法</p>
+                    <p>让我们一起分享这个美好的世界</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
         </div>
 
@@ -569,7 +625,7 @@ const Contact: React.FC = () => {
             />
           </div>
 
-          {/* 访客统计和友情链接 */}
+          {/* 访客统计、留言板和友情链接 */}
            <div className="flex-1 px-4 pb-8 space-y-6">
              {/* 访客统计 */}
              <div className="bg-amber-50/80 border-2 border-amber-800 p-6 rounded-none shadow-lg" style={{
@@ -598,6 +654,21 @@ const Contact: React.FC = () => {
                      <p>© 2025 RainMorime</p>
                      <p>Powered by Next.js</p>
                    </div>
+                 </div>
+               </div>
+             </div>
+             
+             {/* 留言板 - 移动端优化版本 */}
+             <div className="bg-amber-50/80 border-2 border-amber-800 p-4 rounded-none shadow-lg" style={{
+               boxShadow: '8px 8px 0px rgba(120, 53, 15, 0.3)'
+             }}>
+               <h2 className="text-xl md:text-2xl font-bold text-amber-900 mb-4 text-center" style={{ fontFamily: 'Times New Roman, serif' }}>留言交流</h2>
+               <div className="bg-amber-100/50 border border-amber-600 p-3 rounded-none">
+                 <MessageBoard />
+               </div>
+               <div className="mt-3 pt-3 border-t border-amber-600">
+                 <div className="text-xs text-amber-700 text-center">
+                   <p>💬 欢迎留下你的足迹和想法</p>
                  </div>
                </div>
              </div>
@@ -652,27 +723,12 @@ const Contact: React.FC = () => {
                        </div>
                        <div className="text-amber-600 group-hover:text-amber-800 transition-colors duration-300">
                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                          </svg>
                        </div>
                      </div>
                    </a>
                  ))}
-               </div>
-             </div>
-             
-             {/* 留言板 - 移动端优化版本 */}
-             <div className="bg-amber-50/80 border-2 border-amber-800 p-4 rounded-none shadow-lg" style={{
-               boxShadow: '8px 8px 0px rgba(120, 53, 15, 0.3)'
-             }}>
-               <h2 className="text-xl md:text-2xl font-bold text-amber-900 mb-4 text-center" style={{ fontFamily: 'Times New Roman, serif' }}>留言交流</h2>
-               <div className="bg-amber-100/50 border border-amber-600 p-3 rounded-none">
-                 <MessageBoard />
-               </div>
-               <div className="mt-3 pt-3 border-t border-amber-600">
-                 <div className="text-xs text-amber-700 text-center">
-                   <p>💬 欢迎留下你的足迹和想法</p>
-                 </div>
                </div>
              </div>
            </div>
