@@ -9,7 +9,7 @@ let livereScriptPromise: Promise<void> | null = null;
 const loadLivereScript = () => {
   if (!livereScriptPromise) {
     livereScriptPromise = new Promise((resolve, reject) => {
-      const scriptSrc = '/CodeHome/js/embed.dist.js';
+      const scriptSrc = './js/embed.dist.js';
       const existingScript = document.querySelector(`script[src="${scriptSrc}"]`);
 
       if (existingScript && (window as any).LivereTower) {

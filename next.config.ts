@@ -7,8 +7,10 @@ const nextConfig: NextConfig = {
     unoptimized: true
   },
   distDir: 'docs',
-  basePath: '/CodeHome',
-  assetPrefix: '/CodeHome/',
+  // basePath: '/CodeHome',
+  // assetPrefix: '/CodeHome/',
+  basePath: '',
+  assetPrefix: '',
 };
 
 export default nextConfig;

@@ -85,6 +85,22 @@ export default function Home() {
           <div className="backdrop-blur-sm bg-black/40 w-full h-full absolute top-0 left-0 -z-10" />
           {introReady && (
             <>
+              {/* Logo Avatar with pulse effect and hover interaction */}
+              <div className="mb-8 relative group">
+                <div className="w-50 h-50 rounded-full overflow-hidden border-4 border-white/30 shadow-2xl relative transform transition-all duration-300 group-hover:scale-110 group-hover:border-white/60">
+                  <img 
+                    src="./assets/logo/正方形.png" 
+                    alt="Logo" 
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  {/* Pulse effect overlay */}
+                  <div className="absolute inset-0 rounded-full bg-white/20 animate-ping opacity-75"></div>
+                  <div className="absolute inset-0 rounded-full bg-white/10 animate-pulse"></div>
+                </div>
+                {/* Outer pulse ring */}
+                <div className="absolute inset-0 rounded-full border-2 border-white/20 animate-ping scale-110"></div>
+              </div>
+              
               <TextAnimate
                 animation="slideUp"
                 by="character"
@@ -102,7 +118,7 @@ export default function Home() {
                 startOnView={false}
                 className="text-3xl text-white text-center max-w-2xl mb-8"
               >
-                Codeの家  ciallo~
+                CodeRains
               </TextAnimate>
             </>
           )}
