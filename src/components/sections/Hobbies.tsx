@@ -9,7 +9,7 @@ let livereScriptPromise: Promise<void> | null = null;
 const loadLivereScript = () => {
   if (!livereScriptPromise) {
     livereScriptPromise = new Promise((resolve, reject) => {
-      const scriptSrc = './js/embed.dist.js';
+      const scriptSrc = 'https://cdn-city.livere.com/js/embed.dist.js';
       const existingScript = document.querySelector(`script[src="${scriptSrc}"]`);
 
       if (existingScript && (window as any).LivereTower) {
@@ -59,15 +59,7 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
     loadLivereScript()
       .then(() => {
         if (isMounted && (window as any).LivereTower) {
-          try {
-            // `destroy` 方法似乎会导致重新初始化时出错。
-            // 我们依靠React的key属性和容器清理来隔离评论区实例。
-            (window as any).LivereTower.init();
-            if (isMounted) setStatus('loaded');
-          } catch (e) {
-            console.error("Livere init failed", e);
-            if (isMounted) setStatus('error');
-          }
+          setStatus('loaded');
         } else if (isMounted) {
           setStatus('error');
         }
