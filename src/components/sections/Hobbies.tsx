@@ -50,14 +50,20 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
 
     if (!container) return;
 
-    // 确保容器在初始化前是干净的
-    container.innerHTML = '';
+    // 确保容器在初始化前彻底移除旧的 iframe
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
     setStatus('loading');
 
     loadLivereScript()
       .then(() => {
         if (isMounted && (window as any).LivereTower) {
           try {
+            // 重新初始化前先销毁旧实例（如有）
+            if ((window as any).LivereTower.destroy) {
+              (window as any).LivereTower.destroy();
+            }
             (window as any).LivereTower.init();
             if (isMounted) setStatus('loaded');
           } catch (e) {
@@ -101,7 +107,7 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
         <div
           ref={containerRef}
           style={{ display: status === 'loaded' ? 'block' : 'none' }}
-          id="lv-container"
+          id={`lv-container-${articleId}`}
           data-id="city"
           data-uid="MTAyMC82MDc1Ni8zNzIyNw=="
           data-consult={articleId}
