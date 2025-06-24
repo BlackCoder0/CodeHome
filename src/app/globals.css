@@ -305,25 +305,3 @@
     }
   }
 }
-
-/* 来必力评论区样式 */
-.livere-comment-container {
-  color: white;
-}
-
-.livere-comment-container * {
-  color: white !important;
-}
-
-.livere-comment-container iframe {
-  background: transparent !important;
-}
-
-/* 针对来必力评论区内部元素的样式 */
-[id^="lv-container"] * {
-  color: white !important;
-}
-
-[id^="lv-container"] iframe {
-  background: transparent !important;
-}
