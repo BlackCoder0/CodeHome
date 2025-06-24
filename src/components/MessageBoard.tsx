@@ -14,60 +14,61 @@ const MessageBoard: React.FC = () => {
     // 清空原来的留言板
     container.innerHTML = '';
   
-    // 创建新的留言板容器
+    // 创建新的留言板容器，按照官方代码格式
     const newDiv = document.createElement('div');
     newDiv.id = 'lv-container';
     newDiv.setAttribute('data-id', 'city');
     newDiv.setAttribute('data-uid', 'MTAyMC82MDc1Ni8zNzIyNw==');
-    newDiv.setAttribute('data-consult', 'coderains-messageboard'); // 使用更具体的ID
-    newDiv.setAttribute('data-theme', 'light'); // 使用浅色主题
-    newDiv.setAttribute('data-mode', '3'); // 设置模式
     container.appendChild(newDiv);
   
-    // 加载来必力脚本
-    const scriptSrc = 'https://cdn-city.livere.com/js/embed.dist.js';
-    const existingScript = document.querySelector(`script[src="${scriptSrc}"]`);
-    
-    if (existingScript) {
-      // 如果脚本已存在，等待初始化
-      const checkLivere = () => {
-        if ((window as any).LivereTower && isMounted) {
+    // 按照官方代码加载来必力脚本
+    const loadLivereScript = () => {
+      const d = document;
+      const s = 'script';
+      let j: HTMLScriptElement;
+      const e = d.getElementsByTagName(s)[0];
+      
+      if (typeof (window as any).LivereTower === 'function') {
+        if (isMounted) {
           setStatus('loaded');
-        } else if (isMounted) {
-          setTimeout(checkLivere, 100);
+        }
+        return;
+      }
+      
+      j = d.createElement(s) as HTMLScriptElement;
+      j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+      j.async = true;
+      
+      j.onload = () => {
+        if (isMounted) {
+          // 等待LivereTower初始化
+          const checkInit = () => {
+            if ((window as any).LivereTower) {
+              setStatus('loaded');
+            } else {
+              setTimeout(checkInit, 100);
+            }
+          };
+          setTimeout(checkInit, 100); // 给脚本一些时间初始化
         }
       };
-      checkLivere();
-      return;
-    }
-  
-    const script = document.createElement('script');
-    script.src = scriptSrc;
-    script.async = true;
-    script.defer = true;
-  
-    script.onload = () => {
-      if (isMounted) {
-        // 等待LivereTower初始化
-        const checkInit = () => {
-          if ((window as any).LivereTower) {
-            setStatus('loaded');
-          } else {
-            setTimeout(checkInit, 100);
-          }
-        };
-        checkInit();
+      
+      j.onerror = () => {
+        if (isMounted) {
+          console.error('Failed to load Livere script');
+          setStatus('error');
+        }
+      };
+      
+      if (e && e.parentNode) {
+        e.parentNode.insertBefore(j, e);
+      } else {
+        d.head.appendChild(j);
       }
     };
-  
-    script.onerror = () => {
-      if (isMounted) {
-        console.error('Failed to load Livere script');
-        setStatus('error');
-      }
-    };
-  
-    document.head.appendChild(script);
+    
+    // 延迟加载脚本，确保DOM已准备好
+    setTimeout(loadLivereScript, 100);
   
     return () => {
       isMounted = false;
