@@ -60,10 +60,8 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
       .then(() => {
         if (isMounted && (window as any).LivereTower) {
           try {
-            // 重新初始化前先销毁旧实例（如有）
-            if ((window as any).LivereTower.destroy) {
-              (window as any).LivereTower.destroy();
-            }
+            // `destroy` 方法似乎会导致重新初始化时出错。
+            // 我们依靠React的key属性和容器清理来隔离评论区实例。
             (window as any).LivereTower.init();
             if (isMounted) setStatus('loaded');
           } catch (e) {
