@@ -47,34 +47,52 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
   useEffect(() => {
     let isMounted = true;
     const container = containerRef.current;
-  
     if (!container) return;
   
-    // 清除旧内容
-    container.innerHTML = `
-      <div id="lv-container" data-id="city" data-uid="MTAyMC82MDc1Ni8zNzIyNw==" data-consult="${articleId}" data-theme="dark">
-        <noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
-      </div>
-    `;
+    // 清空原来的评论区
+    container.innerHTML = '';
   
-    loadLivereScript()
-      .then(() => {
-        if (isMounted && (window as any).LivereTower) {
-          (window as any).LivereTower.reload(); // 强制刷新评论区
-          setStatus('loaded');
-        } else if (isMounted) {
-          setStatus('error');
-        }
-      })
-      .catch(() => {
-        if (isMounted) setStatus('error');
-      });
+    // 创建新的评论容器
+    const newDiv = document.createElement('div');
+    newDiv.id = 'lv-container';
+    newDiv.setAttribute('data-id', 'city');
+    newDiv.setAttribute('data-uid', 'MTAyMC82MDc1Ni8zNzIyNw==');
+    newDiv.setAttribute('data-consult', articleId);
+    newDiv.setAttribute('data-theme', 'dark');
+    container.appendChild(newDiv);
+  
+    // 每次都重新加载 script
+    const scriptSrc = 'https://cdn-city.livere.com/js/embed.dist.js';
+  
+    const script = document.createElement('script');
+    script.src = scriptSrc;
+    script.async = true;
+  
+    script.onload = () => {
+      if (isMounted) {
+        setStatus('loaded');
+      }
+    };
+  
+    script.onerror = () => {
+      if (isMounted) {
+        setStatus('error');
+      }
+    };
+  
+    document.body.appendChild(script);
   
     return () => {
       isMounted = false;
       container.innerHTML = '';
+      // 删除 script，防止重复加载
+      const existingScript = document.querySelector(`script[src="${scriptSrc}"]`);
+      if (existingScript) {
+        existingScript.remove();
+      }
     };
   }, [articleId]);
+  
   
   return (
     <div className="mt-8 pt-6 border-t border-white/20">
