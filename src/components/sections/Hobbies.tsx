@@ -43,6 +43,7 @@ interface LivereCommentProps {
 const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
   const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
   const containerRef = useRef<HTMLDivElement>(null);
+  const uniqueContainerId = `lv-container-${articleId}`;
 
   useEffect(() => {
     let isMounted = true;
@@ -50,11 +51,25 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
 
     if (!container) return;
 
+    // 清理之前可能存在的评论区
+    const existingContainers = document.querySelectorAll('[id^="lv-container"]');
+    existingContainers.forEach(el => {
+      if (el.id !== uniqueContainerId) {
+        el.innerHTML = '';
+      }
+    });
+
     loadLivereScript()
       .then(() => {
         if (isMounted && (window as any).LivereTower) {
           try {
-            (window as any).LivereTower.init();
+            // 确保容器有正确的ID
+            container.id = uniqueContainerId;
+            
+            // 只有当容器为空时才初始化
+            if (container.children.length === 0) {
+              (window as any).LivereTower.init();
+            }
             if (isMounted) setStatus('loaded');
           } catch (e) {
             console.error("Livere init failed", e);
@@ -74,12 +89,12 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
         container.innerHTML = '';
       }
     };
-  }, []); // Empty dependency array, relies on parent's key prop for re-mounting
+  }, [articleId, uniqueContainerId]); // 依赖articleId确保文章切换时重新初始化
 
   return (
     <div className="mt-8 pt-6 border-t border-white/20">
       <h3 className="text-xl font-bold text-white mb-4">评论区</h3>
-      <div className="min-h-[200px]">
+      <div className="min-h-[200px] livere-comment-container">
         {status === 'loading' && (
           <div className="flex items-center justify-center h-32 text-white/60">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white/60 mr-3"></div>
@@ -96,11 +111,14 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
         )}
         <div
           ref={containerRef}
-          style={{ display: status === 'loaded' ? 'block' : 'none' }}
-          id="lv-container"
+          style={{ 
+            display: status === 'loaded' ? 'block' : 'none',
+            color: 'white'
+          }}
+          id={`lv-container-${articleId}`}
           data-id="city"
           data-uid="MTAyMC82MDc1Ni8zNzIyNw=="
-          data-consult={articleId}
+          data-consult={`article-${articleId}`}
         />
       </div>
       <noscript>
