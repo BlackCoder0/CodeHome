@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import MessageBoard from '@/components/MessageBoard';
 
 
 // 粒子类
@@ -528,7 +529,11 @@ const Contact: React.FC = () => {
               </div>
             </div>
           </div>
-
+          
+          {/* 留言板 */}
+          <div className="mt-8">
+            <MessageBoard />
+          </div>
 
         </div>
 
@@ -660,6 +665,9 @@ const Contact: React.FC = () => {
                  ))}
                </div>
              </div>
+             
+             {/* 留言板 */}
+             <MessageBoard />
            </div>
          </div>
        </div>
