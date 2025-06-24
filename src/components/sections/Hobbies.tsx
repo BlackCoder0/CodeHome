@@ -47,18 +47,20 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
   useEffect(() => {
     let isMounted = true;
     const container = containerRef.current;
-
+  
     if (!container) return;
-
-    // 确保容器在初始化前彻底移除旧的 iframe
-    while (container.firstChild) {
-      container.removeChild(container.firstChild);
-    }
-    setStatus('loading');
-
+  
+    // 清除旧内容
+    container.innerHTML = `
+      <div id="lv-container" data-id="city" data-uid="MTAyMC82MDc1Ni8zNzIyNw==" data-consult="${articleId}" data-theme="dark">
+        <noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+      </div>
+    `;
+  
     loadLivereScript()
       .then(() => {
         if (isMounted && (window as any).LivereTower) {
+          (window as any).LivereTower.reload(); // 强制刷新评论区
           setStatus('loaded');
         } else if (isMounted) {
           setStatus('error');
@@ -67,15 +69,13 @@ const LivereComment: React.FC<LivereCommentProps> = ({ articleId }) => {
       .catch(() => {
         if (isMounted) setStatus('error');
       });
-
+  
     return () => {
       isMounted = false;
-      if (container) {
-        container.innerHTML = '';
-      }
+      container.innerHTML = '';
     };
-  }, [articleId]); // 使用 articleId 作为依赖，确保文章切换时重新执行
-
+  }, [articleId]);
+  
   return (
     <div className="mt-8 pt-6 border-t border-white/20">
       <h3 className="text-xl font-bold text-white mb-4">评论区</h3>
