@@ -406,10 +406,10 @@ const Contact: React.FC = () => {
                     <span className="font-mono text-lg bg-amber-200 px-2 py-1 rounded border border-amber-400">{uptime}</span>
                   </div>
                   
-                  <div className="flex justify-between items-center border-b border-amber-300 pb-2">
+                  {/* <div className="flex justify-between items-center border-b border-amber-300 pb-2">
                     <span className="text-lg font-semibold">访问量:</span>
                     <span className="font-mono text-lg bg-amber-200 px-2 py-1 rounded border border-amber-400">{realVisitorCount.toLocaleString()}</span>
-                  </div>
+                  </div> */}
                   
                   <div className="flex justify-between items-center border-b border-amber-300 pb-2">
                     <span className="text-lg font-semibold">在线用户:</span>
@@ -651,7 +651,7 @@ const Contact: React.FC = () => {
                  
                  <div className="mt-6 pt-4 border-t-2 border-amber-800">
                    <div className="text-sm text-amber-700 space-y-1 text-center">
-                     <p>© 2025 CodeRains</p>
+                     <p>2025 CodeRains By Code</p>
                      <p>爱与奇迹的魔法是存在的</p>
                    </div>
                  </div>
