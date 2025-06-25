@@ -33,7 +33,7 @@ const ringData = [
         ),
         link: 'https://space.bilibili.com/335768850',
       },
-      { icon: <FaEnvelope />, link: 'mailto:2943984952@qq.com' },
+      { icon: <FaEnvelope />, link: 'copy:2943984952@qq.com' },
       {
         icon: (
           <img
@@ -57,6 +57,7 @@ const ringData = [
 
 const PlanetSystem = () => {
   const [hoveredIcon, setHoveredIcon] = useState<string | null>(null);
+  const [showToast, setShowToast] = useState(false);
 
   return (
     <div className="relative w-full h-full pointer-events-none">
@@ -80,7 +81,7 @@ const PlanetSystem = () => {
             {/* 图标轨道容器 */}
             {ring.icons.map((item, iconIndex) => {
               const angle = (360 / iconCount) * iconIndex;
-              const animationDuration = `${15 + ringIndex * 8}s`;
+              const animationDuration = `${15 + ringIndex * 5}s`;
               const iconId = `${ringIndex}-${iconIndex}`;
               const isHovered = hoveredIcon === iconId;
 
@@ -124,6 +125,13 @@ const PlanetSystem = () => {
                         if (target) {
                           target.scrollIntoView({ behavior: 'smooth' });
                         }
+                      } else if (item.link.startsWith('copy:')) {
+                        e.preventDefault();
+                        const email = item.link.replace('copy:', '');
+                        navigator.clipboard.writeText(email).then(() => {
+                          setShowToast(true);
+                          setTimeout(() => setShowToast(false), 2000);
+                        });
                       }
                     }}
                   >
@@ -135,6 +143,13 @@ const PlanetSystem = () => {
           </div>
         );
       })}
+      
+      {/* 复制成功提示弹窗 */}
+      {showToast && (
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-green-500 text-white px-2 py-1 rounded text-xs shadow-lg z-50 animate-fade-in pointer-events-none">
+          已复制
+        </div>
+      )}
     </div>
   );
 };
