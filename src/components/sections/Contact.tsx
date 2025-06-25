@@ -338,8 +338,8 @@ const Contact: React.FC = () => {
   // { name: 'Alice', description: '前端开发者', url: '#', avatar: './assets/logo/logo_0.jpg', subAvatar: './assets/logo/logo_0.jpg' },
   const friendLinks = [
     { name: '墨间黑沢', description: '"阵雨"的作者', url: 'https://space.bilibili.com/24271342', avatar: './assets/friend/墨间黑沢.jpg', subAvatar: undefined},
-    { name: '时隐重工', description: '兴趣使然的未来主义建造者', url: 'https://shiyin.cafe/', avatar: './assets/friend/shiyina.png', subAvatar: undefined},
-    { name: 'MuXiaoChen🍊', description: '柴米油盐酱醋茶，般般都在别人家', url: 'https://miraii.cn/', avatar: './assets/friend/MuXiaoChen.png', subAvatar: './assets/friend/MuXiaoChen_siteshot.png'},
+    { name: '时隐重工', description: '兴趣使然的未来主义建造者', url: 'https://shiyin.cafe/', avatar: './assets/friend/shiyina.ico', subAvatar: undefined},
+    { name: 'MuXiaoChen🍊', description: '柴米油盐酱醋茶，般般都在别人家', url: 'https://miraii.cn/', avatar: './assets/friend/MuXiaoChen.webp', subAvatar: './assets/friend/MuXiaoChen_siteshot.webp'},
   ];
 
   return (
