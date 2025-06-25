@@ -338,6 +338,8 @@ const Contact: React.FC = () => {
   // { name: 'Alice', description: '前端开发者', url: '#', avatar: './assets/logo/logo_0.jpg', subAvatar: './assets/logo/logo_0.jpg' },
   const friendLinks = [
     { name: '墨间黑沢', description: '"阵雨"的作者', url: 'https://space.bilibili.com/24271342', avatar: './assets/friend/墨间黑沢.jpg', subAvatar: undefined},
+    { name: '时隐重工', description: '兴趣使然的未来主义建造者', url: 'https://shiyin.cafe/', avatar: './assets/friend/shiyina.png', subAvatar: undefined},
+    { name: 'MuXiaoChen🍊', description: '柴米油盐酱醋茶，般般都在别人家', url: 'https://miraii.cn/', avatar: './assets/friend/MuXiaoChen.png', subAvatar: './assets/friend/MuXiaoChen_siteshot.png'},
   ];
 
   return (
@@ -455,6 +457,8 @@ const Contact: React.FC = () => {
                       <a
                         key={index}
                         href={friend.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="group block p-2 bg-orange-100 hover:bg-orange-200 border-2 border-amber-700 hover:border-amber-900 transition-all duration-300 hover:shadow-md"
                         style={{
                           boxShadow: '3px 3px 0px rgba(120, 53, 15, 0.2)',
@@ -502,6 +506,8 @@ const Contact: React.FC = () => {
                       <a
                         key={index}
                         href={friend.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="group block p-3 bg-orange-100 hover:bg-orange-200 border-2 border-amber-700 hover:border-amber-900 transition-all duration-300 hover:shadow-md"
                         style={{
                           boxShadow: '4px 4px 0px rgba(120, 53, 15, 0.2)',
