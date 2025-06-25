@@ -417,11 +417,28 @@ const Contact: React.FC = () => {
                     <span className="text-lg font-semibold">在线用户:</span>
                     <span className="font-mono text-lg bg-amber-200 px-2 py-1 rounded border border-amber-400">{realOnlineUsers}</span>
                   </div>
-                  
+                  {/* 进度条区域（移动端新增） */}
+                  <div className="space-y-2 mt-4">
+                    {[
+                      { label: '今日已过', percent: (() => { const now = new Date(); return ((now.getHours()*3600+now.getMinutes()*60+now.getSeconds())/(24*3600)*100).toFixed(2); })() },
+                      { label: '本周已过', percent: (() => { const now = new Date(); const day = (now.getDay()||7)-1; const sec = now.getHours()*3600+now.getMinutes()*60+now.getSeconds(); return ((day*86400+sec)/(7*86400)*100).toFixed(2); })() },
+                      { label: '本月已过', percent: (() => { const now = new Date(); const days = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate(); const sec = (now.getDate()-1)*86400+now.getHours()*3600+now.getMinutes()*60+now.getSeconds(); return (sec/(days*86400)*100).toFixed(2); })() },
+                      { label: '今年已过', percent: (() => { const now = new Date(); const start = new Date(now.getFullYear(),0,1).getTime(); const end = new Date(now.getFullYear()+1,0,1).getTime(); const diff = now.getTime() - start; const yearSec = end - start; return (diff/yearSec*100).toFixed(2); })() }
+                    ].map((item, idx) => (
+                      <div key={idx} className="flex items-center space-x-2">
+                        <span className="text-xs md:text-sm text-amber-900 w-16">{item.label}</span>
+                        <div className="flex-1 h-3 bg-amber-100 border border-amber-300 rounded relative overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-amber-400 to-orange-400" style={{width: `${item.percent}%`, transition: 'width 0.6s'}}></div>
+                        </div>
+                        <span className="text-xs font-mono text-amber-700 w-12 text-right">{item.percent}%</span>
+                      </div>
+                    ))}
+                  </div>
                   <div className="mt-6 pt-4 border-t-2 border-amber-800">
-                    <div className="text-sm text-amber-700 space-y-1">
-                      <p>© 2025 CodeRains</p>
+                    <div className="text-sm text-amber-700 space-y-1 text-center">
+                      <p>2025 CodeRains By Code</p>
                       <p>爱与奇迹的魔法是存在的</p>
+                      <p><a href="https://icp.gov.moe/?keyword=20250577" target="_blank" className="border border-orange-400 rounded px-2 text-orange-500">萌ICP备20250577号</a></p>
                     </div>
                   </div>
                 </div>
@@ -654,11 +671,28 @@ const Contact: React.FC = () => {
                    <span className="text-base md:text-lg font-semibold">在线用户:</span>
                    <span className="font-mono text-base md:text-lg bg-amber-200 px-2 py-1 rounded border border-amber-400">{realOnlineUsers}</span>
                  </div>
-                 
+                 {/* 进度条区域（移动端新增） */}
+                 <div className="space-y-2 mt-4">
+                   {[
+                     { label: '今日已过', percent: (() => { const now = new Date(); return ((now.getHours()*3600+now.getMinutes()*60+now.getSeconds())/(24*3600)*100).toFixed(2); })() },
+                     { label: '本周已过', percent: (() => { const now = new Date(); const day = (now.getDay()||7)-1; const sec = now.getHours()*3600+now.getMinutes()*60+now.getSeconds(); return ((day*86400+sec)/(7*86400)*100).toFixed(2); })() },
+                     { label: '本月已过', percent: (() => { const now = new Date(); const days = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate(); const sec = (now.getDate()-1)*86400+now.getHours()*3600+now.getMinutes()*60+now.getSeconds(); return (sec/(days*86400)*100).toFixed(2); })() },
+                     { label: '今年已过', percent: (() => { const now = new Date(); const start = new Date(now.getFullYear(),0,1).getTime(); const end = new Date(now.getFullYear()+1,0,1).getTime(); const diff = now.getTime() - start; const yearSec = end - start; return (diff/yearSec*100).toFixed(2); })() }
+                   ].map((item, idx) => (
+                     <div key={idx} className="flex items-center space-x-2">
+                       <span className="text-xs md:text-sm text-amber-900 w-16">{item.label}</span>
+                       <div className="flex-1 h-3 bg-amber-100 border border-amber-300 rounded relative overflow-hidden">
+                         <div className="h-full bg-gradient-to-r from-amber-400 to-orange-400" style={{width: `${item.percent}%`, transition: 'width 0.6s'}}></div>
+                       </div>
+                       <span className="text-xs font-mono text-amber-700 w-12 text-right">{item.percent}%</span>
+                     </div>
+                   ))}
+                 </div>
                  <div className="mt-6 pt-4 border-t-2 border-amber-800">
                    <div className="text-sm text-amber-700 space-y-1 text-center">
                      <p>2025 CodeRains By Code</p>
                      <p>爱与奇迹的魔法是存在的</p>
+                     <p><a href="https://icp.gov.moe/?keyword=20250577" target="_blank" className="border border-orange-400 rounded px-2 text-orange-500">萌ICP备20250577号</a></p>
                    </div>
                  </div>
                </div>
