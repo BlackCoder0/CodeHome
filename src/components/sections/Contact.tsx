@@ -340,6 +340,7 @@ const Contact: React.FC = () => {
     { name: '墨间黑沢', description: '"阵雨"的作者', url: 'https://space.bilibili.com/24271342', avatar: './assets/friend/墨间黑沢.jpg', subAvatar: undefined},
     { name: '时隐重工', description: '兴趣使然的未来主义建造者', url: 'https://shiyin.cafe/', avatar: './assets/friend/shiyina.ico', subAvatar: undefined},
     { name: 'MuXiaoChen🍊', description: '柴米油盐酱醋茶，般般都在别人家', url: 'https://miraii.cn/', avatar: './assets/friend/MuXiaoChen.webp', subAvatar: './assets/friend/MuXiaoChen_siteshot.webp'},
+    { name: 'RainMorime', description: '你我命运与此刻纠缠不休', url: 'https://www.rainmorime.com', avatar: './assets/friend/RainMorime.png', subAvatar: undefined},
   ];
 
   return (
