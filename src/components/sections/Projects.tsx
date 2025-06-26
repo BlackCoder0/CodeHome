@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { MorphingText } from "@/components/magicui/morphing-text";
 import { BentoGrid, BentoGridItem } from "../ui/bento-grid";
 import { WarpBackground } from "@/components/magicui/warp-background";
+import { Particles } from "@/components/magicui/Fparticles";
 import { MacbookScroll } from "@/components/ui/macbook-scroll";
 
 
@@ -304,7 +305,16 @@ const Projects: React.FC = () => {
   return (
     <>
       <section id="projects" className="relative z-10 min-h-screen py-16 bg-gradient-to-b from-[#acc8e3] to-[#2e3346] overflow-hidden">
-      <WarpBackground className="absolute inset-0" />
+      {/* <WarpBackground className="absolute inset-0" /> */}
+            <Particles
+        className="absolute inset-0 z-0"
+        quantity={300}
+        ease={80}
+        size={1.5}
+        staticity={15}
+        color={"#ffffff"}
+        vy={10}
+      />
       <div className="relative">
       <div className="overflow-hidden dark:bg-[#0B0B0F] bg-white w-full">
 

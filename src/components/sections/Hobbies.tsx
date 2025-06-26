@@ -72,7 +72,7 @@ const Hobbies: React.FC = () => {
 > */}
       <Particles
         className="absolute inset-0 z-0"
-        quantity={300}
+        quantity={150}
         ease={80}
         size={1.5}
         staticity={15}
