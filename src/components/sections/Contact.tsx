@@ -169,7 +169,7 @@ const Contact: React.FC = () => {
           }
         }
       };
-      img.src = './assets/logo/logo_0.jpg';
+      img.src = './assets/logo/白画透明.png';
     };
 
     const animate = () => {
@@ -326,9 +326,10 @@ const Contact: React.FC = () => {
     if (!canvas) return;
     
     const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
     mouseRef.current = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
+      x: (e.clientX - rect.left) * (canvas.width / rect.width),
+      y: (e.clientY - rect.top) * (canvas.height / rect.height)
     };
   };
 
@@ -633,11 +634,12 @@ const Contact: React.FC = () => {
                 e.preventDefault(); // 阻止滚动
                 const canvas = mobileCanvasRef.current;
                 if (!canvas) return;
+
                 const rect = canvas.getBoundingClientRect();
                 const touch = e.touches[0];
                 mouseRef.current = {
-                  x: touch.clientX - rect.left,
-                  y: touch.clientY - rect.top
+                  x: (touch.clientX - rect.left) * (canvas.width / rect.width),
+                  y: (touch.clientY - rect.top) * (canvas.height / rect.height)
                 };
               }}
               onTouchEnd={(e) => {
