@@ -41,39 +41,79 @@ const MessageBoard: React.FC = () => {
 
       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
       j.async = true;
-      // 移除defer属性，可能导致时序问题
-      // j.defer = true;
+      j.setAttribute('data-livere-script', 'true');
+      
+      // 确保容器存在且有正确的属性
+      const container = document.getElementById('lv-container');
+      if (container) {
+        container.setAttribute('data-id', 'city');
+        container.setAttribute('data-uid', 'MTAyMC82MDc1Ni8zNzIyNw==');
+        console.log('Livere container prepared:', container);
+      }
 
       // 添加加载成功回调
       j.onload = () => {
         console.log('Livere script loaded successfully');
         
-        // 更灵活的初始化检测
+        // 监听来必力的初始化事件
+        const handleLivereReady = () => {
+          console.log('Livere ready event detected');
+          setLoadingStatus('loaded');
+        };
+        
+        // 添加事件监听器
+        window.addEventListener('livere:ready', handleLivereReady);
+        document.addEventListener('livere:loaded', handleLivereReady);
+        
+        // 更智能的初始化检测
         const checkInitialization = (attempts = 0) => {
-          const maxAttempts = 20; // 最多检查20次
-          const interval = 500; // 每500ms检查一次
+          const maxAttempts = 30; // 增加检查次数
+          const interval = 300; // 减少检查间隔
           
           if (attempts >= maxAttempts) {
-            console.warn('Livere initialization timeout, but allowing to continue');
-            setLoadingStatus('loaded'); // 即使超时也设为已加载，让用户看到可能的内容
+            console.warn('Livere initialization timeout after 9 seconds');
+            setLoadingStatus('error');
+            setErrorMessage('脚本加载成功但初始化失败');
             return;
           }
           
-          // 检查多个可能的初始化标志
+          // 检查多个初始化标志
           const container = document.getElementById('lv-container');
           const hasLivereTower = typeof (window as any).LivereTower === 'function';
-          const hasContent = container && (container.children.length > 1 || container.innerHTML.trim().length > 200);
+          const hasLivereCity = typeof (window as any).livereCity === 'object';
+          const hasContent = container && (
+            container.children.length > 1 || 
+            container.innerHTML.includes('livere') ||
+            container.querySelector('iframe') !== null
+          );
           
-          if (hasLivereTower || hasContent) {
-            console.log('Livere initialized successfully');
-            setLoadingStatus('loaded');
-          } else {
-            setTimeout(() => checkInitialization(attempts + 1), interval);
-          }
+          if (hasLivereTower || hasLivereCity || hasContent) {
+             console.log('Livere initialized successfully', {
+               hasLivereTower,
+               hasLivereCity,
+               hasContent,
+               attempt: attempts + 1
+             });
+             setLoadingStatus('loaded');
+             // 清理事件监听器
+             window.removeEventListener('livere:ready', handleLivereReady);
+             document.removeEventListener('livere:loaded', handleLivereReady);
+           } else {
+             // 尝试手动触发初始化
+             if (attempts === 10 && hasLivereTower) {
+               try {
+                 console.log('Attempting manual Livere initialization');
+                 (window as any).LivereTower('lv-container');
+               } catch (e) {
+                 console.warn('Manual initialization failed:', e);
+               }
+             }
+             setTimeout(() => checkInitialization(attempts + 1), interval);
+           }
         };
         
-        // 开始检查初始化
-        setTimeout(() => checkInitialization(), 1000);
+        // 立即开始检查，不等待
+        checkInitialization();
       };
 
       // 添加加载失败回调
