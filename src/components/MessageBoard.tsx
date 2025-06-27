@@ -36,7 +36,7 @@ const MessageBoard: React.FC = () => {
       }
       
       j = d.createElement(s) as HTMLScriptElement;
-      j.src = './js/embed.dist.js';
+      j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
       j.async = true;
       
       j.onload = () => {

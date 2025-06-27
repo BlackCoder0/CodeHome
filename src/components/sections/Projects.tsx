@@ -304,10 +304,11 @@ const Projects: React.FC = () => {
 
   return (
     <>
-      <section id="projects" className="relative z-10 min-h-screen py-16 bg-gradient-to-b from-[#acc8e3] to-[#2e3346] overflow-hidden">
+      <section id="projects" className="relative z-10 min-h-screen py-16 overflow-hidden" style={{ backgroundImage: 'url(./assets/bg_big2.jpg)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}>
+        <div className="backdrop-blur-sm bg-black/40 w-full h-full absolute top-0 left-0 z-0" />
       {/* <WarpBackground className="absolute inset-0" /> */}
             <Particles
-        className="absolute inset-0 z-0"
+        className="absolute inset-0 z-10"
         quantity={300}
         ease={80}
         size={1.5}
@@ -315,7 +316,7 @@ const Projects: React.FC = () => {
         color={"#ffffff"}
         vy={10}
       />
-      <div className="relative">
+      <div className="relative z-20">
       <div className="overflow-hidden dark:bg-[#0B0B0F] bg-white w-full">
 
     </div>

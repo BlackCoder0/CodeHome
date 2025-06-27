@@ -294,7 +294,7 @@ const Contact: React.FC = () => {
       };
       
       // 加载指定的logo图片
-      img.src = './assets/logo/logo_0.jpg';
+      img.src = './assets/logo/白画透明.png';
     };
 
     const animate = () => {
