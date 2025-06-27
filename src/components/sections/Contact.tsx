@@ -113,7 +113,7 @@ const Contact: React.FC = () => {
       const spacing = 4; // 减小间距使点阵更密集
       const offsetX = canvas.width * 0.02; // 减小偏移量使图案更大
       const offsetY = canvas.height * 0.02;
-      const maxWidth = canvas.width * 0.96; // 增大可用区域
+      const maxWidth = canvas.width * 0.98; // 增大可用区域
       const maxHeight = canvas.height * 0.96;
       const img = new window.Image();
       img.crossOrigin = 'anonymous';
@@ -214,9 +214,9 @@ const Contact: React.FC = () => {
       particlesRef.current = [];
       const spacing = 6; // 减小间距使点阵更密集
       const offsetX = canvas.width * 0.05; // 减小偏移量使图案更大
-      const offsetY = canvas.height * 0.05;
-      const maxWidth = canvas.width * 0.9; // 增大可用区域
-      const maxHeight = canvas.height * 0.9;
+      const offsetY = canvas.height * 0.25;
+      const maxWidth = canvas.width * 1.0; // 增大可用区域
+      const maxHeight = canvas.height * 1.0;
 
       // 从指定图片生成点阵图
       const img = new Image();
@@ -396,7 +396,7 @@ const Contact: React.FC = () => {
           </div>
 
           {/* 右侧 - 访客统计和友情链接 */}
-          <div className="w-96 bg-gradient-to-b from-amber-100/90 to-orange-100/90 backdrop-blur-sm border-l-4 border-amber-800 p-0 flex flex-col relative z-20">
+          <div className={`w-96 bg-gradient-to-b from-amber-100/90 to-orange-100/90 backdrop-blur-sm border-l-4 border-amber-800 p-0 flex flex-col relative z-20 transition-all duration-500 ${isExpanded ? 'min-h-screen' : ''}`}>
             {/* 访客统计 */}
             <div className="flex-1 p-8 border-b-4 border-amber-800">
               <div className="bg-amber-50/80 border-2 border-amber-800 p-6 rounded-none shadow-lg" style={{
@@ -449,7 +449,7 @@ const Contact: React.FC = () => {
 
             {/* 友情链接 */}
             <div className="flex-1 p-8">
-              <div className={`bg-amber-50/80 border-2 border-amber-800 p-6 rounded-none shadow-lg h-full transition-all duration-500 ${isExpanded ? 'w-[calc(100vw-200px)] absolute right-0 z-30' : ''}`} style={{
+              <div className={`bg-amber-50/80 border-2 border-amber-800 p-6 rounded-none shadow-lg h-full transition-all duration-500 ${isExpanded ? 'w-[calc(100vw-200px)] absolute right-0 z-30 top-0' : ''}`} style={{
                 boxShadow: '8px 8px 0px rgba(120, 53, 15, 0.3)',
                 transform: isExpanded ? 'translateX(calc(-50% + 48%))' : 'translateX(0)',
                 transition: 'transform 0.5s ease-in-out, width 0.5s ease-in-out'
@@ -468,7 +468,7 @@ const Contact: React.FC = () => {
                 </div>
                 
                 {isExpanded ? (
-                   <div className="grid grid-cols-5 gap-4 max-h-80 overflow-y-auto pr-2" style={{
+                   <div className="grid grid-cols-5 gap-3 min-h-35 max-h-[40rem] overflow-y-auto pr-2" style={{
                      scrollbarWidth: 'thin',
                      scrollbarColor: 'rgba(180, 83, 9, 0.3) transparent'
                    }}>
@@ -478,7 +478,7 @@ const Contact: React.FC = () => {
                         href={friend.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group block p-2 bg-orange-100 hover:bg-orange-200 border-2 border-amber-700 hover:border-amber-900 transition-all duration-300 hover:shadow-md"
+                        className="group block p-3 bg-orange-100 hover:bg-orange-200 border-2 border-amber-700 hover:border-amber-900 transition-all duration-300 hover:shadow-md"
                         style={{
                           boxShadow: '3px 3px 0px rgba(120, 53, 15, 0.2)',
                           transform: 'translateZ(0)'
@@ -492,9 +492,9 @@ const Contact: React.FC = () => {
                           e.currentTarget.style.boxShadow = '3px 3px 0px rgba(120, 53, 15, 0.2)';
                         }}
                       >
-                        <div className="flex flex-col items-center space-y-2">
-                          <div className="flex items-center space-x-1">
-                            <div className="w-8 h-8 bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center text-white font-bold text-sm border border-amber-800 overflow-hidden">
+                        <div className="flex flex-col items-center space-y-3">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-12 h-12 bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center text-white font-bold text-lg border border-amber-800 overflow-hidden">
                               {friend.avatar ? (
                                 <img src={friend.avatar} alt={friend.name + '头像'} className="w-full h-full object-cover" />
                               ) : (
@@ -502,16 +502,16 @@ const Contact: React.FC = () => {
                               )}
                             </div>
                             {friend.subAvatar && (
-                              <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-sm border border-amber-700 overflow-hidden">
+                              <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-lg border border-amber-700 overflow-hidden">
                                 <img src={friend.subAvatar} alt={friend.name + '副头像'} className="w-full h-full object-cover" />
                               </div>
                             )}
                           </div>
                           <div className="text-center">
-                            <h3 className="text-amber-900 font-bold text-sm group-hover:text-amber-700 transition-colors duration-300 truncate">
+                            <h3 className="text-amber-900 font-bold text-base group-hover:text-amber-700 transition-colors duration-300 truncate">
                               {friend.name}
                             </h3>
-                            <p className="text-amber-700 text-xs group-hover:text-amber-600 transition-colors duration-300 truncate">
+                            <p className="text-amber-700 text-sm group-hover:text-amber-600 transition-colors duration-300 truncate">
                               {friend.description}
                             </p>
                           </div>
@@ -520,7 +520,7 @@ const Contact: React.FC = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="space-y-4 max-h-80 overflow-y-auto">
+                  <div className="space-y-4 max-h-48 overflow-y-auto">
                     {friendLinks.map((friend, index) => (
                       <a
                         key={index}
