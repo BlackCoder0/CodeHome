@@ -12,6 +12,20 @@ const MessageBoard: React.FC = () => {
       return;
     }
 
+    // 添加全局错误捕获
+    const originalConsoleError = console.error;
+    const errorHandler = (...args: any[]) => {
+      // 捕获来必力相关的错误但不阻止其他错误
+      const error = args[0];
+      if (error && (error.toString().includes('livere') || error.toString().includes('Livere'))) {
+        console.warn('Livere script error caught:', error);
+        // 不设置为错误状态，让来必力继续尝试工作
+        return;
+      }
+      originalConsoleError.apply(console, args);
+    };
+    console.error = errorHandler;
+
     // 清理可能存在的旧容器
     const existingContainer = document.getElementById('lv-container');
     if (existingContainer && existingContainer.innerHTML) {
@@ -27,20 +41,39 @@ const MessageBoard: React.FC = () => {
 
       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
       j.async = true;
-      j.defer = true; // 添加defer属性
+      // 移除defer属性，可能导致时序问题
+      // j.defer = true;
 
       // 添加加载成功回调
       j.onload = () => {
         console.log('Livere script loaded successfully');
-        // 等待一段时间让脚本初始化
-        setTimeout(() => {
-          if (typeof (window as any).LivereTower === 'function') {
+        
+        // 更灵活的初始化检测
+        const checkInitialization = (attempts = 0) => {
+          const maxAttempts = 20; // 最多检查20次
+          const interval = 500; // 每500ms检查一次
+          
+          if (attempts >= maxAttempts) {
+            console.warn('Livere initialization timeout, but allowing to continue');
+            setLoadingStatus('loaded'); // 即使超时也设为已加载，让用户看到可能的内容
+            return;
+          }
+          
+          // 检查多个可能的初始化标志
+          const container = document.getElementById('lv-container');
+          const hasLivereTower = typeof (window as any).LivereTower === 'function';
+          const hasContent = container && (container.children.length > 1 || container.innerHTML.trim().length > 200);
+          
+          if (hasLivereTower || hasContent) {
+            console.log('Livere initialized successfully');
             setLoadingStatus('loaded');
           } else {
-            setLoadingStatus('error');
-            setErrorMessage('脚本加载成功但初始化失败');
+            setTimeout(() => checkInitialization(attempts + 1), interval);
           }
-        }, 2000);
+        };
+        
+        // 开始检查初始化
+        setTimeout(() => checkInitialization(), 1000);
       };
 
       // 添加加载失败回调
@@ -62,6 +95,8 @@ const MessageBoard: React.FC = () => {
 
     return () => {
       clearTimeout(timer);
+      // 恢复原始的console.error
+      console.error = originalConsoleError;
     };
   }, []);
 
