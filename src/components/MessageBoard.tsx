@@ -22,9 +22,7 @@ const MessageBoard: React.FC = () => {
     container.appendChild(newDiv);
   
     // 按照官方代码加载来必力脚本
-    // 在loadLivereScript函数中添加重试逻辑
-    const loadLivereScript = (retryCount = 0) => {
-      const maxRetries = 3;
+    const loadLivereScript = () => {
       const d = document;
       const s = 'script';
       let j: HTMLScriptElement;
@@ -38,23 +36,12 @@ const MessageBoard: React.FC = () => {
       }
       
       j = d.createElement(s) as HTMLScriptElement;
-      j.src = 'https://livere.com/js/embed.dist.js';
+      j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
       j.async = true;
       
-      // 添加超时处理
-      const timeout = setTimeout(() => {
-        if (isMounted && retryCount < maxRetries) {
-          console.warn(`Livere script timeout, retrying... (${retryCount + 1}/${maxRetries})`);
-          j.remove();
-          loadLivereScript(retryCount + 1);
-        } else if (isMounted) {
-          setStatus('error');
-        }
-      }, 10000); // 10秒超时
-      
       j.onload = () => {
-        clearTimeout(timeout);
         if (isMounted) {
+          // 等待LivereTower初始化
           const checkInit = () => {
             if ((window as any).LivereTower) {
               setStatus('loaded');
@@ -62,17 +49,13 @@ const MessageBoard: React.FC = () => {
               setTimeout(checkInit, 100);
             }
           };
-          setTimeout(checkInit, 100);
+          setTimeout(checkInit, 100); // 给脚本一些时间初始化
         }
       };
       
       j.onerror = () => {
-        clearTimeout(timeout);
-        if (isMounted && retryCount < maxRetries) {
-          console.error(`Failed to load Livere script, retrying... (${retryCount + 1}/${maxRetries})`);
-          setTimeout(() => loadLivereScript(retryCount + 1), 2000);
-        } else if (isMounted) {
-          console.error('Failed to load Livere script after all retries');
+        if (isMounted) {
+          console.error('Failed to load Livere script');
           setStatus('error');
         }
       };
