@@ -1,0 +1,52 @@
+/* 音乐控制组件样式 */
+.music-control {
+  /* 基础样式 */
+}
+
+/* 旋转动画 */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 8s linear infinite;
+}
+
+/* 悬停效果 */
+.music-control .group:hover .group-hover\:scale-110 {
+  transform: scale(1.1);
+}
+
+/* 过渡效果 */
+.music-control * {
+  transition-property: transform, opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
+/* 封面图片样式 */
+.music-control img {
+  transition: transform 0.3s ease;
+}
+
+/* 播放按钮覆盖层 */
+.music-control .absolute.inset-0 {
+  border-radius: inherit;
+}
+
+/* 确保圆形容器 */
+.music-control .rounded-full {
+  border-radius: 50%;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .music-control {
+    /* 移动端样式调整 */
+  }
+}

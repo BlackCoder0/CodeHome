@@ -10,12 +10,25 @@ import About from "@/components/sections/About";
 // import Friends from "@/components/sections/Friends";
 import Navbar from "@/components/Navbar";
 
+
 export default function Home() {
   const [showMain, setShowMain] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showContent, setShowContent] = useState(false);
   const [introReady, setIntroReady] = useState(false); // New state for intro screen fade-in
   const introRef = useRef<HTMLDivElement>(null);
+
+  // 示例音乐数据 - 请替换为你的实际音频文件
+  const sampleSongs = [
+    {
+      id: '1',
+      name: 'Pieces',
+      src: '/assets/music/Pieces/Pieces-ClariS.mp3', // 请添加实际的音频文件
+      author: 'ClariS',
+      album: 'カラフル (アニメ盤)(Colorful)',
+      img: '/assets/music/covers/Pieces-ClariS.jpg' // 如果没有封面，将显示默认图标
+    },
+  ];
 
   useEffect(() => {
     if (!loading && !showMain) {
@@ -138,7 +151,7 @@ export default function Home() {
         <Contact />
         {/* <Friends /> */}
       </div>
-      <Navbar show={!loading && showMain && showContent} />
+      <Navbar show={!loading && showMain && showContent} songs={sampleSongs} />
     </div>
   );
 }

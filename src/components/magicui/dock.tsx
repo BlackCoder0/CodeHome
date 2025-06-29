@@ -19,6 +19,7 @@ export interface DockProps extends VariantProps<typeof dockVariants> {
   iconMagnification?: number;
   iconDistance?: number;
   direction?: "top" | "middle" | "bottom";
+  mouseX?: MotionValue<number>;
   children: React.ReactNode;
 }
 
@@ -27,7 +28,7 @@ const DEFAULT_MAGNIFICATION = 60;
 const DEFAULT_DISTANCE = 140;
 
 const dockVariants = cva(
-  "supports-backdrop-blur:bg-white/10 supports-backdrop-blur:dark:bg-black/10 mx-auto mt-8 flex h-[58px] w-max items-center justify-center gap-2 rounded-2xl border p-2 backdrop-blur-md",
+  "supports-backdrop-blur:bg-white/10 supports-backdrop-blur:dark:bg-black/10 mx-auto mt-8 flex h-[58px] w-max items-center justify-center gap-2 rounded-2xl border p-2",
 );
 
 const Dock = React.forwardRef<HTMLDivElement, DockProps>(
@@ -39,11 +40,13 @@ const Dock = React.forwardRef<HTMLDivElement, DockProps>(
       iconMagnification = DEFAULT_MAGNIFICATION,
       iconDistance = DEFAULT_DISTANCE,
       direction = "middle",
+      mouseX: externalMouseX,
       ...props
     },
     ref,
   ) => {
-    const mouseX = useMotionValue(Infinity);
+    const internalMouseX = useMotionValue(Infinity);
+    const mouseX = externalMouseX ?? internalMouseX;
 
     const renderChildren = () => {
       return React.Children.map(children, (child) => {
@@ -63,11 +66,32 @@ const Dock = React.forwardRef<HTMLDivElement, DockProps>(
       });
     };
 
+    // 添加全局点击监听器来处理点击外部区域
+    React.useEffect(() => {
+      const handleGlobalTouch = (e: TouchEvent) => {
+        const target = e.target as Element;
+        const dockElement = ref && 'current' in ref ? ref.current : null;
+        if (dockElement && !dockElement.contains(target)) {
+          mouseX.set(Infinity);
+        }
+      };
+
+      document.addEventListener('touchstart', handleGlobalTouch);
+      return () => {
+        document.removeEventListener('touchstart', handleGlobalTouch);
+      };
+    }, [mouseX, ref]);
+
     return (
       <motion.div
         ref={ref}
         onMouseMove={(e) => mouseX.set(e.pageX)}
         onMouseLeave={() => mouseX.set(Infinity)}
+        onTouchStart={(e) => {
+          e.stopPropagation();
+          mouseX.set(e.touches[0].pageX);
+        }}
+        onTouchEnd={() => mouseX.set(Infinity)}
         {...props}
         className={cn(dockVariants({ className }), {
           "items-start": direction === "top",

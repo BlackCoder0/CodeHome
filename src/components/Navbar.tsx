@@ -7,6 +7,8 @@ import {
   Handshake
 } from "lucide-react";
 import { useEffect, useState, useCallback, useRef } from "react";
+import MusicControl from "@/components/MusicControl";
+import { useMotionValue } from "motion/react";
 
 const navLinks = [
   { label: "项目", href: "#projects", icon: Folder },
@@ -17,12 +19,22 @@ const navLinks = [
   { label: "友链", href: "#contact", icon: Handshake }
 ];
 
-const Navbar: React.FC<{ show: boolean }> = ({ show }) => {
+interface Song {
+  id: string;
+  name: string;
+  src: string;
+  author?: string;
+  album?: string;
+  img?: string;
+}
+
+const Navbar: React.FC<{ show: boolean; songs?: Song[] }> = ({ show, songs = [] }) => {
   const [current, setCurrent] = useState<string>(navLinks[0].href); // 默认高亮第一个
   const [iconColors, setIconColors] = useState<Record<string, 'light' | 'dark'>>({});
   const observer = useRef<IntersectionObserver | null>(null);
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
   const iconRefs = useRef<Record<string, HTMLElement | null>>({});
+  const dockMouseX = useMotionValue(Infinity);
 
   // 检测背景颜色亮度
   const getBackgroundBrightness = useCallback((element: HTMLElement): number => {
@@ -105,25 +117,25 @@ const Navbar: React.FC<{ show: boolean }> = ({ show }) => {
 
   useEffect(() => {
     // 初始化 IntersectionObserver
-// 降低阈值，让projects section更容易被检测到
-observer.current = new IntersectionObserver(
-  (entries) => {
-    // 找到最靠近顶部且可见的section
-    const visibleEntries = entries.filter(entry => entry.isIntersecting);
-    if (visibleEntries.length > 0) {
-      // 按照在页面中的位置排序，选择最靠近顶部的
-      const topMostEntry = visibleEntries.reduce((prev, current) => {
-        return prev.boundingClientRect.top < current.boundingClientRect.top ? prev : current;
-      });
-      setCurrent(`#${topMostEntry.target.id}`);
-      window.history.replaceState(null, "", `#${topMostEntry.target.id}`);
-    }
-  },
-  { 
-    threshold: [0.1, 0.3, 0.5], // 多个阈值
-    rootMargin: '-10% 0px -10% 0px' // 只有中间60%区域的内容才算"活跃"
-  }
-);
+    // 优化配置以改善About页面识别
+    observer.current = new IntersectionObserver(
+      (entries) => {
+        // 找到可见度最高的section
+        const visibleEntries = entries.filter(entry => entry.isIntersecting);
+        if (visibleEntries.length > 0) {
+          // 按照可见度排序，选择可见度最高的
+          const mostVisibleEntry = visibleEntries.reduce((prev, current) => {
+            return prev.intersectionRatio > current.intersectionRatio ? prev : current;
+          });
+          setCurrent(`#${mostVisibleEntry.target.id}`);
+          window.history.replaceState(null, "", `#${mostVisibleEntry.target.id}`);
+        }
+      },
+      { 
+        threshold: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], // 更多阈值以提高精度
+        rootMargin: '-20% 0px -20% 0px' // 调整为中间60%区域
+      }
+    );
 
     // 观察所有导航链接对应的区块
     navLinks.forEach(link => {
@@ -195,6 +207,8 @@ observer.current = new IntersectionObserver(
     };
   }, [updateIconColors]);
 
+
+
   return (
     <div
       className={`fixed top-1/2 left-4 md:left-8 -translate-y-1/2 z-[100] transition-opacity duration-500 ${
@@ -202,7 +216,7 @@ observer.current = new IntersectionObserver(
       } group`}
     >
       <div className="bg-white/0 backdrop-blur-md shadow-lg rounded-2xl p-2 md:p-3">
-      <Dock className="flex flex-col gap-5 md:gap-6 !bg-transparent border-none p-0 h-auto w-auto group">
+      <Dock mouseX={dockMouseX} className="flex flex-col gap-5 md:gap-6 !bg-transparent border-none p-0 !h-auto !w-auto group !mt-0">
           {navLinks.map(link => {
             const Icon = link.icon;
             const isActive = current === link.href;
@@ -242,6 +256,26 @@ observer.current = new IntersectionObserver(
               </DockIcon>
             );
           })}
+          
+          {/* 音乐控制组件 */}
+          {songs.length > 0 && (
+            <DockIcon className="bg-transparent">
+              <div className="flex flex-col items-center group/music">
+                <span className="flex items-center justify-center mb-1 rounded-full transition-all duration-200 group-hover/music:bg-gray-200/20 p-0">
+                  <MusicControl 
+                    songs={songs} 
+                    className="group-hover/music:scale-110 transition-transform" 
+                  />
+                </span>
+                <span
+                    className="text-xs text-white opacity-0 group-hover:opacity-100 group-hover:translate-y-1 transition-all duration-300 pointer-events-none select-none"
+                    style={{ transitionProperty: 'opacity, transform' }}
+                >
+                  Pieces
+                </span>
+              </div>
+            </DockIcon>
+          )}
         </Dock>
       </div>
     </div>

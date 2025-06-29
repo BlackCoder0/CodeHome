@@ -60,7 +60,7 @@ const PlanetSystem = () => {
   const [showToast, setShowToast] = useState(false);
 
   return (
-    <div className="relative w-full h-full pointer-events-none">
+    <div className="relative w-full h-full pointer-events-none z-10">
       {ringData.map((ring, ringIndex) => {
         const iconCount = ring.icons.length;
 
