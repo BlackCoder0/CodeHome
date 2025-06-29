@@ -60,12 +60,52 @@ export const articles: Article[] = [
     publishDate: '2025-05-03',
     tags: ['魔法少女小圆', '同人', '百合']
   },
+  {
+    id: '2025062901',
+    title: '手机摔坏了',
+    subtitle: '倒霉日常',
+    category: 'life',
+    thumbnail: 'undefined',
+    htmlPath: './articles/life/20250629.html',
+    publishDate: '2025-06-29',
+    tags: ['倒霉', '日常']
+  },
+  {
+    id: '2025062902',
+    title: '看完末日后酒店了，写点感想',
+    subtitle: '荒诞末日下的故事',
+    category: 'other',
+    thumbnail: './articles_img/20250629-other-2.jpg',
+    htmlPath: './articles/other/Hotel.html',
+    publishDate: '2025-06-19',
+    tags: ['末日后酒店', '随笔']
+  },
+    {
+    id: '2025062903',
+    title: '2025.06.29 更新日志',
+    subtitle: '小修小补',
+    category: 'chat',
+    thumbnail: './articles_img/UPDATE.png',
+    htmlPath: './articles/chat/20250629UPDATE.html',
+    publishDate: '2099-06-29',
+    tags: ['阶段性更新汇报']
+  },
 ];
 
 export const getArticlesByCategory = (category: Article['category']) => {
-  return articles
-    .filter(article => article.category === category)
-    .sort((a, b) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime());
+  const filtered = articles.filter(article => article.category === category);
+  if (category === 'chat') {
+    const firstIdx = filtered.findIndex(a => a.id === 'First');
+    if (firstIdx > 0) {
+      const [firstArticle] = filtered.splice(firstIdx, 1);
+      filtered.unshift(firstArticle);
+    }
+  }
+  return filtered.sort((a, b) => {
+    if (category === 'chat' && a.id === 'First') return -1;
+    if (category === 'chat' && b.id === 'First') return 1;
+    return new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime();
+  });
 };
 
 export const getArticleById = (id: string) => {
