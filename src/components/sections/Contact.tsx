@@ -2,6 +2,71 @@ import React, { useEffect, useState, useRef } from 'react';
 import MessageBoard from '@/components/MessageBoard';
 import { useAnalytics } from '@/lib/analytics';
 
+// 进度条组件
+const ProgressBars: React.FC = () => {
+  const [progressData, setProgressData] = useState([
+    { label: '今日已过', percent: '0.00' },
+    { label: '本周已过', percent: '0.00' },
+    { label: '本月已过', percent: '0.00' },
+    { label: '今年已过', percent: '0.00' }
+  ]);
+
+  useEffect(() => {
+    const updateProgress = () => {
+      const now = new Date();
+      
+      // 今日已过
+      const dayPercent = ((now.getHours()*3600+now.getMinutes()*60+now.getSeconds())/(24*3600)*100).toFixed(2);
+      
+      // 本周已过
+      const day = (now.getDay()||7)-1;
+      const sec = now.getHours()*3600+now.getMinutes()*60+now.getSeconds();
+      const weekPercent = ((day*86400+sec)/(7*86400)*100).toFixed(2);
+      
+      // 本月已过
+      const days = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+      const monthSec = (now.getDate()-1)*86400+now.getHours()*3600+now.getMinutes()*60+now.getSeconds();
+      const monthPercent = (monthSec/(days*86400)*100).toFixed(2);
+      
+      // 今年已过
+      const start = new Date(now.getFullYear(),0,1).getTime();
+      const end = new Date(now.getFullYear()+1,0,1).getTime();
+      const diff = now.getTime() - start;
+      const yearSec = end - start;
+      const yearPercent = (diff/yearSec*100).toFixed(2);
+      
+      setProgressData([
+        { label: '今日已过', percent: dayPercent },
+        { label: '本周已过', percent: weekPercent },
+        { label: '本月已过', percent: monthPercent },
+        { label: '今年已过', percent: yearPercent }
+      ]);
+    };
+
+    updateProgress();
+    const interval = setInterval(updateProgress, 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="space-y-2 mt-4">
+      {progressData.map((item, idx) => (
+        <div key={idx} className="flex items-center space-x-2">
+          <span className="text-xs md:text-sm text-amber-900 w-16">{item.label}</span>
+          <div className="flex-1 h-3 bg-amber-100 border border-amber-300 rounded relative overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-amber-400 to-orange-400 transition-all duration-600 ease-out" 
+              style={{width: `${item.percent}%`}}
+            ></div>
+          </div>
+          <span className="text-xs font-mono text-amber-700 w-12 text-right">{item.percent}%</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 
 // 粒子类
 class Particle {
@@ -420,22 +485,7 @@ const Contact: React.FC = () => {
                     <span className="font-mono text-lg bg-amber-200 px-2 py-1 rounded border border-amber-400">{realOnlineUsers}</span>
                   </div>
                   {/* 进度条区域（移动端新增） */}
-                  <div className="space-y-2 mt-4">
-                    {[
-                      { label: '今日已过', percent: (() => { const now = new Date(); return ((now.getHours()*3600+now.getMinutes()*60+now.getSeconds())/(24*3600)*100).toFixed(2); })() },
-                      { label: '本周已过', percent: (() => { const now = new Date(); const day = (now.getDay()||7)-1; const sec = now.getHours()*3600+now.getMinutes()*60+now.getSeconds(); return ((day*86400+sec)/(7*86400)*100).toFixed(2); })() },
-                      { label: '本月已过', percent: (() => { const now = new Date(); const days = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate(); const sec = (now.getDate()-1)*86400+now.getHours()*3600+now.getMinutes()*60+now.getSeconds(); return (sec/(days*86400)*100).toFixed(2); })() },
-                      { label: '今年已过', percent: (() => { const now = new Date(); const start = new Date(now.getFullYear(),0,1).getTime(); const end = new Date(now.getFullYear()+1,0,1).getTime(); const diff = now.getTime() - start; const yearSec = end - start; return (diff/yearSec*100).toFixed(2); })() }
-                    ].map((item, idx) => (
-                      <div key={idx} className="flex items-center space-x-2">
-                        <span className="text-xs md:text-sm text-amber-900 w-16">{item.label}</span>
-                        <div className="flex-1 h-3 bg-amber-100 border border-amber-300 rounded relative overflow-hidden">
-                          <div className="h-full bg-gradient-to-r from-amber-400 to-orange-400" style={{width: `${item.percent}%`, transition: 'width 0.6s'}}></div>
-                        </div>
-                        <span className="text-xs font-mono text-amber-700 w-12 text-right">{item.percent}%</span>
-                      </div>
-                    ))}
-                  </div>
+                  <ProgressBars />
                   <div className="mt-6 pt-4 border-t-2 border-amber-800">
                     <div className="text-sm text-amber-700 space-y-1 text-center">
                       <p>2025 CodeRains By Code</p>

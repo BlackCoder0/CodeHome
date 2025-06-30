@@ -23,10 +23,10 @@ export default function Home() {
     {
       id: '1',
       name: 'Pieces',
-      src: '/assets/music/Pieces/Pieces-ClariS.mp3', // 请添加实际的音频文件
+      src: './assets/music/Pieces/Pieces-ClariS.mp3', // 请添加实际的音频文件
       author: 'ClariS',
       album: 'カラフル (アニメ盤)(Colorful)',
-      img: '/assets/music/covers/Pieces-ClariS.jpg' // 如果没有封面，将显示默认图标
+      img: './assets/music/covers/Pieces-ClariS.jpg' // 如果没有封面，将显示默认图标
     },
   ];
 
@@ -37,9 +37,7 @@ export default function Home() {
         if (e.type === 'wheel') {
           deltaY = (e as WheelEvent).deltaY;
         } else if (e.type === 'touchmove' && (e as TouchEvent).touches.length > 0) {
-          // 简单处理，取第一个触摸点的 Y 轴变化
-          // 更完善的处理需要记录 touchstart 时的位置
-          // 这里假设用户是单指向上滑动
+
           if (introRef.current && introRef.current.dataset.startY) {
             deltaY = parseFloat(introRef.current.dataset.startY) - (e as TouchEvent).touches[0].clientY;
           }
