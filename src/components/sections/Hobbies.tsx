@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { webglPostprocessing } from '@/lib/three-examples/webgl_postprocessing_pixel';
-import { Particles } from "@/components/magicui/Fparticles";
+import { Particles } from "@/components/magicui/Particles";
 import { articles, getArticlesByCategory, categories, Article } from '@/lib/articles';
 import ArticleCard from '@/components/ArticleCard';
 

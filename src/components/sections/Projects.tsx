@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { MorphingText } from "@/components/magicui/morphing-text";
 import { BentoGrid, BentoGridItem } from "../ui/bento-grid";
 import { WarpBackground } from "@/components/magicui/warp-background";
-import { Particles } from "@/components/magicui/Fparticles";
+import { Particles } from "@/components/magicui/Particles";
 import { MacbookScroll } from "@/components/ui/macbook-scroll";
 
 

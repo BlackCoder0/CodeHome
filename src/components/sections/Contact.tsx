@@ -407,6 +407,7 @@ const Contact: React.FC = () => {
     { name: '时隐重工', description: '兴趣使然的未来主义建造者', url: 'https://shiyin.cafe/', avatar: './assets/friend/shiyina.ico', subAvatar: undefined},
     { name: 'MuXiaoChen🍊', description: '柴米油盐酱醋茶，般般都在别人家', url: 'https://miraii.cn/', avatar: './assets/friend/MuXiaoChen.webp', subAvatar: './assets/friend/MuXiaoChen_siteshot.webp'},
     { name: 'RainMorime', description: '你我命运与此刻纠缠不休', url: 'https://www.rainmorime.com', avatar: './assets/friend/RainMorime.jpg', subAvatar: undefined},
+    { name: 'Roxy_Magicの咖啡馆', description: '昨日之书已合，今日之页当以“真本事”为墨', url: 'https://blog.roxymagic.top/', avatar: './assets/friend/Roxy_Magicの咖啡馆.png', subAvatar: undefined},
   ];
 
   return (

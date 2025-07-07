@@ -24,7 +24,7 @@
     "lucide-react": "^0.515.0",
     "matter-js": "^0.20.0",
     "mini-svg-data-uri": "^1.4.4",
-    "motion": "^12.18.1",
+    "motion": "^12.23.0",
     "next": "15.3.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

@@ -5,6 +5,7 @@ import { TextAnimate } from "@/components/magicui/text-animate";
 import LoadingCanvas from "@/components/LoadingCanvas";
 import Projects from "@/components/sections/Projects";
 import Hobbies from "@/components/sections/Hobbies";
+import Bangumi from "@/components/sections/Bangumi";
 import Contact from "@/components/sections/Contact";
 import About from "@/components/sections/About";
 // import Friends from "@/components/sections/Friends";
@@ -145,6 +146,7 @@ export default function Home() {
       `}>
         <Projects />
         <Hobbies />
+        <Bangumi />
         <About />
         <Contact />
         {/* <Friends /> */}
