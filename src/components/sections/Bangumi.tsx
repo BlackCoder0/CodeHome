@@ -290,7 +290,7 @@ const Bangumi: React.FC = () => {
                            
                            <div className="flex justify-between items-center text-xs text-gray-300">
                              <span>{getAirWeekdayFromInfo(item)}</span>
-                             /* 移动端不显示在看 */
+                             {/* 移动端不显示在看 */}
                              {/* {item.collection?.doing && (
                                <span>{item.collection.doing} 人在看</span>
                              )} */}
