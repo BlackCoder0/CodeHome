@@ -36,7 +36,7 @@ export const BANGUMI_GROUPS: Record<string, BangumiItemConfig[]> = {
   ]
 };
 
-// 获取所有分组名（季度/自定义分组）
+// 获取所有分组名
 export const getGroupLabels = (): string[] => {
   return Object.keys(BANGUMI_GROUPS);
 };

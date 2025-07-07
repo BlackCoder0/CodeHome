@@ -2,57 +2,41 @@
 
 import React, { useEffect, useState } from 'react';
 import { Particles } from "@/components/magicui/Particles";
-import { getBangumiIds, getBangumiNote, getBangumiConfig, getGroupLabels, getBangumiIdsByGroup, getFavoriteBangumiIds } from '@/lib/bangumi-config';
+import { getBangumiIds, getBangumiConfig, getGroupLabels, getBangumiIdsByGroup, getFavoriteBangumiIds } from '@/lib/bangumi-config';
 import { Lens } from '@/components/ui/lens';
 
 interface BangumiItem {
   id: number;
   name: string;
   name_cn: string;
+  images: { [key: string]: string };
   summary: string;
+  rating: { score: number; total: number };
   air_date: string;
   air_weekday: number;
-  rating?: {
-    total: number;
-    count: {
-      1: number;
-      2: number;
-      3: number;
-      4: number;
-      5: number;
-      6: number;
-      7: number;
-      8: number;
-      9: number;
-      10: number;
-    };
-    score: number;
-  };
-  rank?: number;
-  images?: {
-    large: string;
-    common: string;
-    medium: string;
-    small: string;
-    grid: string;
-  };
-  collection?: {
-    wish: number;
-    collect: number;
-    doing: number;
-    on_hold: number;
-    dropped: number;
-  };
+  eps: number;
+  collection: { [key: string]: number };
+  infobox: { key: string; value: any }[];
 }
 
-interface BangumiResponse {
-  total: number;
-  limit: number;
-  offset: number;
-  data: BangumiItem[];
-}
+const getWeekdayName = (weekday: number) => {
+  const weekdays = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+  return weekdays[weekday] || '';
+};
 
-
+const getAirWeekdayFromInfo = (item: BangumiItem) => {
+  if (item.infobox) {
+    const airWeekdayInfo = item.infobox.find(info => info.key === '放送星期');
+    if (airWeekdayInfo) {
+      if (typeof airWeekdayInfo.value === 'string') {
+        return airWeekdayInfo.value;
+      } else if (Array.isArray(airWeekdayInfo.value) && airWeekdayInfo.value.length > 0) {
+        return airWeekdayInfo.value[0];
+      }
+    }
+  }
+  return getWeekdayName(item.air_weekday);
+};
 
 const Bangumi: React.FC = () => {
   const [bangumiList, setBangumiList] = useState<BangumiItem[]>([]);
@@ -89,10 +73,11 @@ const Bangumi: React.FC = () => {
                 name: item.name,
                 name_cn: item.name_cn || item.name,
                 summary: item.summary || '',
-                air_date: item.date || '',
-                air_weekday: item.air_weekday || 0,
                 rating: item.rating,
-                rank: item.rank,
+                air_date: item.air_date,
+                air_weekday: item.air_weekday || 0,
+                eps: item.eps,
+                infobox: item.infobox || [],
                 images: item.images,
                 collection: item.collection
               });
@@ -115,71 +100,10 @@ const Bangumi: React.FC = () => {
       console.error('获取番剧数据失败:', err);
       setError('获取番剧数据失败，请检查番剧ID配置或稍后重试');
       
-      // 设置一些示例数据作为fallback
-      const sampleData = [
-        {
-          id: 1,
-          name: 'Sample Anime 1',
-          name_cn: '示例动画 1',
-          summary: '这是一个示例动画的简介。请在 src/lib/bangumi-config.ts 中配置你实际在追的番剧ID。',
-          air_date: '2024-01-01',
-          air_weekday: 1,
-          rating: { total: 100, count: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 10, 7: 20, 8: 30, 9: 25, 10: 15 }, score: 8.5 },
-          images: {
-            large: '/assets/placeholder-anime.jpg',
-            common: '/assets/placeholder-anime.jpg',
-            medium: '/assets/placeholder-anime.jpg',
-            small: '/assets/placeholder-anime.jpg',
-            grid: '/assets/placeholder-anime.jpg'
-          }
-        },
-        {
-          id: 2,
-          name: 'Sample Anime 2',
-          name_cn: '另一个示例动画。你可以在配置文件中添加真实的番剧ID。',
-          summary: '另一个示例动画。你可以在配置文件中添加真实的番剧ID。',
-          air_date: '2024-01-08',
-          air_weekday: 2,
-          rating: { total: 80, count: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 5, 6: 15, 7: 25, 8: 20, 9: 10, 10: 5 }, score: 7.8 },
-          images: {
-            large: '/assets/placeholder-anime.jpg',
-            common: '/assets/placeholder-anime.jpg',
-            medium: '/assets/placeholder-anime.jpg',
-            small: '/assets/placeholder-anime.jpg',
-            grid: '/assets/placeholder-anime.jpg'
-          }
-        }
-      ];
-      setBangumiList(sampleData);
-      setFilteredList(sampleData);
     } finally {
       setLoading(false);
     }
   };
-
-  // 判断番剧是否为当季
-  const isCurrentSeason = (airDate: string) => {
-    if (!airDate) return false;
-    const date = new Date(airDate);
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    const currentMonth = currentDate.getMonth() + 1;
-    const airYear = date.getFullYear();
-    const airMonth = date.getMonth() + 1;
-    
-    // 定义季度
-    const getCurrentSeason = (month: number) => {
-      if (month >= 1 && month <= 3) return 'winter';
-      if (month >= 4 && month <= 6) return 'spring';
-      if (month >= 7 && month <= 9) return 'summer';
-      return 'autumn';
-    };
-    
-    return airYear === currentYear && getCurrentSeason(airMonth) === getCurrentSeason(currentMonth);
-  };
-
-  // // 用户自定义喜欢的番剧ID
-  // const FAVORITE_BANGUMI_IDS: number[] = [51928]; // 示例，用户可自定义
 
   // 筛选番剧
   const filterBangumi = (type: string) => {
@@ -199,24 +123,20 @@ const Bangumi: React.FC = () => {
     filterBangumi(filterType);
   }, [bangumiList]);
 
-  const getWeekdayName = (weekday: number) => {
-    const weekdays = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-    return weekdays[weekday] || '未知';
-  };
-
-  // 获取番剧的手动配置季度标签
-  const getManualSeasonLabel = (bangumiId: number) => null;
-
   const handleItemClick = (item: BangumiItem) => {
     setSelectedItem(item);
+    // 锁定背景滚动
+    document.body.style.overflow = 'hidden';
   };
-
+  
   const handleCloseDetail = () => {
     setSelectedItem(null);
+    // 恢复背景滚动
+    document.body.style.overflow = 'unset';
   };
 
   return (
-    <section id="bangumi" className="relative min-h-screen py-8 bg-gradient-to-br from-[#0f0f23] via-[#1a1b2e] to-[#16213e] overflow-hidden">
+    <section id="bangumi" className="relative min-h-screen py-8 bg-black overflow-hidden">
       {/* 背景装饰 */}
       <div className="absolute inset-0 z-0">
         <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl"></div>
@@ -241,9 +161,6 @@ const Bangumi: React.FC = () => {
           </h2>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-4">
             正在追的番剧，数据来源于 Bangumi.tv
-          </p>
-          <p className="text-sm text-gray-400 mb-8">
-            在 <code className="bg-gray-700/50 px-2 py-1 rounded backdrop-blur-sm">src/lib/bangumi-config.ts</code> 中配置你的番剧ID
           </p>
           
           {/* 筛选下拉框 */}
@@ -322,39 +239,14 @@ const Bangumi: React.FC = () => {
                           )}
                         </div>
                         <div className="p-4 transition-opacity duration-300">
-                          <h3 className="text-white font-semibold text-sm mb-2 line-clamp-2">
+                          <h3 className="text-white font-semibold text-sm mb-2 line-clamp-2 h-10">
                             {item.name_cn || item.name}
                           </h3>
                           <div className="flex justify-between items-center text-xs text-gray-300">
-                            <span>{getWeekdayName(item.air_weekday)}</span>
+                            <span>{getAirWeekdayFromInfo(item)}</span>
                             {item.collection?.doing && (
                               <span>{item.collection.doing} 人在看</span>
                             )}
-                          </div>
-                          {/* 季度标签 */}
-                          <div className="mt-2">
-                            {(() => {
-                              const manualSeason = getManualSeasonLabel(item.id);
-                              if (manualSeason) {
-                                return (
-                                  <span className="inline-block px-2 py-1 text-xs bg-blue-500/20 text-blue-300 rounded-full border border-blue-500/30">
-                                    {manualSeason}
-                                  </span>
-                                );
-                              } else if (isCurrentSeason(item.air_date)) {
-                                return (
-                                  <span className="inline-block px-2 py-1 text-xs bg-green-500/20 text-green-300 rounded-full border border-green-500/30">
-                                    当季
-                                  </span>
-                                );
-                              } else {
-                                return (
-                                  <span className="inline-block px-2 py-1 text-xs bg-orange-500/20 text-orange-300 rounded-full border border-orange-500/30">
-                                    往季
-                                  </span>
-                                );
-                              }
-                            })()} 
                           </div>
                         </div>
                       </div>
@@ -392,42 +284,18 @@ const Bangumi: React.FC = () => {
                         </div>
                         
                         <div className="p-4">
-                           <h3 className="text-white font-semibold text-sm mb-2 line-clamp-2">
+                           <h3 className="text-white font-semibold text-sm mb-2 line-clamp-2 h-10">
                              {item.name_cn || item.name}
                            </h3>
                            
                            <div className="flex justify-between items-center text-xs text-gray-300">
-                             <span>{getWeekdayName(item.air_weekday)}</span>
-                             {item.collection?.doing && (
+                             <span>{getAirWeekdayFromInfo(item)}</span>
+                             /* 移动端不显示在看 */
+                             {/* {item.collection?.doing && (
                                <span>{item.collection.doing} 人在看</span>
-                             )}
+                             )} */}
                            </div>
                            
-                           {/* 季度标签 */}
-                           <div className="mt-2">
-                             {(() => {
-                               const manualSeason = getManualSeasonLabel(item.id);
-                               if (manualSeason) {
-                                 return (
-                                   <span className="inline-block px-2 py-1 text-xs bg-blue-500/20 text-blue-300 rounded-full border border-blue-500/30">
-                                     {manualSeason}
-                                   </span>
-                                 );
-                               } else if (isCurrentSeason(item.air_date)) {
-                                 return (
-                                   <span className="inline-block px-2 py-1 text-xs bg-green-500/20 text-green-300 rounded-full border border-green-500/30">
-                                     当季
-                                   </span>
-                                 );
-                               } else {
-                                 return (
-                                   <span className="inline-block px-2 py-1 text-xs bg-orange-500/20 text-orange-300 rounded-full border border-orange-500/30">
-                                     往季
-                                   </span>
-                                 );
-                               }
-                             })()} 
-                           </div>
                          </div>
                       </div>
                     </div>
@@ -440,10 +308,10 @@ const Bangumi: React.FC = () => {
             {filteredList.length > 0 ? (
               <div className="text-center mt-4">
                 <p className="text-gray-400 text-sm mb-2">
-                  ← 左右滑动查看更多番剧 →
+                  ← 左右滑动查看更多 →
                 </p>
                 <p className="text-gray-500 text-xs">
-                  当前显示 {filteredList.length} 部番剧
+                  当前显示 {filteredList.length} 部番
                 </p>
               </div>
             ) : (
@@ -498,9 +366,12 @@ const Bangumi: React.FC = () => {
                     
                     <div>
                       <span className="text-gray-300">播出时间：</span>
-                      <span>{getWeekdayName(selectedItem.air_weekday)}</span>
+                      <span>{getAirWeekdayFromInfo(selectedItem)}</span>
                     </div>
-                    
+                    <div>
+                      <span className="text-gray-300">总集数：</span>
+                      <span>{selectedItem.collection.doing} 人在看</span>
+                    </div>
                     {selectedItem.air_date && (
                       <div>
                         <span className="text-gray-300">首播日期：</span>
