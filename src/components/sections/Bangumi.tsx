@@ -212,7 +212,7 @@ const Bangumi: React.FC = () => {
                         onClick={() => handleItemClick(item)}
                         className="w-64 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg overflow-hidden transition-all duration-300 cursor-pointer hover:shadow-2xl group hover:border-blue-400/50"
                       >
-                        <div className="aspect-[3/4] relative overflow-hidden">
+                        <div className="aspect-[3/4] relative overflow-hidden h-80 w-64">
                           {item.images?.large ? (
                             <Lens zoomFactor={1.2} lensSize={180}>
                               <img
