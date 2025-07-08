@@ -107,7 +107,7 @@ const projectsData: ProjectData[] = [
   {
     id: '7',
     title: '晓雨',
-    description: '个人网站',
+    description: '个人网站喵~',
     detailedDescription: '你所在的这个网站',
     technologies: ['Vue', 'Next.js','three.js'],
     image: './assets/logo/正方形.png',
