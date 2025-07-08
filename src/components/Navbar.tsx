@@ -239,22 +239,24 @@ const Navbar: React.FC<{ show: boolean; songs?: Song[] }> = ({ show, songs = [] 
             
             return (
               <DockIcon key={link.href} className="bg-transparent">
-                <a
-                  ref={el => { iconRefs.current[link.href] = el; }}
-                  href={link.href}
-                  onClick={e => handleNavClick(e, link.href)}
-                  className={`flex flex-col items-center transition-colors group/icon ${getIconColorClass()}`}
-                >
-                  <span className="flex items-center justify-center w-12 h-12 md:w-12 md:h-12 mb-1 rounded-full transition-all duration-200 group-hover/icon:bg-gray-200/20">
-                    <Icon className="w-8 h-8 md:w-8 md:h-8 group-hover:scale-110 transition-transform" />
-                  </span>
-                  <span
-                    className="text-xs opacity-0 group-hover:opacity-100 group-hover:translate-y-1 transition-all duration-300 pointer-events-none select-none"
-                    style={{ transitionProperty: 'opacity, transform' }}
+                <div className="flex aspect-square cursor-pointer items-center justify-center rounded-full bg-transparent" style={{ padding: '8px', width: '40px', height: '40px' }}>
+                  <a
+                    ref={el => { iconRefs.current[link.href] = el; }}
+                    href={link.href}
+                    onClick={e => handleNavClick(e, link.href)}
+                    className={`flex flex-col items-center transition-colors group/icon ${getIconColorClass()}`}
                   >
-                    {link.label}
-                  </span>
-                </a>
+                    <span className="flex items-center justify-center w-12 h-12 md:w-12 md:h-12 mb-1 rounded-full transition-all duration-200 group-hover/icon:bg-gray-200/20">
+                      <Icon className="w-8 h-8 md:w-8 md:h-8 group-hover:scale-110 transition-transform" />
+                    </span>
+                    <span
+                      className="text-xs opacity-0 group-hover:opacity-100 group-hover:translate-y-1 transition-all duration-300 pointer-events-none select-none"
+                      style={{ transitionProperty: 'opacity, transform' }}
+                    >
+                      {link.label}
+                    </span>
+                  </a>
+                </div>
               </DockIcon>
             );
           })}
@@ -262,19 +264,21 @@ const Navbar: React.FC<{ show: boolean; songs?: Song[] }> = ({ show, songs = [] 
           {/* 音乐控制组件 */}
           {songs.length > 0 && (
             <DockIcon className="bg-transparent">
-              <div className="flex flex-col items-center group/music">
-                <span className="flex items-center justify-center mb-1 rounded-full transition-all duration-200 group-hover/music:bg-gray-200/20 p-0">
-                  <MusicControl 
-                    songs={songs} 
-                    className="group-hover/music:scale-110 transition-transform" 
-                  />
-                </span>
-                <span
-                    className="text-xs text-white opacity-0 group-hover:opacity-100 group-hover:translate-y-1 transition-all duration-300 pointer-events-none select-none"
-                    style={{ transitionProperty: 'opacity, transform' }}
-                >
-                  Pieces
-                </span>
+              <div className="flex aspect-square cursor-pointer items-center justify-center rounded-full bg-transparent" style={{ padding: '8px', width: '40px', height: '40px' }}>
+                <div className="flex flex-col items-center group/music">
+                  <span className="flex items-center justify-center mb-1 rounded-full transition-all duration-200 group-hover/music:bg-gray-200/20 p-0">
+                    <MusicControl 
+                      songs={songs} 
+                      className="group-hover/music:scale-110 transition-transform" 
+                    />
+                  </span>
+                  <span
+                      className="text-xs text-white opacity-0 group-hover:opacity-100 group-hover:translate-y-1 transition-all duration-300 pointer-events-none select-none"
+                      style={{ transitionProperty: 'opacity, transform' }}
+                  >
+                    Pieces
+                  </span>
+                </div>
               </div>
             </DockIcon>
           )}
