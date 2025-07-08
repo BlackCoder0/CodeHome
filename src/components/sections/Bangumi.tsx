@@ -255,7 +255,7 @@ const Bangumi: React.FC = () => {
                     <div className="block md:hidden">
                       <div
                         onClick={() => handleItemClick(item)}
-                        className="w-64 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg overflow-hidden hover:bg-white/20 transition-all duration-300 cursor-pointer transform hover:scale-105 hover:shadow-2xl"
+                        className="w-36 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg overflow-hidden hover:bg-white/20 transition-all duration-300 cursor-pointer transform hover:scale-105 hover:shadow-2xl"
                       >
                         <div className="aspect-[3/4] relative overflow-hidden">
                           {item.images?.large ? (
