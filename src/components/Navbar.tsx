@@ -218,7 +218,7 @@ const Navbar: React.FC<{ show: boolean; songs?: Song[] }> = ({ show, songs = [] 
       } group`}
     >
       <div className="bg-white/0 backdrop-blur-md shadow-lg rounded-2xl p-2 md:p-3">
-      <Dock mouseX={dockMouseX} className="flex flex-col gap-5 md:gap-6 !bg-transparent border-none p-0 !h-auto !w-auto group !mt-0">
+      <Dock mouseX={dockMouseX} direction="bottom" className="flex flex-col gap-5 md:gap-6 !bg-transparent border-none p-0 !h-auto !w-auto group !mt-0">
           {navLinks.map(link => {
             const Icon = link.icon;
             const isActive = current === link.href;
