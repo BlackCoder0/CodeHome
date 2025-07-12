@@ -157,7 +157,7 @@ const Bangumi: React.FC = () => {
       <div className="relative z-10 container mx-auto px-4 ml-20">
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-400 bg-clip-text text-transparent mb-6">
-            我的追番列表
+            我的追番
           </h2>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-4">
             正在追的番剧，数据来源于 Bangumi.tv

@@ -22,8 +22,9 @@ export const BANGUMI_GROUPS: Record<string, BangumiItemConfig[]> = {
   "2025年7月": [
     { id: 467930, note: "青春笨蛋少年不做圣诞服女郎的梦" },
     { id: 524707, note: "我怎么可能成为你的恋人，不行不行！(※不是不可能！？) " },
+    { id: 510256, note: " 与游戏中心的少女异文化交流的故事" },
     { id: 506677, note: "Silent Witch 沉默魔女的秘密" },
-    { id: 501614, note: "不良少女" },
+    { id: 501614, note: "Bad Girl 不良少女" },
     { id: 513345, note: "薰香花朵凛然绽放" },
     { id: 390555, note: "新 吊带袜天使" },
     { id: 492199, note: "明日方舟：焰烬曙明" },

@@ -22,7 +22,7 @@ export const articles: Article[] = [
   },
   {
     id: 'aboutstudy',
-    title: '代码是毒药',
+    title: '代码很好玩，虽然并不总是快乐',
     subtitle: '关于学习',
     category: 'study',
     thumbnail: './articles_img/20250623-study-1.jpg',
@@ -82,13 +82,23 @@ export const articles: Article[] = [
   },
     {
     id: '2025062903',
-    title: '2025.06.29 更新日志',
+    title: '2025.06 更新日志',
     subtitle: '小修小补',
     category: 'chat',
     thumbnail: './articles_img/UPDATE.png',
     htmlPath: './articles/chat/20250629UPDATE.html',
-    publishDate: '2099-06-29',
+    publishDate: '2025-06-29',
     tags: ['阶段性更新汇报']
+  },
+    {
+    id: '2025071301',
+    title: '准备去实习',
+    subtitle: '半只脚探了探社会',
+    category: 'life',
+    thumbnail: 'undefined',
+    htmlPath: './articles/life/20250713.html',
+    publishDate: '2025-07-13',
+    tags: ['实习', '暑假工']
   },
 ];
 
