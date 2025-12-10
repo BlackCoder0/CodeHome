@@ -428,4 +428,4 @@ const Bangumi: React.FC = () => {
 };
 
 export default Bangumi;
-const DEFAULT_GROUP = "2025年7月";
+const DEFAULT_GROUP = "2026年1月";

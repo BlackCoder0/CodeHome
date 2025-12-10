@@ -60,6 +60,16 @@ export const articles: Article[] = [
     publishDate: '2025-05-03',
     tags: ['魔法少女小圆', '同人', '百合']
   },
+    {
+    id: 'BBH',
+    title: '慢慢喜欢上宿敌（但死都不会承认）',
+    subtitle: '同人百合',
+    category: 'other',
+    thumbnail: 'undefined',
+    htmlPath: './articles/other/BlueBlackH.html',
+    publishDate: '2025-11-17',
+    tags: ['魔法少女小圆', '同人', '百合']
+  },
   {
     id: '2025062901',
     title: '手机摔坏了',
