@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { PinContainer } from "../ui/3d-pin";
 import { motion, AnimatePresence } from "motion/react";
 import { X } from "lucide-react";
@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { MorphingText } from "@/components/magicui/morphing-text";
 import { BentoGrid, BentoGridItem } from "../ui/bento-grid";
 import { WarpBackground } from "@/components/magicui/warp-background";
-import { Particles } from "@/components/magicui/Particles";
+import { createNoise3D } from "simplex-noise";
 import { MacbookScroll } from "@/components/ui/macbook-scroll";
 
 
@@ -246,6 +246,108 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, isOpen, onClose })
     </AnimatePresence>
   );
 };
+const PixelRipple = ({ className = "" }: { className?: string }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
+  const noise3D = useRef(createNoise3D());
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const dpr = typeof window !== "undefined" ? window.devicePixelRatio : 1;
+    let width = container.offsetWidth;
+    let height = container.offsetHeight;
+    canvas.width = Math.max(1, Math.floor(width * dpr));
+    canvas.height = Math.max(1, Math.floor(height * dpr));
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    let t = 0;
+    const cell = 10;
+    const sigma = 80;
+    const maxR = Math.hypot(width, height) * 0.85;
+    t = maxR * 0.3;
+    const speed = 15;
+    const ringGap = 1;
+    const waves = 1;
+    const preSpawnLead = 0.5 * maxR;
+    const center = { x: width / 2, y: height / 2 };
+
+    const draw = () => {
+      const bg = ctx.createLinearGradient(0, 0, 0, height);
+      bg.addColorStop(0, "#000000");
+      bg.addColorStop(1, "#2e3346");
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, width, height);
+      t += speed;
+      const phase = (t % maxR);
+      const noise = noise3D.current;
+
+      for (let y = 0; y < height; y += cell) {
+        for (let x = 0; x < width; x += cell) {
+          const dx = x + cell / 2 - center.x;
+          const dy = y + cell / 2 - center.y;
+          const dist = Math.hypot(dx, dy);
+          const n = noise(dx * 0.004, dy * 0.004, t * 0.002) * 55;
+          let ringDist = Infinity;
+          for (let j = 0; j < waves; j++) {
+            const rj = phase - j * ringGap;
+            const d = Math.abs(dist - (rj + n));
+            if (d < ringDist) ringDist = d;
+          }
+          const rGhost = phase - maxR + preSpawnLead;
+          const dGhost = Math.abs(dist - (rGhost + n));
+          if (dGhost < ringDist) ringDist = dGhost;
+          const intensity = Math.exp(-(ringDist * ringDist) / (2 * sigma * sigma));
+          if (intensity < 0.01) continue;
+          const alpha = Math.min(1, intensity * 1.2);
+          const cA = [101, 196, 235]; //#65C4EB，蓝色
+          const cB = [255, 255, 255]; //#ffffff，白色
+          const mix = 0.5 + 0.5 * Math.sin((dx + dy) * 0.003 + t * 0.004);
+          const baseR = cA[0] * (1 - mix) + cB[0] * mix;
+          const baseG = cA[1] * (1 - mix) + cB[1] * mix;
+          const baseB = cA[2] * (1 - mix) + cB[2] * mix;
+          const glow = 30 * intensity;
+          const r = Math.min(255, baseR + glow);
+          const g = Math.min(255, baseG + glow);
+          const b = Math.min(255, baseB + glow);
+          ctx.fillStyle = `rgba(${r.toFixed(0)}, ${g.toFixed(0)}, ${b.toFixed(0)}, ${alpha})`;
+          ctx.fillRect(x, y, cell - 2, cell - 2);
+        }
+      }
+      rafRef.current = requestAnimationFrame(draw);
+    };
+
+    const onResize = () => {
+      width = container.offsetWidth;
+      height = container.offsetHeight;
+      canvas.width = Math.max(1, Math.floor(width * dpr));
+      canvas.height = Math.max(1, Math.floor(height * dpr));
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+
+    draw();
+    window.addEventListener("resize", onResize);
+    return () => {
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+      window.removeEventListener("resize", onResize);
+    };
+  }, []);
+
+  return (
+    <div className={cn("absolute inset-0", className)} ref={containerRef}>
+      <canvas ref={canvasRef} className="w-full h-full" />
+    </div>
+  );
+};
 const Badge = ({ className }: { className?: string }) => {
   return (
     <svg
@@ -307,15 +409,7 @@ const Projects: React.FC = () => {
       <section id="projects" className="relative z-10 min-h-screen py-16 overflow-hidden" style={{ backgroundImage: 'url(./assets/bg_big2.jpg)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}>
         <div className="backdrop-blur-sm bg-black/40 w-full h-full absolute top-0 left-0 z-0" />
       {/* <WarpBackground className="absolute inset-0" /> */}
-            <Particles
-        className="absolute inset-0 z-10"
-        quantity={300}
-        ease={80}
-        size={1.5}
-        staticity={15}
-        color={"#ffffff"}
-        vy={10}
-      />
+            <PixelRipple className="z-10" />
       <div className="relative z-20">
       <div className="overflow-hidden dark:bg-[#0B0B0F] bg-white w-full">
 
@@ -331,7 +425,7 @@ const Projects: React.FC = () => {
         showGradient={false}
       />
           <div className="relative h-[120px] w-full overflow-hidden text-center mb-1">
-          <MorphingText texts={["我的项目", "My Project"]} className="text-[#44475a]" />
+          <MorphingText texts={["我的项目", "My Project"]} className="text-[#c084fc]" />
           </div>
 
         </div>

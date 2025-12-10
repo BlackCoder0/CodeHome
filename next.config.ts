@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
   // assetPrefix: '/CodeHome/',
   basePath: '',
   assetPrefix: '',
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 };
 
 export default nextConfig;

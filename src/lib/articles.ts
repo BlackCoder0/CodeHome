@@ -65,7 +65,7 @@ export const articles: Article[] = [
     title: '慢慢喜欢上宿敌（但死都不会承认）',
     subtitle: '同人百合',
     category: 'other',
-    thumbnail: 'undefined',
+    thumbnail: './articles_img/20251210-other-4.jpg',
     htmlPath: './articles/other/BlueBlackH.html',
     publishDate: '2025-11-17',
     tags: ['魔法少女小圆', '同人', '百合']
