@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "postbuild": "echo www.coderains.cn > docs/CNAME && echo > docs/.nojekyll",
+    "postbuild": "node -e \"const fs=require('fs'); fs.writeFileSync('docs/.nojekyll', ''); fs.writeFileSync('docs/CNAME', 'www.coderains.cn');\"",
     "start": "next start",
     "lint": "next lint"
   },
