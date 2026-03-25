@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 15, "column": 0}, "map": {"version":3,"sources":["file:///D:/%E6%A1%8C%E9%9D%A2/CodeHome/src/components/BaiduAnalytics.tsx"],"sourcesContent":["'use client';\r\nimport { useEffect } from 'react';\r\n\r\nconst BaiduAnalytics = () => {\r\n  useEffect(() => {\r\n    // 确保只在客户端执行\r\n    if (typeof window !== 'undefined') {\r\n      // 检查是否已经加载过百度统计\r\n      if (window._hmt) {\r\n        return;\r\n      }\r\n\r\n      window._hmt = window._hmt || [];\r\n      \r\n      const hm = document.createElement('script');\r\n      hm.src = 'https://hm.baidu.com/hm.js?b2220316e42d7b63a3c68978f3c89dde';\r\n      hm.async = true;\r\n      \r\n      const s = document.getElementsByTagName('script')[0];\r\n      if (s && s.parentNode) {\r\n        s.parentNode.insertBefore(hm, s);\r\n      }\r\n    }\r\n  }, []);\r\n\r\n  return null;\r\n};\r\n\r\nexport default BaiduAnalytics;\r\n\r\n// 声明全局类型\r\ndeclare global {\r\n  interface Window {\r\n    _hmt: any[];\r\n  }\r\n}"],"names":[],"mappings":";;;AACA;AADA;;AAGA,MAAM,iBAAiB;IACrB,CAAA,GAAA,qMAAA,CAAA,YAAS,AAAD,EAAE;QACR,YAAY;QACZ,uCAAmC;;QAgBnC;IACF,GAAG,EAAE;IAEL,OAAO;AACT;uCAEe","debugId":null}}]
-}

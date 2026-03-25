@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 1, "column": 0}, "map": {"version":3,"sources":["file:///D:/%E6%A1%8C%E9%9D%A2/CodeHome/src/components/MusicControl.css"],"sourcesContent":["/* 音乐控制组件样式 */\n.music-control {\n  /* 基础样式 */\n}\n\n/* 旋转动画 */\n@keyframes spin {\n  from {\n    transform: rotate(0deg);\n  }\n  to {\n    transform: rotate(360deg);\n  }\n}\n\n.animate-spin {\n  animation: spin 8s linear infinite;\n}\n\n/* 悬停效果 */\n.music-control .group:hover .group-hover\\:scale-110 {\n  transform: scale(1.1);\n}\n\n/* 过渡效果 */\n.music-control * {\n  transition-property: transform, opacity;\n  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);\n  transition-duration: 200ms;\n}\n\n/* 封面图片样式 */\n.music-control img {\n  transition: transform 0.3s ease;\n}\n\n/* 播放按钮覆盖层 */\n.music-control .absolute.inset-0 {\n  border-radius: inherit;\n}\n\n/* 确保圆形容器 */\n.music-control .rounded-full {\n  border-radius: 50%;\n}\n\n/* 响应式调整 */\n@media (max-width: 768px) {\n  .music-control {\n    /* 移动端样式调整 */\n  }\n}"],"names":[],"mappings":"AAMA;;;;;;;;;;AASA;;;;AAKA;;;;AAKA;;;;;;AAOA;;;;AAKA;;;;AAKA","debugId":null}}]
-}
