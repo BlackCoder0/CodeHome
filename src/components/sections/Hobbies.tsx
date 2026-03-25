@@ -1,22 +1,14 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { webglPostprocessing } from '@/lib/three-examples/webgl_postprocessing_pixel';
+import React, { useState } from 'react';
 import { Particles } from "@/components/magicui/Particles";
 import { articles, getArticlesByCategory, categories, Article } from '@/lib/articles';
 import ArticleCard from '@/components/ArticleCard';
 
 const Hobbies: React.FC = () => {
-  const mountRef = useRef<HTMLDivElement>(null);
   const [activeCategory, setActiveCategory] = useState<Article['category']>('chat');
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [isViewingArticle, setIsViewingArticle] = useState(false);
   const [htmlContent, setHtmlContent] = useState<string>('');
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!mountRef.current) return;
-    const cleanup = webglPostprocessing(mountRef.current);
-    return () => cleanup?.();
-  }, []);
 
   const handleArticleClick = (article: Article) => {
     setSelectedArticle(article);
@@ -60,7 +52,14 @@ const Hobbies: React.FC = () => {
   const filteredArticles = getArticlesByCategory(activeCategory);
 
   return (
-    <section id="hobbies" className="relative min-h-screen py-8 bg-gradient-to-b from-[#2e3346] to-black">
+    <section
+      id="hobbies"
+      className="relative min-h-screen py-8 overflow-hidden"
+      style={{
+        background:
+          'linear-gradient(180deg, #1d3654 0%, #1b3552 12%, #16304a 32%, #122743 58%, #101e35 80%, #111827 100%)'
+      }}
+    >
       {/* <section id="hobbies" className="relative min-h-screen py-8"
   style={{
     backgroundImage: "url('./assets/bg/sea2.jpg')",
@@ -79,12 +78,73 @@ const Hobbies: React.FC = () => {
         color={"#ffffff"}
         vy={10}
       />
+      <div
+        className="absolute inset-x-0 top-0 z-0 h-28"
+        style={{
+          background:
+            'linear-gradient(180deg, rgba(147, 197, 253, 0.1), rgba(125, 211, 252, 0.04) 36%, transparent 100%)'
+        }}
+      />
+      <div
+        className="absolute inset-0 z-0"
+        style={{
+          background:
+            'radial-gradient(circle at 18% 16%, rgba(125, 211, 252, 0.15), transparent 24%), radial-gradient(circle at 82% 26%, rgba(96, 165, 250, 0.12), transparent 22%), radial-gradient(circle at 50% 72%, rgba(59, 130, 246, 0.1), transparent 34%), radial-gradient(circle at 52% 10%, rgba(186, 230, 253, 0.08), transparent 20%)'
+        }}
+      />
+      <div
+        className="absolute inset-0 z-0 opacity-18"
+        style={{
+          backgroundImage:
+            'repeating-radial-gradient(circle at 50% -10%, rgba(186,230,253,0.12) 0 10px, transparent 10px 34px), repeating-radial-gradient(circle at 50% 0%, rgba(125,211,252,0.08) 0 12px, transparent 12px 38px)',
+          filter: 'blur(12px)',
+          maskImage: 'linear-gradient(180deg, rgba(0,0,0,0.82), rgba(0,0,0,0.18))'
+        }}
+      />
+      <div
+        className="absolute inset-0 z-0 opacity-12"
+        style={{
+          backgroundImage:
+            'linear-gradient(108deg, transparent 0%, transparent 26%, rgba(186,230,253,0.18) 36%, transparent 48%, transparent 100%), linear-gradient(72deg, transparent 0%, transparent 52%, rgba(103,232,249,0.12) 64%, transparent 78%, transparent 100%)',
+          filter: 'blur(14px)',
+          maskImage: 'linear-gradient(180deg, rgba(0,0,0,0.9), rgba(0,0,0,0.24))'
+        }}
+      />
+      <div
+        className="absolute inset-0 z-0 opacity-20"
+        style={{
+          backgroundImage:
+            'linear-gradient(rgba(186, 230, 253, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(186, 230, 253, 0.06) 1px, transparent 1px)',
+          backgroundSize: '48px 48px',
+          maskImage: 'linear-gradient(180deg, rgba(0,0,0,0.78), rgba(0,0,0,0.12))'
+        }}
+      />
+      <div
+        className="absolute inset-x-0 bottom-0 z-0 h-40"
+        style={{
+          background:
+            'linear-gradient(180deg, transparent 0%, rgba(129, 140, 248, 0.06) 24%, rgba(67, 56, 202, 0.12) 52%, rgba(17, 24, 39, 0.44) 100%)'
+        }}
+      />
       <div className="relative w-full px-4 h-full">
+        <div className="relative z-10 mb-8 text-center">
+          <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-cyan-200 via-sky-300 to-indigo-300 bg-clip-text text-transparent drop-shadow-[0_0_24px_rgba(125,211,252,0.2)]">
+            我的爱好
+          </h2>
+          <p className="mt-3 text-base md:text-lg text-slate-200/80">
+            水波、随想、还有一些缓慢漂浮的兴趣碎片
+          </p>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[calc(100vh-4rem)] lg:h-full items-stretch">
-          {/* 左侧 - 3D模型区域 */}
+          {/* 左侧 - HTML 动效区域 */}
           <div className={`w-full h-[60vh] lg:h-full items-center lg:items-start justify-center ${isViewingArticle ? 'hidden lg:flex' : 'flex'}`}>
             <div className="w-full h-full max-h-[calc(100vh-8rem)] rounded-lg overflow-hidden shadow-lg relative z-10">
-              <div ref={mountRef} className="w-full h-full" style={{ background: 'transparent' }} />
+              <iframe
+                src="/111.html"
+                title="Hobbies Visual"
+                className="w-full h-full border-0"
+                loading="lazy"
+              />
             </div>
           </div>
 
@@ -117,7 +177,7 @@ const Hobbies: React.FC = () => {
                         >
                           {category.label}
                           {activeCategory === category.value && (
-                            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 to-purple-400" />
+                            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-300 via-sky-300 to-indigo-300" />
                           )}
                         </button>
                       ))}

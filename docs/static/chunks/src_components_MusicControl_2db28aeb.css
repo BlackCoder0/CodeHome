@@ -1,0 +1,39 @@
+/* [project]/src/components/MusicControl.css [app-client] (css) */
+@keyframes spin {
+  from {
+    transform: rotate(0);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: 8s linear infinite spin;
+}
+
+.music-control .group:hover .group-hover\:scale-110 {
+  transform: scale(1.1);
+}
+
+.music-control * {
+  transition-property: transform, opacity;
+  transition-duration: .2s;
+  transition-timing-function: cubic-bezier(.4, 0, .2, 1);
+}
+
+.music-control img {
+  transition: transform .3s;
+}
+
+.music-control .absolute.inset-0 {
+  border-radius: inherit;
+}
+
+.music-control .rounded-full {
+  border-radius: 50%;
+}
+
+
+/*# sourceMappingURL=src_components_MusicControl_2db28aeb.css.map*/

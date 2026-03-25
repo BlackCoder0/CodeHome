@@ -136,12 +136,22 @@ const Bangumi: React.FC = () => {
   };
 
   return (
-    <section id="bangumi" className="relative min-h-screen py-8 bg-black overflow-hidden">
+    <section
+      id="bangumi"
+      className="relative min-h-screen py-8 overflow-hidden"
+      style={{
+        background:
+          'linear-gradient(180deg, #111827 0%, #12172a 18%, #151625 40%, #14131f 62%, #111117 82%, #0d1016 100%)'
+      }}
+    >
       {/* 背景装饰 */}
       <div className="absolute inset-0 z-0">
+        <div className="absolute inset-x-0 top-0 h-32 bg-[linear-gradient(180deg,rgba(129,140,248,0.1),rgba(99,102,241,0.05)_34%,transparent)]"></div>
         <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-36 right-8 w-[26rem] h-[26rem] bg-fuchsia-400/8 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-24 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/5 rounded-full blur-3xl"></div>
+        <div className="absolute inset-x-0 bottom-0 h-52 bg-[linear-gradient(180deg,transparent,rgba(245,158,11,0.05)_42%,rgba(13,16,22,0.84)_100%)]"></div>
       </div>
       
       <Particles
@@ -156,7 +166,7 @@ const Bangumi: React.FC = () => {
       
       <div className="relative z-10 container mx-auto px-4 ml-20">
         <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-400 bg-clip-text text-transparent mb-6">
+          <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-cyan-200 via-sky-300 to-indigo-300 bg-clip-text text-transparent drop-shadow-[0_0_24px_rgba(125,211,252,0.18)] mb-6">
             我的追番
           </h2>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-4">

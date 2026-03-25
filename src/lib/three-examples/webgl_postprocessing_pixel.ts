@@ -46,9 +46,8 @@ export function webglPostprocessing(container: HTMLDivElement) {
   controls.maxZoom = 2;
 
   // Textures
-  const loader = new THREE.TextureLoader();
-  const texChecker = pixelTexture(loader.load('https://threejs.org/examples/textures/checker.png'));
-  const texChecker2 = pixelTexture(loader.load('https://threejs.org/examples/textures/checker.png'));
+  const texChecker = createCheckerTexture(128, 8);
+  const texChecker2 = createCheckerTexture(128, 4);
   texChecker.repeat.set(3, 3);
   texChecker2.repeat.set(1.5, 1.5);
 
@@ -123,6 +122,28 @@ export function webglPostprocessing(container: HTMLDivElement) {
     texture.wrapT = THREE.RepeatWrapping;
     texture.colorSpace = THREE.SRGBColorSpace;
     return texture;
+  }
+
+  function createCheckerTexture(size: number, cells: number) {
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+
+    const context = canvas.getContext('2d');
+    if (!context) {
+      const fallbackTexture = new THREE.Texture();
+      return pixelTexture(fallbackTexture);
+    }
+
+    const cellSize = size / cells;
+    for (let y = 0; y < cells; y++) {
+      for (let x = 0; x < cells; x++) {
+        context.fillStyle = (x + y) % 2 === 0 ? '#f8fafc' : '#334155';
+        context.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+      }
+    }
+
+    return pixelTexture(new THREE.CanvasTexture(canvas));
   }
 
   function easeInOutCubic(x: number) {
@@ -239,6 +260,13 @@ export function webglPostprocessing(container: HTMLDivElement) {
     if (container.contains(renderer.domElement)) {
       container.removeChild(renderer.domElement);
     }
+    texChecker.dispose();
+    texChecker2.dispose();
+    boxMaterial.dispose();
+    planeMesh.geometry.dispose();
+    (planeMesh.material as THREE.Material).dispose();
+    crystalMesh.geometry.dispose();
+    (crystalMesh.material as THREE.Material).dispose();
     renderer.dispose();
   };
 }

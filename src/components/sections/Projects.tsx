@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import { PinContainer } from "../ui/3d-pin";
 import { motion, AnimatePresence } from "motion/react";
 import { X } from "lucide-react";
@@ -25,6 +26,14 @@ interface ProjectData {
   category: string;
 }
 
+const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp'];
+
+const isImageAsset = (image: string) =>
+  IMAGE_EXTENSIONS.some((extension) => image.endsWith(extension));
+
+const toAssetPath = (assetPath: string) =>
+  assetPath.startsWith('./') ? assetPath.replace('./', '/') : assetPath;
+
 // 示例项目数据
 const projectsData: ProjectData[] = [
   {
@@ -33,7 +42,7 @@ const projectsData: ProjectData[] = [
     description: '软件构件与中间件技术',
     detailedDescription: '本项目为为【仿Bilibili】的前端，项目采用前后端分离设计\n实现了用户认证；视频播放；弹幕发送和滚动等功能\n基于Vue.js框架，结合Element UI组件库构建了美观且交互性强的用户界面。弹幕功能通过自定义Barrage类实现多轨道弹幕的动态渲染与轨迹管理，提升用户体验。通过RESTful API与后端高效通信，利用本地存储管理用户状态',
     technologies: ['Vue.js','Element UI','JavaScript','Less','Axios'],
-    image: './assets/project/bilibili_vue.png',
+    image: '/assets/project/bilibili_vue.webp',
     // demoUrl: 'https://ui.aceternity.com',
     githubUrl: 'https://github.com/BlackCoder0/bilibili_vue',
     giteeUrl: 'https://gitee.com/code-liang/1215bilibili',
@@ -59,7 +68,7 @@ const projectsData: ProjectData[] = [
     description: '安卓开发',
     detailedDescription: '本项目是一款基于Android的日记应用，实现《你的名字》电影内的日记创建、编辑、浏览与管理。极其内容维度管理和消失动画\n利用高德SDK集成，通过高德地图与定位服务实现地理位置标注等功能。',
     technologies: ['Android原生开发（Java）', '高德地图与定位SDK', 'Gradle'],
-    image: './assets/project/mydiary.jpg',
+    image: '/assets/project/mydiary.webp',
     demoUrl: '【《你的名字》日记软件复刻-安卓课设展示】 https://www.bilibili.com/video/BV1wdEYzfEYd/?share_source=copy_web&vd_source=01f661ab4de21d2681871c419ca383e9',
     githubUrl: 'https://github.com/BlackCoder0/myDiary',
     giteeUrl: 'https://gitee.com/code-liang/myDiary',
@@ -72,7 +81,7 @@ const projectsData: ProjectData[] = [
     description: 'javaweb课程设计',
     detailedDescription: '本项目为基于JavaWeb的学生选课与管理系统，采用MVC架构，通过JSP页面进行前端展示，Servlet负责业务逻辑处理，结合JDBC实现与后端数据库的高效交互。\n项目注重模块化设计，涵盖学生、教师、课程、班级等多维度管理，支持用户认证、权限分级、数据分页与动态查询，提升了系统的可扩展性与安全性',
     technologies: ['Java', 'Servlet', 'JDBC', 'MySQL'],
-    image: './assets/project/stusym.png',
+    image: '/assets/project/stusym.webp',
     githubUrl: 'https://github.com/BlackCoder0/Wuyi_StuSym',
     giteeUrl: 'https://gitee.com/code-liang/wuyi_stusym',
     status: 'completed',
@@ -84,7 +93,7 @@ const projectsData: ProjectData[] = [
     description: '《明日方舟》官网特效模拟',
     detailedDescription: '本项目是明日方舟为主题的静态网页展示平台，复刻其官网的粒子特效效果，并在其基础上拓展以实现更丰富的交互\n项目经cloudflare静态部署，可直接访问，响应式设计使得移动端体验友好\n上线三个月以后破10w浏览',
     technologies: ['HTML', 'JavaScript'],
-    image: './assets/project/arkpoints.png',
+    image: '/assets/project/arkpoints.png',
     demoUrl: 'arkpoints.top',
     githubUrl: 'https://github.com/BlackCoder0/Arknights-FlowingPoints',
     giteeUrl: 'https://gitee.com/code-liang/arknights-flowing-points',
@@ -97,7 +106,7 @@ const projectsData: ProjectData[] = [
     description: '《魔法少女小圆》同人工具站',
     detailedDescription: '本项目是以魔法少女小圆为主题的前端可视化网站，前端基于Vue 3+Vite，实现高效的组件化开发与热模块替换。\n项目通过响应式数据驱动地图、路径与交互动画，动态绘制角色行动轨迹，并通过精细的CSS保证多端适配和视觉一致性。\n字体生成器支持用户自定义字体大小和颜色，并通过 HTML5 canvas将转换后的文本渲染为图片，实现一键导出无背景字体截图',
     technologies: ['Vue 3', 'JavaScript'],
-    image: './assets/project/MadokaRunes.png',
+    image: '/assets/project/MadokaRunes.png',
     demoUrl: 'madorunes.cn',
     githubUrl: 'https://github.com/BlackCoder0/Madoka-Runes',
     giteeUrl: 'https://gitee.com/code-liang/Madoka-Runes',
@@ -110,7 +119,7 @@ const projectsData: ProjectData[] = [
     description: '个人网站喵~',
     detailedDescription: '你所在的这个网站',
     technologies: ['Vue', 'Next.js','three.js'],
-    image: './assets/logo/正方形.png',
+    image: '/assets/logo/正方形.webp',
     demoUrl: 'www.coderains.cn',
     githubUrl: 'https://github.com/BlackCoder0/CodeHome',
     giteeUrl: 'https://gitee.com/code-liang/codehome',
@@ -166,9 +175,15 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, isOpen, onClose })
               </button>
             </div>
             
-            {project.image.endsWith('.png') || project.image.endsWith('.jpg') || project.image.endsWith('.jpeg') || project.image.endsWith('.webp') ? (
-              <div className="w-full rounded-lg mb-6">
-                <img src={project.image.startsWith('./assets/project/') ? project.image.replace('/CodeHome', '') : project.image} alt={project.title} className="w-full object-contain" />
+            {isImageAsset(project.image) ? (
+              <div className="relative w-full aspect-[4/3] rounded-lg mb-6 overflow-hidden">
+                <Image
+                  src={toAssetPath(project.image)}
+                  alt={project.title}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 768px"
+                  className="object-contain"
+                />
               </div>
             ) : (
               <div className={`w-full h-48 rounded-lg bg-gradient-to-br ${project.image} mb-6`} />
@@ -222,7 +237,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, isOpen, onClose })
                       rel="noopener noreferrer"
                       className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors flex items-center gap-2"
                     >
-                      <img src="./assets/github.svg" alt="GitHub" width={32} height={32} className="inline-block align-middle" />
+                      <Image src="/assets/github.svg" alt="GitHub" width={32} height={32} className="inline-block align-middle" />
                       <span className="sr-only">GitHub</span>
                     </a>
                   )}
@@ -233,7 +248,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, isOpen, onClose })
                       rel="noopener noreferrer"
                       className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors flex items-center gap-2"
                     >
-                      <img src="./assets/gitee.svg" alt="Gitee" width={32} height={32} className="inline-block align-middle" />
+                      <Image src="/assets/gitee.svg" alt="Gitee" width={32} height={32} className="inline-block align-middle" />
                       <span className="sr-only">Gitee</span>
                     </a>
                   )}
@@ -269,22 +284,18 @@ const PixelRipple = ({ className = "" }: { className?: string }) => {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     let t = 0;
-    const cell = 10;
-    const sigma = 80;
+    const cell = 12;
+    const sigma = 68;
     const maxR = Math.hypot(width, height) * 0.85;
     t = maxR * 0.3;
-    const speed = 15;
+    const speed = 11;
     const ringGap = 1;
     const waves = 1;
     const preSpawnLead = 0.5 * maxR;
     const center = { x: width / 2, y: height / 2 };
 
     const draw = () => {
-      const bg = ctx.createLinearGradient(0, 0, 0, height);
-      bg.addColorStop(0, "#000000");
-      bg.addColorStop(1, "#2e3346");
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, width, height);
+      ctx.clearRect(0, 0, width, height);
       t += speed;
       const phase = (t % maxR);
       const noise = noise3D.current;
@@ -305,15 +316,15 @@ const PixelRipple = ({ className = "" }: { className?: string }) => {
           const dGhost = Math.abs(dist - (rGhost + n));
           if (dGhost < ringDist) ringDist = dGhost;
           const intensity = Math.exp(-(ringDist * ringDist) / (2 * sigma * sigma));
-          if (intensity < 0.01) continue;
-          const alpha = Math.min(1, intensity * 1.2);
-          const cA = [101, 196, 235]; //#65C4EB，蓝色
-          const cB = [255, 255, 255]; //#ffffff，白色
-          const mix = 0.5 + 0.5 * Math.sin((dx + dy) * 0.003 + t * 0.004);
+          if (intensity < 0.03) continue;
+          const alpha = Math.min(0.22, intensity * 0.22);
+          const cA = [102, 153, 255];
+          const cB = [199, 224, 255];
+          const mix = 0.5 + 0.5 * Math.sin((dx + dy) * 0.002 + t * 0.003);
           const baseR = cA[0] * (1 - mix) + cB[0] * mix;
           const baseG = cA[1] * (1 - mix) + cB[1] * mix;
           const baseB = cA[2] * (1 - mix) + cB[2] * mix;
-          const glow = 30 * intensity;
+          const glow = 10 * intensity;
           const r = Math.min(255, baseR + glow);
           const g = Math.min(255, baseG + glow);
           const b = Math.min(255, baseB + glow);
@@ -343,8 +354,92 @@ const PixelRipple = ({ className = "" }: { className?: string }) => {
   }, []);
 
   return (
-    <div className={cn("absolute inset-0", className)} ref={containerRef}>
+    <div className={cn("absolute inset-0 pointer-events-none", className)} ref={containerRef}>
       <canvas ref={canvasRef} className="w-full h-full" />
+    </div>
+  );
+};
+const DreamStars = ({ className = "" }: { className?: string }) => {
+  const [stars] = useState(() =>
+    Array.from({ length: 22 }, (_, index) => ({
+      id: index,
+      left: `${8 + Math.random() * 84}%`,
+      top: `${6 + Math.random() * 84}%`,
+      size: 2 + Math.random() * 5,
+      opacity: 0.18 + Math.random() * 0.38,
+      blur: Math.random() > 0.72 ? 1.4 : 0,
+      duration: 4 + Math.random() * 7,
+      delay: Math.random() * 5,
+    })),
+  );
+
+  const [auroras] = useState(() =>
+    Array.from({ length: 4 }, (_, index) => ({
+      id: index,
+      left: `${12 + Math.random() * 68}%`,
+      top: `${10 + Math.random() * 62}%`,
+      width: 180 + Math.random() * 220,
+      height: 120 + Math.random() * 160,
+      opacity: 0.08 + Math.random() * 0.08,
+      duration: 10 + Math.random() * 8,
+      delay: Math.random() * 4,
+    })),
+  );
+
+  return (
+    <div className={cn("absolute inset-0 pointer-events-none overflow-hidden", className)}>
+      {auroras.map((aurora) => (
+        <motion.div
+          key={`aurora-${aurora.id}`}
+          className="absolute rounded-full"
+          style={{
+            left: aurora.left,
+            top: aurora.top,
+            width: aurora.width,
+            height: aurora.height,
+            opacity: aurora.opacity,
+            background:
+              "radial-gradient(circle, rgba(147,197,253,0.85) 0%, rgba(96,165,250,0.35) 38%, rgba(14,165,233,0.08) 68%, transparent 100%)",
+            filter: "blur(48px)",
+          }}
+          animate={{
+            x: [0, 22, -14, 0],
+            y: [0, -18, 12, 0],
+            scale: [1, 1.06, 0.97, 1],
+          }}
+          transition={{
+            duration: aurora.duration,
+            delay: aurora.delay,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+      {stars.map((star) => (
+        <motion.span
+          key={`star-${star.id}`}
+          className="absolute rounded-full bg-white"
+          style={{
+            left: star.left,
+            top: star.top,
+            width: star.size,
+            height: star.size,
+            opacity: star.opacity,
+            boxShadow: `0 0 ${star.size * 6}px rgba(191, 219, 254, 0.45)`,
+            filter: `blur(${star.blur}px)`,
+          }}
+          animate={{
+            opacity: [star.opacity * 0.5, star.opacity, star.opacity * 0.6],
+            scale: [0.9, 1.15, 0.95],
+          }}
+          transition={{
+            duration: star.duration,
+            delay: star.delay,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
     </div>
   );
 };
@@ -406,10 +501,73 @@ const Projects: React.FC = () => {
 
   return (
     <>
-      <section id="projects" className="relative z-10 min-h-screen py-16 overflow-hidden" style={{ backgroundImage: 'url(./assets/bg_big2.jpg)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}>
-        <div className="backdrop-blur-sm bg-black/40 w-full h-full absolute top-0 left-0 z-0" />
-      {/* <WarpBackground className="absolute inset-0" /> */}
-            <PixelRipple className="z-10" />
+      <section
+        id="projects"
+        className="relative z-10 min-h-screen py-16 overflow-hidden"
+        style={{
+          background:
+            "linear-gradient(180deg, #315f86 0%, #285479 16%, #21486d 34%, #1d4264 58%, #1b3c5d 80%, #1d3654 100%)",
+        }}
+      >
+        <div
+          className="absolute inset-0 z-0"
+          style={{
+            background:
+              "radial-gradient(circle at 18% 14%, rgba(224, 242, 254, 0.24), transparent 22%), radial-gradient(circle at 78% 16%, rgba(196, 181, 253, 0.15), transparent 24%), radial-gradient(circle at 50% 58%, rgba(96, 165, 250, 0.18), transparent 30%), radial-gradient(circle at 82% 76%, rgba(59, 130, 246, 0.12), transparent 26%)",
+          }}
+        />
+        <div
+          className="absolute inset-0 z-0 opacity-28"
+          style={{
+            backgroundImage:
+              "linear-gradient(102deg, transparent 0%, transparent 20%, rgba(191, 219, 254, 0.18) 31%, transparent 44%, transparent 100%), linear-gradient(80deg, transparent 0%, transparent 56%, rgba(147, 197, 253, 0.14) 68%, transparent 80%, transparent 100%)",
+            filter: "blur(14px)",
+            maskImage: "linear-gradient(180deg, rgba(0,0,0,0.95), rgba(0,0,0,0.18))",
+          }}
+        />
+        <div
+          className="absolute inset-0 z-0 opacity-18"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(112deg, transparent 0 36px, rgba(255,255,255,0.08) 36px 42px, transparent 42px 118px), repeating-linear-gradient(68deg, transparent 0 44px, rgba(186,230,253,0.08) 44px 52px, transparent 52px 132px)",
+            filter: "blur(18px)",
+            maskImage: "linear-gradient(180deg, rgba(0,0,0,0.85), rgba(0,0,0,0.15))",
+          }}
+        />
+        <div
+          className="absolute inset-0 z-0 opacity-16"
+          style={{
+            background:
+              "radial-gradient(ellipse at 24% 38%, rgba(255,255,255,0.1) 0%, transparent 34%), radial-gradient(ellipse at 76% 56%, rgba(191,219,254,0.1) 0%, transparent 30%)",
+            filter: "blur(12px)",
+          }}
+        />
+        <div
+          className="absolute inset-x-0 top-0 z-0 h-28"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(224, 242, 254, 0.22), rgba(125, 211, 252, 0.08) 42%, transparent 100%)",
+          }}
+        />
+        <div
+          className="absolute inset-0 z-0 opacity-20"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
+            maskImage: "linear-gradient(180deg, rgba(0,0,0,0.45), rgba(0,0,0,0.12))",
+          }}
+        />
+        <DreamStars className="z-0" />
+        <div className="absolute inset-0 z-0 bg-[linear-gradient(180deg,rgba(8,15,30,0.06),rgba(7,12,24,0.24))]" />
+        <div
+          className="absolute inset-x-0 bottom-0 z-0 h-36"
+          style={{
+            background:
+              "linear-gradient(180deg, transparent 0%, rgba(125, 211, 252, 0.06) 26%, rgba(84, 136, 181, 0.16) 56%, rgba(29, 54, 84, 0.46) 100%)",
+          }}
+        />
+        <PixelRipple className="z-10 opacity-35 mix-blend-screen" />
       <div className="relative z-20">
       <div className="overflow-hidden dark:bg-[#0B0B0F] bg-white w-full">
 
@@ -421,11 +579,11 @@ const Projects: React.FC = () => {
             <Badge className="h-10 w-10 transform -rotate-12" />
           </a>
         }
-        src={`./assets/project/github_page.png`}
+        src="/assets/project/github_page.webp"
         showGradient={false}
       />
           <div className="relative h-[120px] w-full overflow-hidden text-center mb-1">
-          <MorphingText texts={["我的项目", "My Project"]} className="text-[#c084fc]" />
+          <MorphingText texts={["我的项目", "My Project"]} className="bg-gradient-to-r from-cyan-200 via-sky-300 to-indigo-300 bg-clip-text text-transparent drop-shadow-[0_0_24px_rgba(125,211,252,0.22)]" />
           </div>
 
         </div>
@@ -476,9 +634,15 @@ const Projects: React.FC = () => {
                       )}
                     </div>
                     
-                    {project.image.endsWith('.png') || project.image.endsWith('.jpg') || project.image.endsWith('.jpeg') || project.image.endsWith('.webp') ? (
-                        <div className="w-full h-32 max-h-32 rounded-lg mt-auto overflow-hidden border">
-                          <img src={project.image.startsWith('./assets/project/') ? project.image.replace('/CodeHome', '') : project.image} alt={project.title} className="w-full h-full max-h-32 object-cover" />
+                    {isImageAsset(project.image) ? (
+                        <div className="relative w-full h-32 max-h-32 rounded-lg mt-auto overflow-hidden border">
+                          <Image
+                            src={toAssetPath(project.image)}
+                            alt={project.title}
+                            fill
+                            sizes="(max-width: 768px) 100vw, 288px"
+                            className="object-cover"
+                          />
                         </div>
                     ) : (
                       <div className={`w-full h-32 max-h-32 rounded-lg mt-auto bg-gradient-to-br ${project.image}`} />

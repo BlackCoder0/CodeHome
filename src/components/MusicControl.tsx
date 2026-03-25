@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import { Play, Pause } from 'lucide-react';
 import './MusicControl.css';
 
@@ -19,20 +20,29 @@ interface MusicControlProps {
 const MusicControl: React.FC<MusicControlProps> = ({ songs, className = '' }) => {
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [loadedSongId, setLoadedSongId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const currentSong = songs[currentSongIndex] || null;
 
   // 播放/暂停切换
-  const togglePlay = () => {
+  const togglePlay = async () => {
     if (!audioRef.current || !currentSong) return;
 
     if (isPlaying) {
       audioRef.current.pause();
     } else {
-      audioRef.current.play();
+      if (loadedSongId !== currentSong.id) {
+        setLoadedSongId(currentSong.id);
+        return;
+      }
+
+      try {
+        await audioRef.current.play();
+      } catch {
+        setIsPlaying(false);
+      }
     }
-    setIsPlaying(!isPlaying);
   };
 
   // 音频事件处理
@@ -59,12 +69,27 @@ const MusicControl: React.FC<MusicControlProps> = ({ songs, className = '' }) =>
     };
   }, []);
 
-  // 当歌曲改变时重新加载
   useEffect(() => {
-    if (audioRef.current && currentSong) {
-      audioRef.current.load();
+    const audio = audioRef.current;
+    if (!audio || !currentSong) return;
+
+    if (loadedSongId !== currentSong.id) {
+      audio.pause();
+      setIsPlaying(false);
+      audio.removeAttribute('src');
+      audio.load();
     }
-  }, [currentSong]);
+  }, [currentSong, loadedSongId]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !currentSong || loadedSongId !== currentSong.id) return;
+
+    audio.load();
+    audio.play().catch(() => {
+      setIsPlaying(false);
+    });
+  }, [currentSong, loadedSongId]);
 
   if (!currentSong) {
     return null;
@@ -74,11 +99,11 @@ const MusicControl: React.FC<MusicControlProps> = ({ songs, className = '' }) =>
     <div className={`music-control ${className}`}>
       <div className="relative">
         {/* 音频元素 */}
-        <audio ref={audioRef} preload="metadata">
-          <source src={currentSong.src} type="audio/mpeg" />
-          <source src={currentSong.src} type="audio/wav" />
-          <source src={currentSong.src} type="audio/ogg" />
-        </audio>
+        <audio
+          ref={audioRef}
+          preload="none"
+          src={loadedSongId === currentSong.id ? currentSong.src : undefined}
+        />
 
         {/* 歌曲封面和播放按钮 */}
         <div 
@@ -90,10 +115,12 @@ const MusicControl: React.FC<MusicControlProps> = ({ songs, className = '' }) =>
             isPlaying ? 'animate-spin' : ''
           }`}>
             {currentSong.img ? (
-              <img 
-                src={currentSong.img} 
+              <Image
+                src={currentSong.img}
                 alt={currentSong.name}
-                className="w-full h-full object-cover"
+                fill
+                sizes="40px"
+                className="object-cover"
                 onError={(e) => {
                   // 如果图片加载失败，隐藏图片元素
                   e.currentTarget.style.display = 'none';

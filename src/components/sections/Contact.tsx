@@ -1,6 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
+import NextImage from 'next/image';
 import MessageBoard from '@/components/MessageBoard';
 import { useAnalytics } from '@/lib/analytics';
+
+const toAssetPath = (assetPath: string) =>
+  assetPath.startsWith('./') ? assetPath.replace('./', '/') : assetPath;
 
 // 进度条组件
 const ProgressBars: React.FC = () => {
@@ -409,11 +413,11 @@ const Contact: React.FC = () => {
 
   // { name: 'Alice', description: '前端开发者', url: '#', avatar: './assets/logo/logo_0.jpg', subAvatar: './assets/logo/logo_0.jpg' },
   const friendLinks = [
-    { name: '墨间黑沢', description: '"阵雨"的作者', url: 'https://space.bilibili.com/24271342', avatar: './assets/friend/墨间黑沢.jpg', subAvatar: undefined},
-    { name: '时隐重工', description: '兴趣使然的未来主义建造者', url: 'https://shiyin.cafe/', avatar: './assets/friend/shiyina.ico', subAvatar: undefined},
-    { name: 'MuXiaoChen🍊', description: '柴米油盐酱醋茶，般般都在别人家', url: 'https://miraii.cn/', avatar: './assets/friend/MuXiaoChen.webp', subAvatar: './assets/friend/MuXiaoChen_siteshot.webp'},
-    { name: 'RainMorime', description: '你我命运与此刻纠缠不休', url: 'https://www.rainmorime.com', avatar: './assets/friend/RainMorime.jpg', subAvatar: undefined},
-    { name: 'Roxy_Magicの咖啡馆', description: '昨日之书已合，今日之页当以“真本事”为墨', url: 'https://blog.roxymagic.top/', avatar: './assets/friend/Roxy_Magicの咖啡馆.png', subAvatar: undefined},
+    { name: '墨间黑沢', description: '"阵雨"的作者', url: 'https://space.bilibili.com/24271342', avatar: '/assets/friend/墨间黑沢.webp', subAvatar: undefined},
+    { name: '时隐重工', description: '兴趣使然的未来主义建造者', url: 'https://shiyin.cafe/', avatar: '/assets/friend/shiyina.ico', subAvatar: undefined},
+    { name: 'MuXiaoChen🍊', description: '柴米油盐酱醋茶，般般都在别人家', url: 'https://miraii.cn/', avatar: '/assets/friend/MuXiaoChen.webp', subAvatar: '/assets/friend/MuXiaoChen_siteshot.webp'},
+    { name: 'RainMorime', description: '你我命运与此刻纠缠不休', url: 'https://www.rainmorime.com', avatar: '/assets/friend/RainMorime.jpg', subAvatar: undefined},
+    { name: 'Roxy_Magicの咖啡馆', description: '昨日之书已合，今日之页当以“真本事”为墨', url: 'https://blog.roxymagic.top/', avatar: '/assets/friend/Roxy_Magicの咖啡馆.png', subAvatar: undefined},
   ];
 
   return (
@@ -551,16 +555,16 @@ const Contact: React.FC = () => {
                       >
                         <div className="flex flex-col items-center space-y-3">
                           <div className="flex items-center space-x-2">
-                            <div className="w-12 h-12 bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center text-white font-bold text-lg border border-amber-800 overflow-hidden">
+                            <div className="relative w-12 h-12 bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center text-white font-bold text-lg border border-amber-800 overflow-hidden">
                               {friend.avatar ? (
-                                <img src={friend.avatar} alt={friend.name + '头像'} className="w-full h-full object-cover" />
+                                <NextImage src={toAssetPath(friend.avatar)} alt={friend.name + '头像'} fill sizes="48px" className="object-cover" />
                               ) : (
                                 friend.name.charAt(0)
                               )}
                             </div>
                             {friend.subAvatar && (
-                              <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-lg border border-amber-700 overflow-hidden">
-                                <img src={friend.subAvatar} alt={friend.name + '副头像'} className="w-full h-full object-cover" />
+                              <div className="relative w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-lg border border-amber-700 overflow-hidden">
+                                <NextImage src={toAssetPath(friend.subAvatar)} alt={friend.name + '副头像'} fill sizes="48px" className="object-cover" />
                               </div>
                             )}
                           </div>
@@ -600,16 +604,16 @@ const Contact: React.FC = () => {
                       >
                         <div className="flex items-center space-x-3">
                           <div className="flex items-center space-x-2">
-                            <div className="w-10 h-10 bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center text-white font-bold text-lg border border-amber-800 overflow-hidden">
+                            <div className="relative w-10 h-10 bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center text-white font-bold text-lg border border-amber-800 overflow-hidden">
                               {friend.avatar ? (
-                                <img src={friend.avatar} alt={friend.name + '头像'} className="w-full h-full object-cover" />
+                                <NextImage src={toAssetPath(friend.avatar)} alt={friend.name + '头像'} fill sizes="40px" className="object-cover" />
                               ) : (
                                 friend.name.charAt(0)
                               )}
                             </div>
                             {friend.subAvatar && (
-                              <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-lg border border-amber-700 overflow-hidden">
-                                <img src={friend.subAvatar} alt={friend.name + '副头像'} className="w-full h-full object-cover" />
+                              <div className="relative w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-lg border border-amber-700 overflow-hidden">
+                                <NextImage src={toAssetPath(friend.subAvatar)} alt={friend.name + '副头像'} fill sizes="40px" className="object-cover" />
                               </div>
                             )}
                           </div>
@@ -785,16 +789,16 @@ const Contact: React.FC = () => {
                    >
                      <div className="flex items-center space-x-3">
                        <div className="flex items-center space-x-2">
-                         <div className="w-8 h-8 bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center text-white font-bold text-sm border border-amber-800 overflow-hidden">
+                         <div className="relative w-8 h-8 bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center text-white font-bold text-sm border border-amber-800 overflow-hidden">
                            {friend.avatar ? (
-                             <img src={friend.avatar} alt={friend.name + '头像'} className="w-full h-full object-cover" />
+                             <NextImage src={toAssetPath(friend.avatar)} alt={friend.name + '头像'} fill sizes="32px" className="object-cover" />
                            ) : (
                              friend.name.charAt(0)
                            )}
                          </div>
                          {friend.subAvatar && (
-                           <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-sm border border-amber-700 overflow-hidden">
-                             <img src={friend.subAvatar} alt={friend.name + '副头像'} className="w-full h-full object-cover" />
+                           <div className="relative w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-sm border border-amber-700 overflow-hidden">
+                             <NextImage src={toAssetPath(friend.subAvatar)} alt={friend.name + '副头像'} fill sizes="32px" className="object-cover" />
                            </div>
                          )}
                        </div>
