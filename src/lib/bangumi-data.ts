@@ -51,35 +51,13 @@ export const BANGUMI_GROUPS: Record<string, BangumiItemConfig[]> = {
     { id: 29648, note: "中二病也要谈恋爱！" },
   ],
   "2026年1月": [
-    {
-      id: 613150,
-      source: "manual",
-      note: "超时空辉夜姬！",
-      manual: {
-        name: "超时空辉夜姬！",
-        nameCn: "超时空辉夜姬！",
-        summary: "Bangumi 当前未提供可直接使用的动画条目，先以手动条目补录。",
-        airDate: "2026-01",
-        airWeekdayText: "待定",
-      },
-    },
+    { id: 604826, note: "超时空辉夜姬！" },
     { id: 515759, note: "葬送的芙莉莲 第二季" },
     { id: 548818, note: "金牌得主 第二季" },
     { id: 443831, note: "Fate/strange Fake" },
     { id: 565802, note: "辉夜大小姐想让我告白 通往大人的阶梯" },
     { id: 493016, note: "异国日记" },
-    {
-      id: 342888,
-      source: "manual",
-      note: "和机器人啪啪啪能算在经验次数里吗？",
-      manual: {
-        name: "和机器人啪啪啪能算在经验次数里吗？",
-        nameCn: "和机器人啪啪啪能算在经验次数里吗？",
-        summary: "Bangumi 当前未提供可直接使用的动画条目，先以手动条目补录。",
-        airDate: "2026",
-        airWeekdayText: "待定",
-      },
-    },
+
     // 手动补录模板：
     // {
     //   id: 900001,
