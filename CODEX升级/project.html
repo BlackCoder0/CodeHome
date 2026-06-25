@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Projects Dive Prototype v2</title>
+  <style>
+    :root {
+      --bg-top: #7cb7d6;
+      --bg-mid: #1a5f8d;
+      --bg-deep: #08253d;
+      --bg-abyss: #03111d;
+      --cyan: #8fe8ff;
+      --foam: rgba(228, 247, 255, 0.92);
+      --text: rgba(233, 244, 250, 0.92);
+      --muted: rgba(201, 223, 235, 0.64);
+      --panel: rgba(8, 23, 38, 0.3);
+      --panel-border: rgba(159, 226, 255, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      color-scheme: dark;
+    }
+
+    body {
+      min-height: 100vh;
+      overflow-x: hidden;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 50% -15%, rgba(203, 240, 255, 0.5), transparent 26%),
+        linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 24%, var(--bg-deep) 56%, var(--bg-abyss) 100%);
+    }
+
+    .stage {
+      position: relative;
+      min-height: 420vh;
+    }
+
+    .sticky {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .backdrop {
+      background:
+        radial-gradient(circle at 50% -18%, rgba(219, 245, 255, 0.62), transparent 22%),
+        radial-gradient(circle at 15% 15%, rgba(160, 236, 255, 0.2), transparent 18%),
+        radial-gradient(circle at 82% 18%, rgba(119, 224, 255, 0.14), transparent 22%),
+        linear-gradient(180deg, rgba(137, 199, 228, 0.96) 0%, rgba(69, 138, 184, 0.94) 20%, rgba(16, 66, 99, 0.96) 58%, rgba(4, 21, 34, 0.98) 100%);
+      transform: translateY(calc(var(--camera-shift, 0px) * 0.32));
+    }
+
+    .surface-glow {
+      top: -15vh;
+      height: 40vh;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.56), transparent 38%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent 85%);
+      opacity: calc(1 - var(--depth-fade, 0));
+      z-index: 1;
+    }
+
+    .surface-line {
+      top: calc(var(--surface-y, 42vh) - 2px);
+      height: 6px;
+      background:
+        linear-gradient(90deg, transparent, rgba(241, 250, 255, 0.95) 20%, rgba(123, 231, 255, 0.84) 50%, rgba(241, 250, 255, 0.95) 80%, transparent);
+      filter: blur(0.4px);
+      opacity: calc(0.85 - var(--depth-fade, 0) * 0.52);
+      transform: scaleX(1.02);
+      z-index: 4;
+    }
+
+    .shafts {
+      z-index: 2;
+      opacity: calc(0.72 - var(--depth-fade, 0) * 0.48);
+      transform: translateY(calc(var(--camera-shift, 0px) * 0.22));
+      background:
+        linear-gradient(104deg, transparent 0%, transparent 35%, rgba(199, 243, 255, 0.22) 42%, transparent 52%, transparent 100%),
+        linear-gradient(88deg, transparent 0%, transparent 58%, rgba(154, 227, 255, 0.16) 66%, transparent 74%, transparent 100%),
+        linear-gradient(74deg, transparent 0%, transparent 16%, rgba(255, 255, 255, 0.12) 23%, transparent 31%, transparent 100%);
+      filter: blur(12px);
+    }
+
+    .caustics {
+      z-index: 3;
+      opacity: calc(0.16 + (1 - var(--depth-fade, 0)) * 0.08);
+      transform: translateY(calc(var(--camera-shift, 0px) * 0.16));
+      background-image:
+        repeating-linear-gradient(104deg, transparent 0 20px, rgba(255, 255, 255, 0.05) 20px 26px, transparent 26px 72px),
+        repeating-linear-gradient(76deg, transparent 0 26px, rgba(159, 229, 255, 0.05) 26px 33px, transparent 33px 80px);
+      filter: blur(10px);
+      mix-blend-mode: screen;
+    }
+
+    .mist {
+      z-index: 8;
+      opacity: calc(0.12 + var(--impact, 0) * 0.42 + var(--depth-fade, 0) * 0.14);
+      background:
+        radial-gradient(circle at 50% 46%, rgba(255, 255, 255, 0.24), transparent 14%),
+        radial-gradient(circle at 50% 56%, rgba(198, 240, 255, 0.16), transparent 24%);
+      filter: blur(calc(18px + var(--impact, 0) * 26px));
+    }
+
+    .vignette {
+      z-index: 11;
+      background:
+        radial-gradient(circle at 50% 45%, transparent 45%, rgba(2, 12, 21, 0.12) 72%, rgba(1, 7, 14, 0.42) 100%);
+      opacity: calc(0.2 + var(--depth-fade, 0) * 0.55);
+    }
+
+    .hero-copy {
+      position: absolute;
+      top: 10vh;
+      left: min(7vw, 88px);
+      z-index: 12;
+      width: min(32rem, calc(100vw - 2rem));
+      transition: opacity 0.35s ease;
+      opacity: calc(1 - var(--copy-fade, 0));
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.8rem;
+      color: rgba(218, 241, 252, 0.72);
+      font-size: 0.78rem;
+      letter-spacing: 0.38em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::after {
+      content: "";
+      width: 4.8rem;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(184, 233, 255, 0.9), transparent);
+    }
+
+    .hero-copy h1 {
+      margin-top: 1.1rem;
+      font-size: clamp(2.8rem, 6vw, 6rem);
+      line-height: 0.96;
+      letter-spacing: -0.04em;
+      font-weight: 600;
+      text-shadow: 0 8px 30px rgba(5, 28, 44, 0.18);
+    }
+
+    .hero-copy p {
+      margin-top: 1.2rem;
+      max-width: 30rem;
+      font-size: clamp(0.98rem, 1.6vw, 1.15rem);
+      line-height: 1.8;
+      color: var(--muted);
+    }
+
+    .phase-caption {
+      position: absolute;
+      right: min(7vw, 92px);
+      bottom: 8vh;
+      z-index: 12;
+      width: min(20rem, calc(100vw - 2rem));
+      text-align: right;
+      color: rgba(214, 239, 249, 0.78);
+      opacity: calc(0.88 - var(--final-fade, 0));
+      transition: opacity 0.3s ease;
+    }
+
+    .hero-copy,
+    .phase-caption {
+      display: none;
+    }
+
+    .phase-index {
+      font-size: 0.76rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: rgba(154, 224, 255, 0.76);
+    }
+
+    .phase-title {
+      margin-top: 0.8rem;
+      font-size: clamp(1.4rem, 3vw, 2.1rem);
+      line-height: 1.15;
+      font-weight: 500;
+      color: #eef9ff;
+    }
+
+    .phase-body {
+      margin-top: 0.8rem;
+      font-size: 0.94rem;
+      line-height: 1.8;
+      color: rgba(211, 229, 241, 0.7);
+    }
+
+    .scroll-cue {
+      position: absolute;
+      left: 50%;
+      bottom: 5vh;
+      transform: translateX(-50%);
+      z-index: 12;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.7rem;
+      color: rgba(217, 240, 248, 0.64);
+      letter-spacing: 0.36em;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      opacity: calc(1 - var(--copy-fade, 0) * 1.35);
+    }
+
+    .scroll-cue::before {
+      content: "";
+      width: 1px;
+      height: 3.3rem;
+      background: linear-gradient(180deg, rgba(220, 244, 254, 0.8), transparent);
+    }
+
+    .canvas-wrap {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+    }
+
+    #diveCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .projects-ghost {
+      position: absolute;
+      left: 50%;
+      bottom: 6vh;
+      z-index: 9;
+      width: min(1180px, calc(100vw - 2rem));
+      transform:
+        translateX(-50%)
+        translateY(calc(160px - var(--cards-rise, 0px)))
+        scale(calc(0.92 + var(--cards-scale, 0)));
+      opacity: var(--cards-alpha, 0);
+      transition: opacity 0.35s ease;
+    }
+
+    .projects-ghost-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.4rem;
+      color: rgba(198, 233, 248, 0.76);
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      font-size: 0.82rem;
+    }
+
+    .projects-ghost-header::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(146, 219, 247, 0.5), transparent);
+    }
+
+    .projects-grid {
+      display: grid;
+      grid-template-columns: 1.35fr 0.92fr 0.92fr;
+      gap: 1rem;
+    }
+
+    .project-card {
+      min-height: 13rem;
+      border: 1px solid var(--panel-border);
+      border-radius: 1.5rem;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02)),
+        rgba(6, 20, 32, 0.38);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 22px 60px rgba(2, 9, 16, 0.26);
+      backdrop-filter: blur(16px);
+      padding: 1.4rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .project-card.large {
+      min-height: 20rem;
+      grid-row: span 2;
+    }
+
+    .project-state {
+      font-size: 0.72rem;
+      color: rgba(144, 226, 255, 0.82);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .project-title {
+      margin-top: 0.7rem;
+      font-size: 1.2rem;
+      color: #f1fbff;
+      line-height: 1.2;
+    }
+
+    .project-copy {
+      margin-top: 0.8rem;
+      color: rgba(207, 226, 239, 0.66);
+      line-height: 1.7;
+      font-size: 0.92rem;
+    }
+
+    .project-preview {
+      margin-top: 1.2rem;
+      min-height: 5rem;
+      border-radius: 1rem;
+      border: 1px solid rgba(154, 220, 245, 0.1);
+      background:
+        radial-gradient(circle at 30% 22%, rgba(165, 234, 255, 0.14), transparent 18%),
+        linear-gradient(180deg, rgba(9, 29, 46, 0.55), rgba(5, 18, 31, 0.3));
+      overflow: hidden;
+      position: relative;
+    }
+
+    .project-preview::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(102deg, transparent 0%, transparent 40%, rgba(230, 250, 255, 0.08) 48%, transparent 58%, transparent 100%);
+    }
+
+    .tech-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-top: 1rem;
+    }
+
+    .tech-chip {
+      padding: 0.26rem 0.52rem;
+      border-radius: 999px;
+      border: 1px solid rgba(159, 218, 240, 0.1);
+      background: rgba(255, 255, 255, 0.04);
+      color: rgba(216, 234, 241, 0.56);
+      font-size: 0.72rem;
+    }
+
+    @media (max-width: 900px) {
+      .hero-copy {
+        left: 1rem;
+        right: 1rem;
+        width: auto;
+      }
+
+      .phase-caption {
+        left: 1rem;
+        right: 1rem;
+        width: auto;
+        text-align: left;
+      }
+
+      .projects-ghost {
+        width: calc(100vw - 1.2rem);
+        bottom: 4vh;
+      }
+
+      .projects-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .project-card.large {
+        min-height: 16rem;
+        grid-row: span 1;
+      }
+
+      .scroll-cue {
+        bottom: 3vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="stage" id="diveStage">
+    <div class="sticky" id="stickyRoot">
+      <div class="layer backdrop"></div>
+      <div class="layer surface-glow"></div>
+      <div class="layer shafts"></div>
+      <div class="layer caustics"></div>
+      <div class="layer surface-line"></div>
+      <div class="layer mist"></div>
+      <div class="canvas-wrap">
+        <canvas id="diveCanvas"></canvas>
+      </div>
+      <div class="layer vignette"></div>
+
+      <div class="hero-copy">
+        <div class="eyebrow">Projects Transition</div>
+        <h1>不是看见一个人在跳<br />而是自己正在下潜</h1>
+        <p>
+          这版原型把重点从“动作拆解”换成“镜头叙事”。
+          身影只是代入锚点，真正推动情绪的是海面、击水、失重、折射，以及入水后那段短暂的安静。
+        </p>
+      </div>
+
+      <div class="phase-caption">
+        <div class="phase-index" id="phaseIndex">Phase 01</div>
+        <div class="phase-title" id="phaseTitle">海面前的迟疑</div>
+        <div class="phase-body" id="phaseBody">
+          视角先停在海面之上，人物只是一道不完全清晰的访客身影，重点是将“向下滑动”翻译成“身体准备离开岸边”。
+        </div>
+      </div>
+
+      <div class="projects-ghost" id="projectsGhost">
+        <div class="projects-ghost-header">Shallow Work Layer</div>
+        <div class="projects-grid">
+          <article class="project-card large">
+            <div>
+              <div class="project-state">In Progress</div>
+              <h3 class="project-title">CodeRains Ocean Narrative</h3>
+              <p class="project-copy">
+                这里不再像常规作品集首页，而像一组被带入浅海工作层的样本容器。信息仍然清晰，但它已经属于环境的一部分。
+              </p>
+            </div>
+            <div>
+              <div class="project-preview"></div>
+              <div class="tech-row">
+                <span class="tech-chip">Next.js</span>
+                <span class="tech-chip">Canvas</span>
+                <span class="tech-chip">Three.js</span>
+              </div>
+            </div>
+          </article>
+          <article class="project-card">
+            <div>
+              <div class="project-state">Archive</div>
+              <h3 class="project-title">Observation Shell</h3>
+              <p class="project-copy">用更轻的折射、内发光和惯性，取代厚重的科技卡片味道。</p>
+            </div>
+            <div class="tech-row">
+              <span class="tech-chip">UI Motion</span>
+              <span class="tech-chip">Glass</span>
+            </div>
+          </article>
+          <article class="project-card">
+            <div>
+              <div class="project-state">Sample</div>
+              <h3 class="project-title">Current Relay</h3>
+              <p class="project-copy">项目列表不是突然出现，而像被水流带进视线。</p>
+            </div>
+            <div class="tech-row">
+              <span class="tech-chip">Scroll</span>
+              <span class="tech-chip">Parallax</span>
+            </div>
+          </article>
+          <article class="project-card">
+            <div>
+              <div class="project-state">Lab</div>
+              <h3 class="project-title">Entry Impact</h3>
+              <p class="project-copy">击水不是一个特效点，而是上下世界完成切换的瞬间。</p>
+            </div>
+            <div class="tech-row">
+              <span class="tech-chip">Ripple</span>
+              <span class="tech-chip">Foam</span>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <div class="scroll-cue">Scroll To Dive</div>
+    </div>
+  </section>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./node_modules/three/build/three.module.js",
+        "three/addons/": "./node_modules/three/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { FBXLoader } from "three/addons/loaders/FBXLoader.js";
+
+    const root = document.documentElement;
+    const stage = document.getElementById("diveStage");
+    const phaseIndex = document.getElementById("phaseIndex");
+    const phaseTitle = document.getElementById("phaseTitle");
+    const phaseBody = document.getElementById("phaseBody");
+    const canvas = document.getElementById("diveCanvas");
+    const canvasWrap = document.querySelector(".canvas-wrap");
+    const ctx = canvas.getContext("2d");
+
+    const phases = [
+      {
+        index: "Phase 01",
+        title: "海面前的迟疑",
+        body: "视角先停在海面之上，人物只是一道不完全清晰的访客身影，重点是将“向下滑动”翻译成“身体准备离开岸边”。"
+      },
+      {
+        index: "Phase 02",
+        title: "跃出海面线",
+        body: "人物动作不需要很写实，但必须让用户感觉到重心已经离开陆地，镜头开始跟着那股向下的势能移动。"
+      },
+      {
+        index: "Phase 03",
+        title: "击水与短暂失明",
+        body: "最重要的瞬间不是看清动作，而是被浪花、折射和一瞬间的白雾包裹，像真正穿过了两个介质的边界。"
+      },
+      {
+        index: "Phase 04",
+        title: "水下的余韵",
+        body: "入水后不立刻展示项目，而是让人物先被气泡和水流带着下沉一小段，给情绪一个沉下去的时间。"
+      },
+      {
+        index: "Phase 05",
+        title: "带着势能进入作品层",
+        body: "项目内容应该像浅海中的工作舱缓慢浮现，而不是网页模块突然冒出来。这样 Projects 才真的是叙事的一部分。"
+      }
+    ];
+
+    let width = 0;
+    let height = 0;
+    let dpr = 1;
+    let targetProgress = 0;
+    let progress = 0;
+    let time = 0;
+    let impactTriggered = false;
+    let impactPointCache = null;
+    let lastLaunchDebugBucket = -1;
+    let rafId = 0;
+
+    const particles = [];
+    const bubbles = [];
+    const droplets = [];
+
+    const motion = {
+      totalDuration: 6.8,
+      runOnlyEnd: 0.28,
+      runDiveBlendEnd: 0.5,
+      swimBlendStart: 0.58,
+      swimOnlyStart: 0.84,
+      runClipLeadRatio: 0.6,
+      runClipBufferRatio: 0.82,
+      diveClipStartRatio: 0.16,
+      diveClipBlendInEndRatio: 0.3,
+      diveClipPreSwimRatio: 0.88,
+      diveClipExitRatio: 0.96,
+      swimClipStartRatio: 0.3,
+      swimClipBlendInEndRatio: 0.46,
+      underwaterEntryOffset: { x: -0.06, y: -1.26, z: -3.9 },
+      underwaterCruiseOffset: { x: -0.16, y: -3.92, z: -6.56 },
+      swimPitchAngle: -Math.PI / 6
+    };
+
+    const motionScene = new THREE.Scene();
+    const motionCamera = new THREE.OrthographicCamera(-10, 10, 7, -7, 0.1, 100);
+    const motionRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    motionRenderer.outputColorSpace = THREE.SRGBColorSpace;
+    motionRenderer.domElement.style.position = "absolute";
+    motionRenderer.domElement.style.inset = "0";
+    motionRenderer.domElement.style.width = "100%";
+    motionRenderer.domElement.style.height = "100%";
+    motionRenderer.domElement.style.pointerEvents = "none";
+    motionRenderer.domElement.style.opacity = "0";
+    motionRenderer.domElement.style.filter =
+      "drop-shadow(0 0 10px rgba(242,248,255,0.86)) drop-shadow(0 0 24px rgba(145,230,255,0.62))";
+    canvasWrap.appendChild(motionRenderer.domElement);
+
+    motionScene.add(new THREE.HemisphereLight(0xe8f7ff, 0x0d1f30, 1.55));
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    keyLight.position.set(4, 8, 6);
+    motionScene.add(keyLight);
+    const rimLight = new THREE.DirectionalLight(0x86e2ff, 1.05);
+    rimLight.position.set(-6, 4, -3);
+    motionScene.add(rimLight);
+
+    const silhouetteMaterial = new THREE.MeshBasicMaterial({
+      color: 0xf5fbff,
+      transparent: true,
+      opacity: 0.98,
+      side: THREE.DoubleSide
+    });
+    const loader = new FBXLoader();
+    const projectionVector = new THREE.Vector3();
+    const worldPoint = new THREE.Vector3();
+
+    let characterStageRoot = null;
+    let characterMotionRoot = null;
+    let characterModel = null;
+    let diveSourceFbx = null;
+    let mixer = null;
+    let runAction = null;
+    let diveAction = null;
+    let swimAction = null;
+    let runClip = null;
+    let diveClip = null;
+    let swimClip = null;
+    let runClipDuration = 0;
+    let diveClipDuration = 0;
+    let swimClipDuration = 0;
+    let modelReady = false;
+    let runClipReady = false;
+    let swimClipReady = false;
+    let diveClipReady = false;
+    let motionReady = false;
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    function easeInOutSine(t) {
+      return -(Math.cos(Math.PI * t) - 1) / 2;
+    }
+
+    function easeOutCubic(t) {
+      return 1 - Math.pow(1 - t, 3);
+    }
+
+    function smoothstep(min, max, value) {
+      const x = clamp((value - min) / (max - min), 0, 1);
+      return x * x * (3 - 2 * x);
+    }
+
+    function applySilhouette(target) {
+      target.traverse((child) => {
+        if (!child.isMesh) return;
+        child.material = silhouetteMaterial;
+        child.castShadow = false;
+        child.receiveShadow = false;
+      });
+    }
+
+    function normalizeTrackTargetName(name) {
+      return (name || "").replace(/[:|]/g, "");
+    }
+
+    function getTrackTargetNames(clip) {
+      const names = new Set();
+      for (const track of clip?.tracks || []) {
+        const [rawTarget = ""] = track.name.split(".");
+        names.add(normalizeTrackTargetName(rawTarget));
+      }
+      return [...names];
+    }
+
+    function inspectRig(model) {
+      const bones = [];
+      const skinnedMeshes = [];
+      const meshes = [];
+      const names = new Set();
+
+      model.traverse((child) => {
+        if (child.name) {
+          names.add(normalizeTrackTargetName(child.name));
+        }
+        if (child.isBone) {
+          bones.push(child.name || "(unnamed bone)");
+        }
+        if (child.isSkinnedMesh) {
+          skinnedMeshes.push(child.name || "(unnamed skinned mesh)");
+        }
+        if (child.isMesh) {
+          meshes.push(child.name || "(unnamed mesh)");
+        }
+      });
+
+      return {
+        boneCount: bones.length,
+        skinnedMeshCount: skinnedMeshes.length,
+        meshCount: meshes.length,
+        boneSample: bones.slice(0, 20),
+        skinnedMeshSample: skinnedMeshes.slice(0, 10),
+        meshSample: meshes.slice(0, 10),
+        nodeNames: names
+      };
+    }
+
+    function inspectBinding(model, clip) {
+      const rig = inspectRig(model);
+      const targets = getTrackTargetNames(clip);
+      const matchedTargets = targets.filter((target) => rig.nodeNames.has(target));
+      return {
+        targetCount: targets.length,
+        matchedCount: matchedTargets.length,
+        matchRatio: targets.length ? matchedTargets.length / targets.length : 0,
+        targetSample: targets.slice(0, 16),
+        matchedSample: matchedTargets.slice(0, 16),
+        missingSample: targets.filter((target) => !rig.nodeNames.has(target)).slice(0, 16)
+      };
+    }
+
+    function logRigDiagnostics(label, model, clip = null) {
+      const rig = inspectRig(model);
+      console.group(`[DiveRig] ${label}`);
+      console.log("bones:", rig.boneCount, rig.boneSample);
+      console.log("skinnedMeshes:", rig.skinnedMeshCount, rig.skinnedMeshSample);
+      console.log("meshes:", rig.meshCount, rig.meshSample);
+      if (clip) {
+        const binding = inspectBinding(model, clip);
+        console.log("clip:", clip.name || "(unnamed)");
+        console.log("trackTargets:", binding.targetCount, binding.targetSample);
+        console.log("matchedTargets:", binding.matchedCount, binding.matchedSample);
+        console.log("missingTargets:", binding.missingSample);
+        console.log("matchRatio:", Number(binding.matchRatio.toFixed(3)));
+      }
+      console.groupEnd();
+      return rig;
+    }
+
+    function sanitizeMotionClip(clip) {
+      const sanitized = clip.clone();
+      sanitized.tracks = sanitized.tracks.filter((track) => !track.name.endsWith(".position"));
+      sanitized.resetDuration();
+      return sanitized;
+    }
+
+    function prepareModel(model) {
+      model.scale.setScalar(0.004);
+      model.rotation.y = Math.PI;
+      model.position.set(0, 0, 0);
+      model.updateMatrixWorld(true);
+
+      const bounds = new THREE.Box3().setFromObject(model);
+      const center = bounds.getCenter(new THREE.Vector3());
+
+      model.position.x = -center.x;
+      model.position.z = -center.z;
+
+      if (Number.isFinite(bounds.min.y)) {
+        model.position.y = -bounds.min.y;
+      }
+    }
+
+    function mountCharacterModel(model, label) {
+      characterModel = model;
+      prepareModel(characterModel);
+
+      characterMotionRoot = new THREE.Group();
+      characterMotionRoot.add(characterModel);
+
+      characterStageRoot = new THREE.Group();
+      characterStageRoot.add(characterMotionRoot);
+
+      applySilhouette(characterStageRoot);
+      motionScene.add(characterStageRoot);
+      characterStageRoot.visible = false;
+      modelReady = true;
+      console.info(`[DiveRig] using render rig: ${label}`);
+    }
+
+    function chooseCharacterModel() {
+      if (modelReady || !diveSourceFbx) {
+        return;
+      }
+
+      if (runClipReady) {
+        console.log("[DiveRig] Running clip binding", inspectBinding(diveSourceFbx, runClip));
+      }
+      if (diveClipReady) {
+        console.log("[DiveRig] Dive clip binding", inspectBinding(diveSourceFbx, diveClip));
+      }
+      if (swimClipReady) {
+        console.log("[DiveRig] Swim clip binding", inspectBinding(diveSourceFbx, swimClip));
+      }
+
+      logRigDiagnostics("Run To Dive-带皮肤.fbx render rig", diveSourceFbx, diveClip);
+      mountCharacterModel(diveSourceFbx, "Run To Dive-带皮肤.fbx");
+    }
+
+    function getRunLocalTime(t) {
+      if (t <= motion.runOnlyEnd) {
+        const runProgress = easeInOutSine(clamp(t / motion.runOnlyEnd, 0, 1));
+        return lerp(0, motion.runClipLeadRatio, runProgress) * runClipDuration;
+      }
+
+      const bufferProgress = easeInOutSine(
+        clamp((t - motion.runOnlyEnd) / (motion.runDiveBlendEnd - motion.runOnlyEnd), 0, 1)
+      );
+      return lerp(motion.runClipLeadRatio, motion.runClipBufferRatio, bufferProgress) * runClipDuration;
+    }
+
+    function getDiveLocalTime(t) {
+      if (t <= motion.runOnlyEnd) {
+        return motion.diveClipStartRatio * diveClipDuration;
+      }
+
+      if (t <= motion.runDiveBlendEnd) {
+        const blendInProgress = easeInOutSine(
+          clamp((t - motion.runOnlyEnd) / (motion.runDiveBlendEnd - motion.runOnlyEnd), 0, 1)
+        );
+        return (
+          lerp(motion.diveClipStartRatio, motion.diveClipBlendInEndRatio, blendInProgress) *
+          diveClipDuration
+        );
+      }
+
+      if (t <= motion.swimBlendStart) {
+        const diveProgress = easeInOutSine(
+          clamp((t - motion.runDiveBlendEnd) / (motion.swimBlendStart - motion.runDiveBlendEnd), 0, 1)
+        );
+        return (
+          lerp(motion.diveClipBlendInEndRatio, motion.diveClipPreSwimRatio, diveProgress) *
+          diveClipDuration
+        );
+      }
+
+      if (t <= motion.swimOnlyStart) {
+        const exitProgress = easeInOutSine(
+          clamp((t - motion.swimBlendStart) / (motion.swimOnlyStart - motion.swimBlendStart), 0, 1)
+        );
+        return (
+          lerp(motion.diveClipPreSwimRatio, motion.diveClipExitRatio, exitProgress) *
+          diveClipDuration
+        );
+      }
+
+      return diveClipDuration;
+    }
+
+    function getSwimLocalTime(t) {
+      if (t <= motion.swimBlendStart) {
+        return motion.swimClipStartRatio * swimClipDuration;
+      }
+
+      if (t <= motion.swimOnlyStart) {
+        const blendProgress = easeInOutSine(
+          clamp((t - motion.swimBlendStart) / (motion.swimOnlyStart - motion.swimBlendStart), 0, 1)
+        );
+        return (
+          lerp(motion.swimClipStartRatio, motion.swimClipBlendInEndRatio, blendProgress) *
+          swimClipDuration
+        );
+      }
+
+      const cruiseProgress = easeInOutSine(
+        clamp((t - motion.swimOnlyStart) / (1 - motion.swimOnlyStart), 0, 1)
+      );
+      return lerp(motion.swimClipBlendInEndRatio, 1, cruiseProgress) * swimClipDuration;
+    }
+
+    function applyBlendWeights(t) {
+      const runFade = smoothstep(motion.runOnlyEnd, motion.runDiveBlendEnd, t);
+      const swimWeight = smoothstep(motion.swimBlendStart, motion.swimOnlyStart, t);
+      const runWeight = (1 - runFade) * (1 - swimWeight);
+      const diveWeight = runFade * (1 - swimWeight);
+      runAction.enabled = runWeight > 0.001;
+      diveAction.enabled = diveWeight > 0.001;
+      swimAction.enabled = swimWeight > 0.001;
+      runAction.setEffectiveWeight(runWeight);
+      diveAction.setEffectiveWeight(diveWeight);
+      swimAction.setEffectiveWeight(swimWeight);
+    }
+
+    function getSurfaceScreenY(p) {
+      return lerp(height * 0.42, height * 0.29, smoothstep(0.42, 0.72, p));
+    }
+
+    function worldToScreenY(worldY, worldZ = 0) {
+      projectionVector.set(0, worldY, worldZ).project(motionCamera);
+      return ((-projectionVector.y + 1) * 0.5) * height;
+    }
+
+    function getSurfaceWorldY(p, worldZ = 0.12) {
+      return getWorldYForScreenY(getSurfaceScreenY(p), worldZ);
+    }
+
+    function getWorldYForScreenY(targetY, worldZ = 0.12) {
+      let low = -10;
+      let high = 10;
+
+      for (let i = 0; i < 28; i += 1) {
+        const mid = (low + high) * 0.5;
+        const screenY = worldToScreenY(mid, worldZ);
+        if (screenY > targetY) {
+          low = mid;
+        } else {
+          high = mid;
+        }
+      }
+
+      return (low + high) * 0.5;
+    }
+
+    function worldToScreenX(worldX = 0, worldY = 0, worldZ = 0) {
+      projectionVector.set(worldX, worldY, worldZ).project(motionCamera);
+      return ((projectionVector.x + 1) * 0.5) * width;
+    }
+
+    function getWorldZForScreenX(screenX, worldY = 0, worldX = 0) {
+      let low = -80;
+      let high = 80;
+      const lowX = worldToScreenX(worldX, worldY, low);
+      const highX = worldToScreenX(worldX, worldY, high);
+      const increasing = highX > lowX;
+
+      for (let i = 0; i < 30; i += 1) {
+        const mid = (low + high) * 0.5;
+        const midX = worldToScreenX(worldX, worldY, mid);
+        if ((increasing && midX < screenX) || (!increasing && midX > screenX)) {
+          low = mid;
+        } else {
+          high = mid;
+        }
+      }
+
+      return (low + high) * 0.5;
+    }
+
+    function getPlatformMetrics() {
+      const isMobile = width < 768;
+      const platformLeft = isMobile ? 6 : 8;
+      const platformWidth = isMobile ? width * 0.28 : Math.min(168, width * 0.12);
+      return {
+        left: platformLeft,
+        right: platformLeft + platformWidth
+      };
+    }
+
+    function getImpactScreenPoint() {
+      const surfaceY = getSurfaceScreenY(progress);
+      const impactY = getWorldYForScreenY(surfaceY, 0.12);
+      const impactZ = getWorldZForScreenX(width * 0.44, impactY);
+      const impactWorld = new THREE.Vector3(0, impactY, impactZ);
+      impactWorld.project(motionCamera);
+      return {
+        x: ((impactWorld.x + 1) * 0.5) * width,
+        y: ((-impactWorld.y + 1) * 0.5) * height
+      };
+    }
+
+    function getCharacterScreenPoint() {
+      if (!characterMotionRoot) {
+        return { x: width * 0.56, y: getSurfaceScreenY(progress) };
+      }
+
+      characterMotionRoot.localToWorld(worldPoint.set(0, 0.95, 0));
+      worldPoint.project(motionCamera);
+      return {
+        x: ((worldPoint.x + 1) * 0.5) * width,
+        y: ((-worldPoint.y + 1) * 0.5) * height
+      };
+    }
+
+    function getCharacterScreenBounds() {
+      if (!characterStageRoot) return null;
+
+      const bounds = new THREE.Box3().setFromObject(characterStageRoot);
+      if (!Number.isFinite(bounds.min.x) || !Number.isFinite(bounds.max.x)) {
+        return null;
+      }
+
+      const corners = [
+        new THREE.Vector3(bounds.min.x, bounds.min.y, bounds.min.z),
+        new THREE.Vector3(bounds.min.x, bounds.min.y, bounds.max.z),
+        new THREE.Vector3(bounds.min.x, bounds.max.y, bounds.min.z),
+        new THREE.Vector3(bounds.min.x, bounds.max.y, bounds.max.z),
+        new THREE.Vector3(bounds.max.x, bounds.min.y, bounds.min.z),
+        new THREE.Vector3(bounds.max.x, bounds.min.y, bounds.max.z),
+        new THREE.Vector3(bounds.max.x, bounds.max.y, bounds.min.z),
+        new THREE.Vector3(bounds.max.x, bounds.max.y, bounds.max.z)
+      ];
+
+      let minX = Infinity;
+      let maxX = -Infinity;
+      let minY = Infinity;
+      let maxY = -Infinity;
+
+      for (const corner of corners) {
+        corner.project(motionCamera);
+        const x = ((corner.x + 1) * 0.5) * width;
+        const y = ((-corner.y + 1) * 0.5) * height;
+        minX = Math.min(minX, x);
+        maxX = Math.max(maxX, x);
+        minY = Math.min(minY, y);
+        maxY = Math.max(maxY, y);
+      }
+
+      return { minX, maxX, minY, maxY };
+    }
+
+    function getCharacterWaterContact() {
+      const bounds = getCharacterScreenBounds();
+      if (!bounds) return null;
+
+      const surfaceY = getSurfaceScreenY(progress);
+      const contactX = (bounds.minX + bounds.maxX) * 0.5;
+      const penetration = bounds.maxY - surfaceY;
+
+      return {
+        x: contactX,
+        surfaceY,
+        bodyBottomY: bounds.maxY,
+        penetration
+      };
+    }
+
+    function logLaunchDebug(t) {
+      if (!characterStageRoot) return;
+
+      const bucket = Math.floor(t * 12);
+      if (bucket === lastLaunchDebugBucket) return;
+      lastLaunchDebugBucket = bucket;
+
+      const { left: platformLeft, right: platformRight } = getPlatformMetrics();
+      const characterPoint = getCharacterScreenPoint();
+      const characterBounds = getCharacterScreenBounds();
+      const surfaceY = getSurfaceScreenY(progress);
+      const platformTopScreenY = surfaceY - 12;
+      const platformWorldY = getWorldYForScreenY(surfaceY - 12, 0.12);
+      const runStartScreenX = platformLeft + 2;
+      const takeoffScreenX = platformRight - 18;
+      const footGap = characterBounds ? platformTopScreenY - characterBounds.maxY : NaN;
+      const boundsText = characterBounds
+        ? ` bounds=[${characterBounds.minX.toFixed(2)}, ${characterBounds.maxX.toFixed(2)}]x[${characterBounds.minY.toFixed(2)}, ${characterBounds.maxY.toFixed(2)}]`
+        : " bounds=n/a";
+
+      console.log(
+        `[DiveDebug] launch p=${progress.toFixed(4)} t=${t.toFixed(4)} ` +
+          `platformLeft=${platformLeft.toFixed(2)} platformRight=${platformRight.toFixed(2)} ` +
+          `surfaceY=${surfaceY.toFixed(2)} runStartX=${runStartScreenX.toFixed(2)} ` +
+          `takeoffX=${takeoffScreenX.toFixed(2)} characterX=${characterPoint.x.toFixed(2)} ` +
+          `characterY=${characterPoint.y.toFixed(2)} stageY=${characterStageRoot.position.y.toFixed(4)} ` +
+          `stageZ=${characterStageRoot.position.z.toFixed(4)} footGap=${Number.isFinite(footGap) ? footGap.toFixed(2) : "n/a"}` +
+          boundsText
+      );
+    }
+
+    function applyStageTrack(t) {
+      if (!characterStageRoot) return;
+
+      const isMobile = width < 768;
+      const { left: platformLeft, right: platformRight } = getPlatformMetrics();
+      const prepT = smoothstep(0, 0.3, t);
+      const arcT = smoothstep(0.3, 0.52, t);
+      const entryT = smoothstep(0.52, 0.66, t);
+      const glideT = smoothstep(0.66, 1, t);
+      const surfaceWorldY = getSurfaceWorldY(progress, 0.12);
+      const platformWorldY = getWorldYForScreenY(getSurfaceScreenY(progress) - 12, 0.12);
+      const takeoffWorldY = platformWorldY + (isMobile ? -0.1 : -0.1);
+      const runStartScreenX = platformLeft + 2;
+      const takeoffScreenX = platformRight - (isMobile ? 12 : 18);
+      const arcPeakScreenX = width * (isMobile ? 0.4 : 0.34);
+      const entryScreenX = width * (isMobile ? 0.5 : 0.44);
+      const glideScreenX = width * (isMobile ? 0.66 : 0.56);
+
+      const runStartZ = getWorldZForScreenX(runStartScreenX, takeoffWorldY);
+      const startZ = getWorldZForScreenX(takeoffScreenX, takeoffWorldY);
+      const arcPeakZ = getWorldZForScreenX(arcPeakScreenX, takeoffWorldY + 2.4);
+      const entryZ = getWorldZForScreenX(entryScreenX, surfaceWorldY);
+      const glideZ = getWorldZForScreenX(glideScreenX, surfaceWorldY - 0.12);
+
+      let z = startZ;
+      let y = takeoffWorldY;
+
+      if (t < 0.3) {
+        z = THREE.MathUtils.lerp(runStartZ, startZ, prepT);
+        y = takeoffWorldY;
+      } else if (t < 0.52) {
+        z = THREE.MathUtils.lerp(startZ, arcPeakZ, arcT);
+        y = takeoffWorldY + Math.sin(arcT * Math.PI) * 2.4;
+      } else {
+        z = THREE.MathUtils.lerp(arcPeakZ, entryZ, entryT);
+        y = THREE.MathUtils.lerp(surfaceWorldY + 0.2, surfaceWorldY - 0.04, entryT);
+      }
+
+      if (t >= 0.66) {
+        z = THREE.MathUtils.lerp(z, glideZ, glideT);
+        y = THREE.MathUtils.lerp(y, surfaceWorldY - 0.12, glideT);
+      }
+
+      characterStageRoot.position.set(0, y, z);
+    }
+
+    function applyMotionOffset(t) {
+      if (!characterMotionRoot) return;
+
+      const entryT = smoothstep(motion.swimBlendStart - 0.03, motion.swimOnlyStart, t);
+      const cruiseT = smoothstep(motion.swimOnlyStart, 1, t);
+      const pitchT = smoothstep(motion.swimBlendStart + 0.02, motion.swimOnlyStart + 0.08, t);
+
+      characterMotionRoot.position.x =
+        motion.underwaterEntryOffset.x * entryT +
+        (motion.underwaterCruiseOffset.x - motion.underwaterEntryOffset.x) * cruiseT;
+      characterMotionRoot.position.y =
+        motion.underwaterEntryOffset.y * entryT +
+        (motion.underwaterCruiseOffset.y - motion.underwaterEntryOffset.y) * cruiseT;
+      characterMotionRoot.position.z =
+        motion.underwaterEntryOffset.z * entryT +
+        (motion.underwaterCruiseOffset.z - motion.underwaterEntryOffset.z) * cruiseT;
+      characterMotionRoot.rotation.x = motion.swimPitchAngle * pitchT;
+      characterMotionRoot.rotation.y = 0;
+      characterMotionRoot.rotation.z = 0;
+    }
+
+    function syncCharacterMotion(stageProgress) {
+      if (!motionReady) return;
+
+      const t = clamp((stageProgress - 0.06) / 0.84, 0, 1);
+      applyBlendWeights(t);
+
+      runAction.paused = true;
+      diveAction.paused = true;
+      swimAction.paused = true;
+      runAction.time = getRunLocalTime(t);
+      diveAction.time = getDiveLocalTime(t);
+      swimAction.time = getSwimLocalTime(t);
+
+      applyStageTrack(t);
+      applyMotionOffset(t);
+      mixer.update(0);
+      if (t <= 0.34) {
+        logLaunchDebug(t);
+      }
+    }
+
+    function maybeReady() {
+      chooseCharacterModel();
+      if (!modelReady || !runClipReady || !diveClipReady || !swimClipReady || motionReady) return;
+
+      mixer = new THREE.AnimationMixer(characterModel);
+      runAction = mixer.clipAction(runClip);
+      diveAction = mixer.clipAction(diveClip);
+      swimAction = mixer.clipAction(swimClip);
+      runAction.setLoop(THREE.LoopRepeat, Infinity);
+      diveAction.setLoop(THREE.LoopOnce, 1);
+      swimAction.setLoop(THREE.LoopRepeat, Infinity);
+      runAction.clampWhenFinished = false;
+      diveAction.clampWhenFinished = true;
+      swimAction.clampWhenFinished = false;
+      runAction.play();
+      diveAction.play();
+      swimAction.play();
+      lastLaunchDebugBucket = -1;
+      targetProgress = 0;
+      progress = 0;
+      motionReady = true;
+      syncCharacterMotion(0);
+      characterStageRoot.visible = true;
+      motionRenderer.domElement.style.opacity = "1";
+    }
+
+    function resize() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      canvas.style.width = width + "px";
+      canvas.style.height = height + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      motionRenderer.setSize(width, height);
+      motionRenderer.setPixelRatio(Math.min(dpr, width < 768 ? 1.1 : 1.5));
+      const isMobile = width < 768;
+      const frustumHeight = isMobile ? 18.5 : 14.5;
+      const aspect = width / height;
+      motionCamera.left = (-frustumHeight * aspect) / 2;
+      motionCamera.right = (frustumHeight * aspect) / 2;
+      motionCamera.top = frustumHeight / 2;
+      motionCamera.bottom = -frustumHeight / 2;
+      motionCamera.position.set(isMobile ? 19.5 : 16.5, isMobile ? 1.1 : 1.35, 0);
+      motionCamera.lookAt(isMobile ? -0.8 : -0.35, isMobile ? 0.75 : 0.9, 0);
+      motionCamera.updateProjectionMatrix();
+      seedParticles();
+    }
+
+    function seedParticles() {
+      particles.length = 0;
+      const particleCount = width < 768 ? 56 : 84;
+      for (let i = 0; i < particleCount; i += 1) {
+        particles.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          r: Math.random() * 2.4 + 0.4,
+          alpha: Math.random() * 0.3 + 0.04,
+          speed: Math.random() * 0.5 + 0.2,
+          drift: Math.random() * 0.8 + 0.2
+        });
+      }
+    }
+
+    function spawnImpact(x, y, intensity) {
+      const dropletCount = width < 768 ? 24 : 36;
+      const bubbleCount = width < 768 ? 14 : 20;
+      for (let i = 0; i < dropletCount; i += 1) {
+        droplets.push({
+          x,
+          y,
+          vx: (Math.random() - 0.5) * (10 + intensity * 8),
+          vy: -Math.random() * (8 + intensity * 6) - 1,
+          size: Math.random() * 3.4 + 1,
+          alpha: Math.random() * 0.45 + 0.4
+        });
+      }
+
+      for (let i = 0; i < bubbleCount; i += 1) {
+        bubbles.push({
+          x: x + (Math.random() - 0.5) * 28,
+          y: y + Math.random() * 24,
+          vx: (Math.random() - 0.5) * 1.6,
+          vy: -Math.random() * 2.8 - 0.7,
+          size: Math.random() * 3 + 1.2,
+          alpha: Math.random() * 0.35 + 0.28
+        });
+      }
+    }
+
+    function updateProgress() {
+      const rect = stage.getBoundingClientRect();
+      const total = stage.offsetHeight - window.innerHeight;
+      const consumed = clamp(-rect.top, 0, total);
+      targetProgress = total > 0 ? consumed / total : 0;
+    }
+
+    function getPhase(progressValue) {
+      if (progressValue < 0.18) return phases[0];
+      if (progressValue < 0.38) return phases[1];
+      if (progressValue < 0.55) return phases[2];
+      if (progressValue < 0.8) return phases[3];
+      return phases[4];
+    }
+
+    function updateCssVars(p) {
+      const depthFade = smoothstep(0.26, 0.92, p);
+      const impact = Math.sin(smoothstep(0.4, 0.56, p) * Math.PI);
+      const cardsAlpha = smoothstep(0.72, 0.9, p);
+      const cardsRise = lerp(0, 180, cardsAlpha);
+      const cardsScale = cardsAlpha * 0.08;
+      const cameraShift = lerp(0, -height * 0.26, smoothstep(0.22, 1, p));
+      const surfaceY = lerp(42, 29, smoothstep(0.42, 0.72, p));
+      const copyFade = smoothstep(0.18, 0.44, p);
+      const finalFade = smoothstep(0.86, 1, p);
+
+      root.style.setProperty("--depth-fade", depthFade.toFixed(4));
+      root.style.setProperty("--impact", impact.toFixed(4));
+      root.style.setProperty("--cards-alpha", cardsAlpha.toFixed(4));
+      root.style.setProperty("--cards-rise", cardsRise.toFixed(2) + "px");
+      root.style.setProperty("--cards-scale", cardsScale.toFixed(4));
+      root.style.setProperty("--camera-shift", cameraShift.toFixed(2) + "px");
+      root.style.setProperty("--surface-y", surfaceY.toFixed(2) + "vh");
+      root.style.setProperty("--copy-fade", copyFade.toFixed(4));
+      root.style.setProperty("--final-fade", finalFade.toFixed(4));
+    }
+
+    function drawSurfaceRipples(p, impact) {
+      const impactPoint = impactPointCache || getImpactScreenPoint();
+      const ringCount = width < 768 ? 3 : 4;
+      ctx.save();
+      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = `rgba(219, 247, 255, ${0.26 + impact * 0.42})`;
+      for (let ring = 0; ring < ringCount; ring += 1) {
+        const radius = 48 + ring * 20 + impact * (26 + ring * 6);
+        ctx.beginPath();
+        ctx.ellipse(impactPoint.x, impactPoint.y + 2, radius, radius * 0.18, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawLaunchPlatform(p) {
+      const surfaceY = getSurfaceScreenY(p);
+      const fade = 1 - smoothstep(0.44, 0.72, p);
+      const { left, right } = getPlatformMetrics();
+
+      ctx.save();
+      ctx.globalAlpha = 0.14 + fade * 0.34;
+      ctx.fillStyle = "rgba(4, 18, 30, 0.92)";
+      ctx.fillRect(left, surfaceY - 12, right - left, 10);
+
+      ctx.fillStyle = "rgba(147, 228, 255, 0.18)";
+      ctx.fillRect(right - 16, surfaceY - 14, 16, 12);
+
+      ctx.strokeStyle = `rgba(214, 244, 255, ${0.18 + fade * 0.28})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(left, surfaceY - 12);
+      ctx.lineTo(right, surfaceY - 12);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawParticles(p) {
+      const depthFade = smoothstep(0.24, 1, p);
+      ctx.save();
+      for (const particle of particles) {
+        particle.y += particle.speed + depthFade * 0.22;
+        particle.x += Math.sin(time * 0.5 + particle.y * 0.01) * particle.drift * 0.18;
+        if (particle.y > height + 12) {
+          particle.y = -12;
+          particle.x = Math.random() * width;
+        }
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(202, 239, 255, ${particle.alpha + depthFade * 0.08})`;
+        ctx.arc(particle.x, particle.y, particle.r + depthFade * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawBubbles() {
+      for (let i = bubbles.length - 1; i >= 0; i -= 1) {
+        const bubble = bubbles[i];
+        bubble.x += bubble.vx + Math.sin(time + bubble.y * 0.012) * 0.4;
+        bubble.y += bubble.vy;
+        bubble.alpha -= 0.0024;
+        if (bubble.alpha <= 0 || bubble.y < -30) {
+          bubbles.splice(i, 1);
+          continue;
+        }
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(168, 236, 255, ${bubble.alpha})`;
+        ctx.lineWidth = 1.1;
+        ctx.arc(bubble.x, bubble.y, bubble.size, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    function drawDroplets() {
+      for (let i = droplets.length - 1; i >= 0; i -= 1) {
+        const drop = droplets[i];
+        drop.x += drop.vx;
+        drop.y += drop.vy;
+        drop.vy += 0.18;
+        drop.alpha -= 0.016;
+        if (drop.alpha <= 0) {
+          droplets.splice(i, 1);
+          continue;
+        }
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(241, 251, 255, ${drop.alpha})`;
+        ctx.arc(drop.x, drop.y, drop.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function updateImpactEffects(p) {
+      const contact = getCharacterWaterContact();
+      const contactImpact = contact
+        ? smoothstep(-10, 18, contact.penetration)
+        : 0;
+      const progressImpact = Math.sin(smoothstep(0.4, 0.56, p) * Math.PI);
+      const impact = Math.min(progressImpact, contactImpact);
+
+      if (contact) {
+        impactPointCache = {
+          x: contact.x,
+          y: contact.surfaceY
+        };
+      } else {
+        impactPointCache = getImpactScreenPoint();
+      }
+
+      if (impact > 0.001) {
+        drawSurfaceRipples(p, impact);
+      }
+
+      if (!impactTriggered && contact && contact.penetration >= 0) {
+        spawnImpact(impactPointCache.x, impactPointCache.y + 2, Math.max(impact, 0.35));
+        impactTriggered = true;
+      }
+
+      if (!contact || contact.penetration < -12) {
+        impactTriggered = false;
+      }
+    }
+
+    function render() {
+      if (document.hidden) return;
+      time += 0.016;
+      progress += (targetProgress - progress) * 0.075;
+      updateCssVars(progress);
+
+      const phase = getPhase(progress);
+      phaseIndex.textContent = phase.index;
+      phaseTitle.textContent = phase.title;
+      phaseBody.textContent = phase.body;
+
+      ctx.clearRect(0, 0, width, height);
+      drawLaunchPlatform(progress);
+      drawParticles(progress);
+      updateImpactEffects(progress);
+      drawDroplets();
+      drawBubbles();
+      syncCharacterMotion(progress);
+      motionRenderer.render(motionScene, motionCamera);
+
+      rafId = requestAnimationFrame(render);
+    }
+
+    loader.load(
+      "../Run To Dive-带皮肤.fbx",
+      (fbx) => {
+        diveSourceFbx = fbx;
+        if (!fbx.animations?.[0]) {
+          console.warn("[DiveRig] Run To Dive-带皮肤.fbx has no embedded animation clip.");
+        } else {
+          diveClip = sanitizeMotionClip(fbx.animations[0]);
+          diveClipDuration = diveClip.duration;
+          diveClipReady = true;
+        }
+        maybeReady();
+      },
+      undefined,
+      (error) => {
+        console.error("[DiveRig] Failed to load Run To Dive-带皮肤.fbx", error);
+      }
+    );
+
+    loader.load(
+      "../Running-带皮肤.fbx",
+      (fbx) => {
+        if (!fbx.animations?.[0]) return;
+        runClip = sanitizeMotionClip(fbx.animations[0]);
+        runClipDuration = runClip.duration;
+        runClipReady = true;
+        maybeReady();
+      }
+    );
+
+    loader.load(
+      "../Swimming-带皮肤.fbx",
+      (fbx) => {
+        if (!fbx.animations?.[0]) return;
+        swimClip = sanitizeMotionClip(fbx.animations[0]);
+        swimClipDuration = swimClip.duration;
+        swimClipReady = true;
+        maybeReady();
+      }
+    );
+
+    resize();
+    if ("scrollRestoration" in history) {
+      history.scrollRestoration = "manual";
+    }
+    window.scrollTo(0, 0);
+    targetProgress = 0;
+    progress = 0;
+    updateProgress();
+    render();
+
+    window.addEventListener("resize", resize);
+    window.addEventListener("scroll", updateProgress, { passive: true });
+    window.addEventListener("pageshow", () => {
+      window.scrollTo(0, 0);
+      targetProgress = 0;
+      progress = 0;
+      lastLaunchDebugBucket = -1;
+      updateProgress();
+    });
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = 0;
+        return;
+      }
+      if (!rafId) {
+        render();
+      }
+    });
+  </script>
+</body>
+</html>

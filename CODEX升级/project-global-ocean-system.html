@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Global Ocean System Lab</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      color-scheme: dark;
+    }
+
+    body {
+      min-height: 100vh;
+      overflow-x: hidden;
+      background: #010912;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    #oceanCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 0;
+    }
+
+    .stage {
+      position: relative;
+      z-index: 1;
+    }
+
+    .section {
+      min-height: 100vh;
+      background: transparent;
+    }
+
+    .section.about {
+      min-height: 130vh;
+    }
+
+    @media (max-width: 900px) {
+      .section.about {
+        min-height: 110vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="oceanCanvas"></canvas>
+  <main class="stage" aria-hidden="true">
+    <section class="section projects" data-phase="Projects"></section>
+    <section class="section hobbies" data-phase="Hobbies"></section>
+    <section class="section bangumi" data-phase="Bangumi"></section>
+    <section class="section about" data-phase="About"></section>
+    <section class="section contact" data-phase="Contact"></section>
+  </main>
+
+  <script>
+    const phaseDefs = [
+      {
+        name: "Projects",
+        top: [136, 193, 219],
+        bottom: [5, 30, 44],
+        surface: 0.95,
+        haze: 0.12,
+        caustic: 1,
+        current: 0.2,
+        silt: 0.2,
+        wreck: 0.08,
+        belts: 0,
+        observatory: 0,
+        ruins: 0,
+        whale: 0.08,
+        signal: 0
+      },
+      {
+        name: "Hobbies",
+        top: [92, 149, 182],
+        bottom: [4, 24, 36],
+        surface: 0.58,
+        haze: 0.22,
+        caustic: 0.52,
+        current: 0.35,
+        silt: 0.38,
+        wreck: 0.96,
+        belts: 0.08,
+        observatory: 0,
+        ruins: 0.06,
+        whale: 0.16,
+        signal: 0
+      },
+      {
+        name: "Bangumi",
+        top: [52, 107, 144],
+        bottom: [3, 18, 30],
+        surface: 0.34,
+        haze: 0.3,
+        caustic: 0.24,
+        current: 0.46,
+        silt: 0.44,
+        wreck: 0.3,
+        belts: 1,
+        observatory: 0.1,
+        ruins: 0.12,
+        whale: 0.8,
+        signal: 0.06
+      },
+      {
+        name: "About",
+        top: [25, 76, 112],
+        bottom: [2, 13, 22],
+        surface: 0.18,
+        haze: 0.38,
+        caustic: 0.08,
+        current: 0.56,
+        silt: 0.52,
+        wreck: 0.22,
+        belts: 0.46,
+        observatory: 1,
+        ruins: 0.26,
+        whale: 0.54,
+        signal: 0.16
+      },
+      {
+        name: "Contact",
+        top: [12, 41, 67],
+        bottom: [1, 7, 13],
+        surface: 0.06,
+        haze: 0.5,
+        caustic: 0,
+        current: 0.7,
+        silt: 0.66,
+        wreck: 0.1,
+        belts: 0.18,
+        observatory: 0.18,
+        ruins: 1,
+        whale: 0.22,
+        signal: 1
+      }
+    ];
+
+    const canvas = document.getElementById("oceanCanvas");
+    const ctx = canvas.getContext("2d");
+    const sections = [...document.querySelectorAll(".section")];
+
+    let width = 0;
+    let height = 0;
+    let dpr = 1;
+    let time = 0;
+    let phaseMetrics = [];
+    const silt = [];
+    const fish = [];
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    function smoothstep(min, max, value) {
+      const x = clamp((value - min) / (max - min), 0, 1);
+      return x * x * (3 - 2 * x);
+    }
+
+    function rgba(color, alpha) {
+      return `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${alpha})`;
+    }
+
+    function mixColor(a, b, t) {
+      return [
+        Math.round(lerp(a[0], b[0], t)),
+        Math.round(lerp(a[1], b[1], t)),
+        Math.round(lerp(a[2], b[2], t))
+      ];
+    }
+
+    function mixPhase(a, b, t) {
+      return {
+        name: t < 0.5 ? a.name : b.name,
+        top: mixColor(a.top, b.top, t),
+        bottom: mixColor(a.bottom, b.bottom, t),
+        surface: lerp(a.surface, b.surface, t),
+        haze: lerp(a.haze, b.haze, t),
+        caustic: lerp(a.caustic, b.caustic, t),
+        current: lerp(a.current, b.current, t),
+        silt: lerp(a.silt, b.silt, t),
+        wreck: lerp(a.wreck, b.wreck, t),
+        belts: lerp(a.belts, b.belts, t),
+        observatory: lerp(a.observatory, b.observatory, t),
+        ruins: lerp(a.ruins, b.ruins, t),
+        whale: lerp(a.whale, b.whale, t),
+        signal: lerp(a.signal, b.signal, t)
+      };
+    }
+
+    function refreshMetrics() {
+      phaseMetrics = sections.map((section, index) => ({
+        top: section.offsetTop,
+        height: section.offsetHeight,
+        index,
+        name: section.dataset.phase || phaseDefs[index].name
+      }));
+    }
+
+    function seedScene() {
+      silt.length = 0;
+      fish.length = 0;
+
+      const siltCount = width < 900 ? 110 : 180;
+      for (let i = 0; i < siltCount; i += 1) {
+        silt.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          r: Math.random() * 2.2 + 0.4,
+          speed: Math.random() * 0.35 + 0.08,
+          drift: Math.random() * 0.6 + 0.15,
+          alpha: Math.random() * 0.22 + 0.04
+        });
+      }
+
+      for (let i = 0; i < 16; i += 1) {
+        fish.push({
+          x: Math.random() * width,
+          y: Math.random() * height * 0.5 + height * 0.25,
+          size: Math.random() * 12 + 12,
+          speed: Math.random() * 0.65 + 0.35,
+          phase: Math.random() * Math.PI * 2
+        });
+      }
+    }
+
+    function resize() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      canvas.style.width = width + "px";
+      canvas.style.height = height + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      refreshMetrics();
+      seedScene();
+    }
+
+    function getPhaseState() {
+      const scrollY = window.scrollY;
+      let active = phaseMetrics[0];
+
+      for (let i = 0; i < phaseMetrics.length; i += 1) {
+        const metric = phaseMetrics[i];
+        if (scrollY >= metric.top) active = metric;
+      }
+
+      const next = phaseMetrics[Math.min(active.index + 1, phaseMetrics.length - 1)];
+      const local = clamp((scrollY - active.top) / Math.max(active.height, 1), 0, 1);
+      const mix = active.index === next.index ? 0 : smoothstep(0.12, 0.88, local);
+      const phase = mixPhase(phaseDefs[active.index], phaseDefs[next.index], mix);
+
+      return {
+        phase,
+        activeIndex: active.index,
+        local,
+        mix
+      };
+    }
+
+    function drawGradient(phase) {
+      const surfaceY = lerp(height * 0.18, height * 0.08, 1 - phase.surface);
+      const grad = ctx.createLinearGradient(0, surfaceY, 0, height);
+      grad.addColorStop(0, rgba(mixColor(phase.top, phase.bottom, 0.1), 1));
+      grad.addColorStop(0.24, rgba(mixColor(phase.top, phase.bottom, 0.32), 1));
+      grad.addColorStop(1, rgba(phase.bottom, 1));
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, surfaceY, width, height - surfaceY);
+
+      const glow = ctx.createRadialGradient(width * 0.5, surfaceY + height * 0.03, 0, width * 0.5, surfaceY + height * 0.03, width * 0.44);
+      glow.addColorStop(0, `rgba(240, 252, 255, ${0.18 * phase.surface})`);
+      glow.addColorStop(1, "rgba(240, 252, 255, 0)");
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, surfaceY, width, height - surfaceY);
+    }
+
+    function drawAboveSurface(phase) {
+      if (phase.surface <= 0.08) return;
+
+      const surfaceY = lerp(height * 0.18, height * 0.08, 1 - phase.surface);
+      const skyHeight = surfaceY + height * 0.06;
+
+      const sky = ctx.createLinearGradient(0, 0, 0, skyHeight);
+      sky.addColorStop(0, `rgba(186, 214, 225, ${0.84 * phase.surface})`);
+      sky.addColorStop(0.56, `rgba(126, 169, 191, ${0.62 * phase.surface})`);
+      sky.addColorStop(1, `rgba(97, 142, 171, ${0.12 * phase.surface})`);
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, width, skyHeight);
+
+      const airMist = ctx.createLinearGradient(0, 0, 0, skyHeight + height * 0.08);
+      airMist.addColorStop(0, `rgba(248, 252, 255, ${0.18 * phase.surface})`);
+      airMist.addColorStop(1, "rgba(248, 252, 255, 0)");
+      ctx.fillStyle = airMist;
+      ctx.fillRect(0, 0, width, skyHeight + height * 0.08);
+
+      ctx.fillStyle = `rgba(255,255,255,${0.08 * phase.surface})`;
+      ctx.fillRect(0, surfaceY - 20, width, 20);
+
+      const boatX = width * 0.14;
+      const boatY = surfaceY - 6;
+      const boatScale = width < 900 ? 0.72 : 1;
+
+      ctx.save();
+      ctx.translate(boatX, boatY);
+      ctx.scale(boatScale, boatScale);
+      ctx.globalAlpha = 0.66 * phase.surface;
+      ctx.fillStyle = "rgba(15, 27, 35, 0.9)";
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(68, 0);
+      ctx.lineTo(56, 12);
+      ctx.lineTo(8, 12);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillRect(20, -18, 10, 18);
+      ctx.fillRect(26, -34, 2, 16);
+      ctx.beginPath();
+      ctx.moveTo(28, -34);
+      ctx.lineTo(44, -28);
+      ctx.lineTo(28, -22);
+      ctx.closePath();
+      ctx.fill();
+
+      const lamp = ctx.createRadialGradient(54, -1, 0, 54, -1, 28);
+      lamp.addColorStop(0, `rgba(255, 233, 169, ${0.52 * phase.surface})`);
+      lamp.addColorStop(1, "rgba(255, 233, 169, 0)");
+      ctx.fillStyle = lamp;
+      ctx.beginPath();
+      ctx.arc(54, -1, 28, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawSurface(phase) {
+      const surfaceY = lerp(height * 0.18, height * 0.08, 1 - phase.surface);
+      ctx.fillStyle = `rgba(62, 116, 145, ${0.26 * phase.surface})`;
+      ctx.fillRect(0, surfaceY, width, height * 0.045);
+
+      ctx.fillStyle = `rgba(236, 250, 255, ${0.9 * phase.surface})`;
+      ctx.fillRect(0, surfaceY, width, 2);
+
+      ctx.strokeStyle = `rgba(228, 247, 255, ${0.18 + phase.surface * 0.2})`;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      for (let x = 0; x <= width; x += 10) {
+        const y = surfaceY + Math.sin(x * 0.014 + time * 1.6) * 2.4 + Math.sin(x * 0.032 + time * 1.2) * 1.2;
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      const glow = ctx.createLinearGradient(0, 0, 0, surfaceY + height * 0.16);
+      glow.addColorStop(0, `rgba(255,255,255,${0.18 * phase.surface})`);
+      glow.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, width, surfaceY + height * 0.16);
+
+      const underFog = ctx.createLinearGradient(0, surfaceY, 0, surfaceY + height * 0.2);
+      underFog.addColorStop(0, `rgba(141, 204, 224, ${0.14 * phase.surface})`);
+      underFog.addColorStop(1, "rgba(141, 204, 224, 0)");
+      ctx.fillStyle = underFog;
+      ctx.fillRect(0, surfaceY, width, height * 0.2);
+    }
+
+    function drawCaustics(phase) {
+      if (phase.caustic <= 0.01) return;
+
+      ctx.save();
+      ctx.globalAlpha = phase.caustic;
+      for (let i = 0; i < 8; i += 1) {
+        const x = ((i / 8) * width + time * 26 + i * 90) % (width + 260) - 140;
+        const y = height * 0.02 + i * 8;
+        const beam = ctx.createLinearGradient(x, y, x + 150, y + height * 0.36);
+        beam.addColorStop(0, "rgba(255,255,255,0)");
+        beam.addColorStop(0.5, `rgba(223, 247, 255, ${0.08 + phase.surface * 0.1})`);
+        beam.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.fillStyle = beam;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + 60, y);
+        ctx.lineTo(x + 220, y + height * 0.4);
+        ctx.lineTo(x + 160, y + height * 0.4);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawSilt(phase) {
+      for (const mote of silt) {
+        mote.y += mote.speed + phase.current * 0.25;
+        mote.x += Math.sin(time * 0.5 + mote.y * 0.01) * mote.drift * phase.current;
+        if (mote.y > height + 12) {
+          mote.y = -12;
+          mote.x = Math.random() * width;
+        }
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(206, 232, 241, ${mote.alpha + phase.silt * 0.08})`;
+        ctx.arc(mote.x, mote.y, mote.r + phase.silt * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawFishSchool(phase) {
+      if (phase.current <= 0.22) return;
+      ctx.save();
+      ctx.strokeStyle = `rgba(190, 227, 240, ${0.08 + phase.current * 0.16})`;
+      ctx.lineWidth = 1;
+      for (const item of fish) {
+        item.x += item.speed + phase.current * 0.25;
+        if (item.x > width + item.size * 2) item.x = -item.size * 2;
+        const y = item.y + Math.sin(time * 0.9 + item.phase) * 10;
+        ctx.beginPath();
+        ctx.moveTo(item.x - item.size, y);
+        ctx.quadraticCurveTo(item.x, y - item.size * 0.45, item.x + item.size, y);
+        ctx.quadraticCurveTo(item.x, y + item.size * 0.45, item.x - item.size, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawWhale(phase, local) {
+      if (phase.whale <= 0.02) return;
+
+      const alpha = phase.whale * 0.3;
+      const scale = width < 900 ? 0.62 : 0.88;
+      const x = width * (0.82 - local * 0.18) + Math.sin(time * 0.15) * 28;
+      const y = height * 0.48 + Math.sin(time * 0.25) * 16;
+
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+      ctx.fillStyle = `rgba(8, 23, 35, ${alpha})`;
+
+      ctx.beginPath();
+      ctx.moveTo(-190, 6);
+      ctx.bezierCurveTo(-160, -28, -92, -58, 6, -54);
+      ctx.bezierCurveTo(116, -50, 186, -14, 208, 10);
+      ctx.bezierCurveTo(194, 34, 132, 58, 36, 62);
+      ctx.bezierCurveTo(-68, 68, -150, 42, -190, 6);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(202, 8);
+      ctx.lineTo(270, -26);
+      ctx.lineTo(242, 8);
+      ctx.lineTo(270, 42);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(-32, 10);
+      ctx.quadraticCurveTo(22, 52, 64, 66);
+      ctx.quadraticCurveTo(24, 32, -10, 8);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(28, -46);
+      ctx.quadraticCurveTo(52, -78, 84, -82);
+      ctx.quadraticCurveTo(68, -54, 34, -34);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawWreckSample(phase) {
+      if (phase.wreck <= 0.02) return;
+      const alpha = phase.wreck;
+      const left = width * 0.08;
+      const top = height * 0.5;
+      const w = width * 0.34;
+      const h = height * 0.32;
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = "rgba(11, 24, 34, 0.74)";
+      ctx.beginPath();
+      ctx.moveTo(left, top + h * 0.9);
+      ctx.bezierCurveTo(left + w * 0.04, top + h * 0.16, left + w * 0.28, top, left + w * 0.68, top + h * 0.08);
+      ctx.bezierCurveTo(left + w * 0.96, top + h * 0.14, left + w * 1.06, top + h * 0.32, left + w, top + h);
+      ctx.lineTo(left + w * 0.18, top + h);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(146, 182, 194, 0.22)";
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 5; i += 1) {
+        const x = left + w * (0.18 + i * 0.14);
+        ctx.beginPath();
+        ctx.moveTo(x, top + h * 0.14);
+        ctx.quadraticCurveTo(x - 10, top + h * 0.56, x - 4, top + h * 0.95);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = "rgba(108, 208, 185, 0.28)";
+      for (let i = 0; i < 4; i += 1) {
+        const baseX = left + w * (0.44 + i * 0.1);
+        ctx.beginPath();
+        ctx.moveTo(baseX, top + h * 0.78);
+        ctx.bezierCurveTo(baseX + 18, top + h * 0.6, baseX + 28, top + h * 0.45, baseX + 48, top + h * 0.26);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawArchiveBelts(phase) {
+      if (phase.belts <= 0.02) return;
+      const alpha = phase.belts;
+      const beltY = height * 0.42;
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = "rgba(170, 215, 234, 0.18)";
+      ctx.lineWidth = 1.5;
+
+      for (let row = 0; row < 3; row += 1) {
+        const y = beltY + row * 70;
+        ctx.beginPath();
+        ctx.moveTo(width * 0.18, y);
+        ctx.quadraticCurveTo(width * 0.5, y - 26, width * 0.84, y + 8);
+        ctx.stroke();
+
+        for (let i = 0; i < 9; i += 1) {
+          const x = width * 0.2 + i * width * 0.07;
+          ctx.fillStyle = `rgba(198, 232, 246, ${0.06 + alpha * 0.1})`;
+          ctx.fillRect(x, y - 8, 34, 16);
+        }
+      }
+      ctx.restore();
+    }
+
+    function drawObservatory(phase) {
+      if (phase.observatory <= 0.02) return;
+      const alpha = phase.observatory;
+      const cx = width * 0.78;
+      const cy = height * 0.32;
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+
+      ctx.fillStyle = "rgba(11, 22, 31, 0.74)";
+      ctx.beginPath();
+      ctx.arc(cx, cy, 58, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(236, 229, 172, 0.34)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx - 12, cy + 58);
+      ctx.lineTo(cx - 62, cy + 132);
+      ctx.moveTo(cx + 12, cy + 58);
+      ctx.lineTo(cx + 62, cy + 132);
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(147, 224, 255, 0.26)";
+      for (let ring = 0; ring < 3; ring += 1) {
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, 84 + ring * 28, 22 + ring * 8, -0.3, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      const beam = ctx.createRadialGradient(cx, cy, 4, cx, cy, 70);
+      beam.addColorStop(0, "rgba(250, 244, 193, 0.24)");
+      beam.addColorStop(1, "rgba(250, 244, 193, 0)");
+      ctx.fillStyle = beam;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 72, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawRuins(phase) {
+      if (phase.ruins <= 0.02) return;
+      const alpha = phase.ruins;
+      const baseY = height * 0.82;
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+
+      ctx.fillStyle = "rgba(10, 20, 28, 0.78)";
+      ctx.beginPath();
+      ctx.moveTo(0, baseY + 34);
+      for (let x = 0; x <= width; x += 16) {
+        const y = baseY + Math.sin(x * 0.012 + time * 0.1) * 10 + Math.sin(x * 0.033) * 7;
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(width, height);
+      ctx.lineTo(0, height);
+      ctx.closePath();
+      ctx.fill();
+
+      const ruins = [
+        { x: width * 0.64, w: 68, h: 120 },
+        { x: width * 0.74, w: 94, h: 158 },
+        { x: width * 0.86, w: 56, h: 104 }
+      ];
+
+      ctx.strokeStyle = "rgba(155, 205, 223, 0.18)";
+      ctx.lineWidth = 2;
+      for (const ruin of ruins) {
+        ctx.fillStyle = "rgba(18, 31, 41, 0.72)";
+        ctx.fillRect(ruin.x, baseY - ruin.h, ruin.w, ruin.h);
+        ctx.clearRect(ruin.x + ruin.w * 0.28, baseY - ruin.h * 0.52, ruin.w * 0.44, ruin.h * 0.52);
+        ctx.strokeRect(ruin.x, baseY - ruin.h, ruin.w, ruin.h);
+      }
+      ctx.restore();
+    }
+
+    function drawSignal(phase) {
+      if (phase.signal <= 0.02) return;
+      const alpha = phase.signal;
+      const cx = width * 0.78;
+      const cy = height * 0.66;
+      ctx.save();
+      ctx.strokeStyle = `rgba(149, 236, 255, ${0.12 + alpha * 0.18})`;
+      ctx.lineWidth = 1.2;
+      for (let i = 0; i < 4; i += 1) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, 14 + i * 18 + Math.sin(time * 1.6) * 2, -Math.PI * 0.28, Math.PI * 0.3);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawLabel(state) {
+      const phaseName = phaseDefs[state.activeIndex].name;
+      const nextName = phaseDefs[Math.min(state.activeIndex + 1, phaseDefs.length - 1)].name;
+      const nextFade = smoothstep(0.56, 0.9, state.local);
+
+      ctx.save();
+      ctx.font = "600 13px Segoe UI, PingFang SC, Microsoft YaHei, sans-serif";
+      ctx.fillStyle = "rgba(221, 241, 248, 0.68)";
+      ctx.letterSpacing = "2px";
+      ctx.fillText(`GLOBAL OCEAN SYSTEM`, 24, 34);
+
+      ctx.font = "600 42px Segoe UI, PingFang SC, Microsoft YaHei, sans-serif";
+      ctx.fillStyle = `rgba(241, 249, 252, ${0.9 - nextFade * 0.4})`;
+      ctx.fillText(phaseName, 24, 82);
+
+      if (nextName !== phaseName) {
+        ctx.font = "500 18px Segoe UI, PingFang SC, Microsoft YaHei, sans-serif";
+        ctx.fillStyle = `rgba(181, 221, 236, ${nextFade * 0.82})`;
+        ctx.fillText(nextName, 28, 112);
+      }
+      ctx.restore();
+    }
+
+    function render() {
+      time += 0.016;
+      const state = getPhaseState();
+      const phase = state.phase;
+
+      drawGradient(phase);
+      drawAboveSurface(phase);
+      drawSurface(phase);
+      drawCaustics(phase);
+      drawSilt(phase);
+      drawFishSchool(phase);
+      drawWhale(phase, state.local);
+      drawWreckSample(phase);
+      drawArchiveBelts(phase);
+      drawObservatory(phase);
+      drawRuins(phase);
+      drawSignal(phase);
+      drawLabel(state);
+
+      requestAnimationFrame(render);
+    }
+
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+    resize();
+    render();
+
+    window.addEventListener("resize", resize);
+  </script>
+</body>
+</html>

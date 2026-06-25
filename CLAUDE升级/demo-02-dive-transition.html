@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>跃入海中转场 — CodeRains 改版</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #020a12; overflow-x: hidden; }
+  #scrollSpace { height: 5000px; position: relative; }
+  #stage {
+    position: sticky; top: 0; width: 100%; height: 100vh;
+    overflow: hidden;
+    background: #031018;
+  }
+  canvas { display: block; position: absolute; inset: 0; }
+  #hud {
+    position: absolute; top: 28px; left: 50%; transform: translateX(-50%);
+    color: rgba(200,230,255,0.8); font-family: 'Georgia','Noto Serif SC',serif;
+    font-size: 22px; letter-spacing: 5px; pointer-events: none;
+    text-shadow: 0 0 24px rgba(80,180,220,0.5);
+    transition: opacity 0.3s;
+  }
+  #prompt {
+    position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+    color: rgba(190,220,240,0.7); font-size: 14px; letter-spacing: 3px;
+    pointer-events: none; transition: opacity 0.3s;
+    text-shadow: 0 0 12px rgba(80,160,200,0.4);
+  }
+  #prompt .arrow { display: block; text-align: center; font-size: 20px; animation: bob 2s ease-in-out infinite; }
+  @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
+  #postDive {
+    min-height: 60vh; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(180deg, #041828 0%, #0a2040 100%);
+    color: #7ab8d8; font-size: 18px; letter-spacing: 3px; text-align: center;
+  }
+  #postDive .card {
+    background: rgba(15,40,70,0.55); backdrop-filter: blur(12px);
+    border: 1px solid rgba(100,190,220,0.25); border-radius: 18px;
+    padding: 48px 56px; max-width: 480px;
+  }
+  #postDive h2 { color: #c8e8f8; margin-bottom: 12px; letter-spacing: 5px; }
+  #postDive p { color: #5a90b0; line-height: 2.2; font-size: 15px; }
+</style>
+</head>
+<body>
+
+<div id="scrollSpace">
+  <div id="stage">
+    <canvas id="c"></canvas>
+    <div id="hud"></div>
+    <div id="prompt">向下滚动 · 跃入海中<span class="arrow">↓</span></div>
+  </div>
+</div>
+<div id="postDive">
+  <div class="card">
+    <h2>Projects · 浅海工作层</h2>
+    <p>你已进入海中<br>项目展示从这里展开<br>—— 浅海折射中的作品集</p>
+  </div>
+</div>
+
+<script>
+(function() {
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const hud = document.getElementById('hud');
+  const prompt = document.getElementById('prompt');
+
+  let W, H;
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = (W = window.innerWidth) * dpr;
+    canvas.height = (H = window.innerHeight) * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // ==================== 滚动进度 ====================
+  function progress() {
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const max = Math.max(document.getElementById('scrollSpace').offsetHeight - H, 1);
+    return Math.min(Math.max(scrollTop / max, 0), 1);
+  }
+
+  // ==================== 四段分镜映射 ====================
+  // 返回 { stage, t, charWorldY, impactIntensity, splashActive }
+  function getStage(prog) {
+    // 起跳准备: 0 - 0.20
+    // 跃出下落: 0.20 - 0.42
+    // 击水入水: 0.42 - 0.55
+    // 水下动作: 0.55 - 1.00
+    const WATER_Y = 0; // 水面世界坐标
+
+    if (prog < 0.20) {
+      // 起跳准备：人物在海面以上平台上
+      const t = prog / 0.20;
+      // 先站立 → 微蹲蓄力 → 弹起
+      const crouch = t < 0.7 ? Math.sin(t / 0.7 * Math.PI) * 18 : Math.sin((t - 0.7) / 0.3 * Math.PI * 0.5) * 18;
+      return {
+        stage: '起跳准备', stageIdx: 0,
+        t: t,
+        charWorldY: -280 + crouch, // 人物在平台上方
+        impactIntensity: 0,
+        splashActive: false,
+        waterDistort: 0,
+      };
+    } else if (prog < 0.42) {
+      // 跃出：身体腾空，加速向水面
+      const t = (prog - 0.20) / 0.22;
+      const eased = t < 0.3 ? (t / 0.3) * (t / 0.3) * 0.3 : 0.3 + (t - 0.3) / 0.7; // ease-in then linear
+      return {
+        stage: '跃  出', stageIdx: 1,
+        t: t,
+        charWorldY: -280 + eased * 270, // -280 → -10
+        impactIntensity: 0,
+        splashActive: false,
+        waterDistort: t > 0.5 ? (t - 0.5) * 2 * 0.3 : 0,
+      };
+    } else if (prog < 0.55) {
+      // 击水：身体突破水面
+      const t = (prog - 0.42) / 0.13;
+      return {
+        stage: '击  水', stageIdx: 2,
+        t: t,
+        charWorldY: -10 + t * 60, // -10 → +50
+        impactIntensity: t < 0.5 ? t * 2 : (1 - t) * 2, // 峰值在 t=0.5
+        splashActive: true,
+        waterDistort: (t < 0.5 ? t * 2 : (1 - t) * 2) * 1.0,
+      };
+    } else {
+      // 水下：下沉 → 游动
+      const t = (prog - 0.55) / 0.45;
+      const sinkEnd = 0.55;
+      let charY;
+      if (t < sinkEnd) {
+        // 下沉阶段
+        const st = t / sinkEnd;
+        charY = 50 + (1 - Math.pow(1 - st, 2)) * 280; // 减速下沉
+      } else {
+        // 游动阶段
+        const st = (t - sinkEnd) / (1 - sinkEnd);
+        charY = 330 + st * 120 + Math.sin(st * Math.PI * 2.5) * 15;
+      }
+      return {
+        stage: t < sinkEnd ? '入水下沉' : '水下潜行',
+        stageIdx: t < sinkEnd ? 3 : 4,
+        t: t,
+        charWorldY: charY,
+        impactIntensity: t < 0.1 ? (1 - t / 0.1) * 0.6 : 0,
+        splashActive: t < 0.15,
+        waterDistort: t < 0.1 ? (1 - t / 0.1) * 0.8 : 0,
+      };
+    }
+  }
+
+  // ==================== 浪花粒子 ====================
+  const splashParts = [];
+  function burstSplash(screenX, screenY, power) {
+    const count = Math.floor(25 + power * 55);
+    for (let i = 0; i < count; i++) {
+      const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * power;
+      const speed = (1.5 + Math.random() * 8) * power;
+      splashParts.push({
+        x: screenX, y: screenY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        size: 1 + Math.random() * 4.5,
+        life: 28 + Math.random() * 50,
+        age: 0,
+        gravity: true,
+      });
+    }
+  }
+
+  // ==================== 气泡 ====================
+  const bubbles = [];
+  function spawnBubble(x, y) {
+    bubbles.push({
+      x: x + (Math.random() - 0.5) * 35,
+      y, vx: (Math.random() - 0.5) * 0.5,
+      vy: -(0.6 + Math.random() * 1.6),
+      size: 1 + Math.random() * 3.5,
+      opacity: 0.12 + Math.random() * 0.3,
+      wobble: Math.random() * Math.PI * 2,
+      ws: 0.03 + Math.random() * 0.07,
+      life: 90 + Math.random() * 200,
+      age: 0,
+    });
+  }
+
+  // ==================== 绘制人物剪影 ====================
+  // 绘制一个中性、姿态清晰的跳水人物（Canvas 路径）
+  function drawDiver(ctx, cx, cy, scale, stageIdx, stageT) {
+    // scale 控制人物大小（屏幕像素）
+    const s = scale;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(s, s);
+
+    // 深色剪影
+    ctx.fillStyle = '#0a1522';
+    ctx.strokeStyle = '#152535';
+    ctx.lineWidth = 0.3 / s;
+
+    // 根据阶段调整身体姿态角度
+    let bodyRot = 0;      // 躯干整体旋转
+    let armFrontAngle = 0;
+    let armBackAngle = 0;
+    let legAngle = 0;
+    let bodyStretch = 1;  // 身体拉伸
+
+    if (stageIdx === 0) {
+      // 起跳准备：站立 → 微蹲 → 手臂后摆准备
+      const prepare = stageT < 0.7 ? stageT / 0.7 : 1;
+      bodyRot = -0.05;
+      armFrontAngle = -0.6 - prepare * 0.6;  // 手臂后摆蓄力
+      armBackAngle = 0.5 + prepare * 0.5;
+      legAngle = prepare * 0.5; // 膝盖弯曲
+      bodyStretch = 1 - prepare * 0.1;
+    } else if (stageIdx === 1) {
+      // 跃出：身体前倾 → 手臂前伸
+      bodyRot = -(0.15 + stageT * 0.55);
+      armFrontAngle = -1.2 - stageT * 0.3;
+      armBackAngle = 1.0 - stageT * 0.4;
+      legAngle = 0.3 - stageT * 0.3;
+      bodyStretch = 1 + stageT * 0.08;
+    } else if (stageIdx === 2) {
+      // 击水：身体拉直，手臂并拢前伸
+      bodyRot = -(0.7 - stageT * 0.65);
+      armFrontAngle = -1.5 + stageT * 0.2;
+      armBackAngle = 0.6 - stageT * 0.5;
+      legAngle = stageT * 0.1;
+      bodyStretch = 1.08;
+    } else {
+      // 水下：流线型，轻微摆动
+      bodyRot = -0.05 + Math.sin(stageT * 8) * 0.03;
+      armFrontAngle = -1.3;
+      armBackAngle = 0.1;
+      legAngle = Math.sin(stageT * 6) * 0.15;
+      bodyStretch = 1.05;
+    }
+
+    ctx.save();
+    ctx.rotate(bodyRot);
+    ctx.scale(1, bodyStretch);
+
+    // --- 头部 ---
+    ctx.beginPath();
+    ctx.arc(0, -55, 12, 0, Math.PI * 2);
+    ctx.fill();
+
+    // --- 颈部 ---
+    ctx.fillRect(-3, -43, 6, 6);
+
+    // --- 躯干（梯形） ---
+    ctx.beginPath();
+    ctx.moveTo(-9, -37);  // 肩左
+    ctx.lineTo(9, -37);   // 肩右
+    ctx.lineTo(7, 10);    // 胯右
+    ctx.lineTo(-7, 10);   // 胯左
+    ctx.closePath();
+    ctx.fill();
+
+    // --- 前伸臂（左臂，伸向前上方） ---
+    ctx.save();
+    ctx.translate(6, -34);
+    ctx.rotate(-0.3 + armFrontAngle);
+    // 上臂
+    ctx.fillRect(-2, -2, 24, 6);
+    // 前臂
+    ctx.translate(22, 0);
+    ctx.rotate(-0.25);
+    ctx.fillRect(-1, -2, 20, 5);
+    // 手掌
+    ctx.translate(18, 0);
+    ctx.fillRect(0, -1.5, 8, 3);
+    ctx.restore();
+
+    // --- 后摆臂（右臂） ---
+    ctx.save();
+    ctx.translate(-6, -34);
+    ctx.rotate(0.3 + armBackAngle);
+    ctx.fillRect(-22, -2, 24, 6);
+    ctx.translate(-22, 0);
+    ctx.rotate(0.3);
+    ctx.fillRect(-18, -2, 18, 5);
+    ctx.translate(-17, 0);
+    ctx.fillRect(-7, -1.5, 7, 3);
+    ctx.restore();
+
+    // --- 左腿 ---
+    ctx.save();
+    ctx.translate(3, 10);
+    ctx.rotate(-0.1 + legAngle);
+    ctx.fillRect(-2, 0, 8, 28);
+    ctx.translate(2, 27);
+    ctx.rotate(legAngle * 0.7);
+    ctx.fillRect(-2, 0, 7, 24);
+    // 脚
+    ctx.translate(1, 22);
+    ctx.fillRect(-2, 0, 9, 4);
+    ctx.restore();
+
+    // --- 右腿 ---
+    ctx.save();
+    ctx.translate(-3, 10);
+    ctx.rotate(0.1 - legAngle);
+    ctx.fillRect(-6, 0, 8, 28);
+    ctx.translate(-2, 27);
+    ctx.rotate(-legAngle * 0.6);
+    ctx.fillRect(-5, 0, 7, 24);
+    ctx.translate(-2, 22);
+    ctx.fillRect(-7, 0, 9, 4);
+    ctx.restore();
+
+    ctx.restore(); // bodyRot + stretch
+    ctx.restore(); // translate + scale
+  }
+
+  // ==================== 渲染 ====================
+  let time = 0;
+  let camY = -200; // 相机世界Y（平滑跟随人物）
+  let prevImpact = 0;
+  let splashScreenX = W/2, splashScreenY = H * 0.6;
+
+  function render(ts) {
+    requestAnimationFrame(render);
+    time = ts * 0.001;
+
+    const prog = progress();
+    const st = getStage(prog);
+
+    // 相机平滑跟随人物
+    const targetCamY = st.charWorldY - H * 0.4;
+    camY += (targetCamY - camY) * 0.06;
+
+    // 水面屏幕位置
+    const waterScreenY = 0 - camY;
+
+    // 人物屏幕位置
+    const charScreenX = W * 0.5 + (st.stageIdx >= 4 ? Math.sin(time * 0.6) * 30 : 0);
+    const charScreenY = st.charWorldY - camY;
+
+    // --- 击水浪花生成 ---
+    const nearWater = Math.abs(st.charWorldY - 0) < 20;
+    if (st.impactIntensity > 0.3 && nearWater && Math.random() < st.impactIntensity) {
+      burstSplash(charScreenX, waterScreenY, st.impactIntensity);
+    }
+    if (st.impactIntensity > prevImpact + 0.15) {
+      burstSplash(charScreenX, waterScreenY, st.impactIntensity);
+    }
+    prevImpact = st.impactIntensity;
+
+    // --- 水下气泡 ---
+    if (st.charWorldY > 10 && frameCount % 3 === 0) {
+      spawnBubble(charScreenX, charScreenY + 30);
+    }
+
+    // ===== 绘制 =====
+    ctx.clearRect(0, 0, W, H);
+
+    // --- 1. 天空（水面以上） ---
+    if (waterScreenY > -20) {
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, Math.max(waterScreenY, 0));
+      skyGrad.addColorStop(0, '#102030');
+      skyGrad.addColorStop(0.3, '#1a3a55');
+      skyGrad.addColorStop(0.7, '#2a5580');
+      skyGrad.addColorStop(1, '#5a90b8');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, W, Math.max(waterScreenY, 0));
+
+      // 远处的云/雾（仅当水面在视野内）
+      if (waterScreenY > 100) {
+        ctx.fillStyle = 'rgba(200,220,240,0.06)';
+        ctx.beginPath();
+        ctx.ellipse(W*0.2, waterScreenY*0.3, W*0.3, 30, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(W*0.7, waterScreenY*0.2, W*0.25, 25, 0, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    // --- 2. 水面波浪 ---
+    if (waterScreenY > -50 && waterScreenY < H + 50) {
+      // 水面下方的蓝色水体
+      const waterGrad = ctx.createLinearGradient(0, Math.max(0, waterScreenY), 0, H);
+      waterGrad.addColorStop(0, 'rgba(20,100,160,0.8)');
+      waterGrad.addColorStop(0.15, 'rgba(8,60,120,0.9)');
+      waterGrad.addColorStop(0.5, 'rgba(3,30,70,0.95)');
+      waterGrad.addColorStop(1, 'rgba(1,12,35,0.98)');
+      ctx.fillStyle = waterGrad;
+      ctx.fillRect(0, Math.max(0, waterScreenY), W, H);
+
+      // 水面波浪线
+      const distort = st.waterDistort;
+      ctx.beginPath();
+      ctx.moveTo(0, waterScreenY);
+      for (let x = 0; x <= W; x += 3) {
+        let wy = waterScreenY;
+        wy += Math.sin(x * 0.006 + time * 0.04) * (6 + distort * 35);
+        wy += Math.sin(x * 0.015 + time * 0.07) * (4 + distort * 20);
+        wy += Math.sin(x * 0.025 + time * 0.03) * (3 + distort * 12);
+        ctx.lineTo(x, wy);
+      }
+      ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+
+      const surfGrad = ctx.createLinearGradient(0, waterScreenY - 40, 0, waterScreenY + 50);
+      surfGrad.addColorStop(0, 'rgba(140,200,230,0.2)');
+      surfGrad.addColorStop(0.35, 'rgba(60,150,200,0.6)');
+      surfGrad.addColorStop(0.55, 'rgba(15,80,140,0.85)');
+      surfGrad.addColorStop(1, 'rgba(2,25,60,0.95)');
+      ctx.fillStyle = surfGrad;
+      ctx.fill();
+
+      // 水面高光
+      ctx.strokeStyle = 'rgba(200,240,255,0.55)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let x = 0; x <= W; x += 3) {
+        let wy = waterScreenY;
+        wy += Math.sin(x * 0.006 + time * 0.04) * (6 + distort * 35);
+        wy += Math.sin(x * 0.015 + time * 0.07) * (4 + distort * 20);
+        wy += Math.sin(x * 0.025 + time * 0.03) * (3 + distort * 12);
+        if (x === 0) ctx.moveTo(x, wy); else ctx.lineTo(x, wy);
+      }
+      ctx.stroke();
+
+      // 击水白沫
+      if (distort > 0.3 && st.charWorldY < 30 && st.charWorldY > -30) {
+        const foamAlpha = distort * 0.6;
+        ctx.fillStyle = `rgba(240,250,255,${foamAlpha})`;
+        const foamX = charScreenX;
+        const foamY = waterScreenY;
+        for (let f = 0; f < 12; f++) {
+          const fx = foamX + (Math.random() - 0.5) * 80 * distort;
+          const fy = foamY + (Math.random() - 0.5) * 25 * distort;
+          const fr = 5 + Math.random() * 18 * distort;
+          ctx.beginPath();
+          ctx.arc(fx, fy, fr, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // 折射光（浅水区）
+      if (waterScreenY > 0) {
+        for (let r = 0; r < 5; r++) {
+          const rx = W * (0.1 + r * 0.2);
+          const rGrad = ctx.createLinearGradient(0, waterScreenY, 0, waterScreenY + 250);
+          rGrad.addColorStop(0, 'rgba(160,220,250,0.05)');
+          rGrad.addColorStop(0.7, 'rgba(100,180,220,0.02)');
+          rGrad.addColorStop(1, 'transparent');
+          ctx.fillStyle = rGrad;
+          ctx.fillRect(rx - 15, waterScreenY, 30 + Math.sin(r * 2) * 20, Math.min(250, H - waterScreenY));
+        }
+      }
+    }
+
+    // --- 3. 浪花粒子 ---
+    for (let i = splashParts.length - 1; i >= 0; i--) {
+      const p = splashParts[i];
+      p.age++;
+      if (p.age > p.life) { splashParts.splice(i, 1); continue; }
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.gravity) p.vy += 0.18;
+      const fade = Math.max(0, 1 - p.age / p.life);
+      ctx.fillStyle = `rgba(210,235,255,${fade * 0.85})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * fade, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // --- 4. 人物剪影 ---
+    const charScale = 0.95 + (st.stageIdx >= 3 ? 0.06 : 0);
+    drawDiver(ctx, charScreenX, charScreenY, charScale, st.stageIdx, st.t);
+
+    // 人物入水后的折射效果（水下部分变浅）
+    if (st.charWorldY > -15) {
+      const waterline = waterScreenY;
+      const submerged = st.charWorldY - 0;
+      if (submerged > 0 && waterline < H) {
+        // 人物下半部分变淡（折射）
+        ctx.fillStyle = `rgba(80,180,220,${Math.min(0.2, submerged * 0.002)})`;
+        ctx.fillRect(charScreenX - 30, Math.max(0, waterline), 60, Math.min(H - waterline, 100));
+      }
+    }
+
+    // --- 5. 气泡 ---
+    for (let i = bubbles.length - 1; i >= 0; i--) {
+      const b = bubbles[i];
+      b.age++;
+      if (b.age > b.life || b.y < -15) { bubbles.splice(i, 1); continue; }
+      b.y += b.vy;
+      b.x += b.vx + Math.sin(time * 60 * b.ws + b.wobble) * 0.4;
+      const fade = b.age < 15 ? b.age/15 : Math.max(0, 1 - (b.age-15)/(b.life-15));
+      const alpha = b.opacity * fade;
+      ctx.strokeStyle = `rgba(180,225,245,${alpha})`;
+      ctx.lineWidth = 0.6;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.size, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // --- 6. HUD ---
+    hud.textContent = st.stage;
+    prompt.style.opacity = prog < 0.04 ? 1 : Math.max(0, 1 - prog / 0.04);
+
+    if (st.stageIdx >= 2 && st.stageIdx < 4) {
+      hud.style.color = 'rgba(140,220,255,0.9)';
+    } else if (st.stageIdx >= 4) {
+      hud.style.color = 'rgba(100,180,220,0.8)';
+    } else {
+      hud.style.color = 'rgba(200,230,255,0.8)';
+    }
+
+    frameCount++;
+  }
+
+  let frameCount = 0;
+  resize();
+  requestAnimationFrame(render);
+
+  console.log('🏊 跃入海中转场 v2 已启动');
+  console.log('   四段分镜：起跳准备 → 跃出 → 击水 → 入水下沉/潜行');
+})();
+</script>
+</body>
+</html>

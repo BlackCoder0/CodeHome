@@ -45,3 +45,12 @@ next-env.d.ts
 !docs/_next/static/
 !docs/_next/static/css/
 !docs/_next/static/chunks/
+
+# 3D模型资产 (体积过大，不适合Git追踪)
+*.glb
+*.fbx
+*.blend
+*.obj
+*.max
+*.3ds
+*.dae

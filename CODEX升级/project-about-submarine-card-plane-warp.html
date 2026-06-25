@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About Submarine Card Plane Warp Validator</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --panel-bg: rgba(7, 15, 28, 0.9);
+      --panel-border: rgba(157, 204, 255, 0.22);
+      --accent: #79bbff;
+      --accent-strong: #bfe0ff;
+      --card-shadow: 0 18px 38px rgba(0, 0, 0, 0.42);
+      --grid-line: rgba(145, 197, 255, 0.18);
+      --plane-fill: rgba(122, 176, 232, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(92, 147, 216, 0.15), transparent 28%),
+        linear-gradient(180deg, #030814 0%, #071427 42%, #08111c 100%);
+      color: #edf5ff;
+      overflow: hidden;
+    }
+
+    .app {
+      position: relative;
+      min-height: 100vh;
+    }
+
+    .stage-shell,
+    .controls {
+      border: 1px solid var(--panel-border);
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      border-radius: 18px;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+    }
+
+    .stage-shell {
+      position: relative;
+      min-height: 100vh;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border: 0;
+      border-radius: 0;
+      background:
+        radial-gradient(circle at 20% 16%, rgba(53, 112, 156, 0.28), transparent 28%),
+        radial-gradient(circle at 80% 10%, rgba(29, 80, 125, 0.22), transparent 20%),
+        linear-gradient(180deg, #112a40 0%, #082033 40%, #04111d 72%, #020812 100%);
+      box-shadow: none;
+    }
+
+    .stage-meta {
+      position: absolute;
+      left: 18px;
+      top: 18px;
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+      max-width: min(760px, calc(100vw - 400px));
+      padding: 12px 14px;
+      border: 1px solid rgba(200, 223, 235, 0.18);
+      border-radius: 18px;
+      background: rgba(5, 14, 22, 0.36);
+      backdrop-filter: blur(12px);
+    }
+
+    .stage-meta h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .stage-meta p {
+      margin: 4px 0 0;
+      font-size: 13px;
+      color: rgba(228, 240, 255, 0.72);
+    }
+
+    .hint-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .hint-pill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(170, 214, 255, 0.18);
+      background: rgba(111, 165, 230, 0.12);
+      font-size: 12px;
+      color: rgba(234, 245, 255, 0.88);
+    }
+
+    .stage {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+      background-color: #04101b;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+    }
+
+    .stage::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 22% 18%, rgba(196, 228, 255, 0.16), transparent 20%),
+        radial-gradient(circle at 74% 22%, rgba(255, 216, 150, 0.08), transparent 18%),
+        linear-gradient(180deg, rgba(2, 10, 18, 0.04), rgba(3, 12, 20, 0.36));
+    }
+
+    .board {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 420px;
+      height: 620px;
+      transform-origin: 0 0;
+      transform-style: preserve-3d;
+      overflow: visible;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .board-surface {
+      position: absolute;
+      inset: 0;
+      border: 1px dashed rgba(193, 227, 255, 0.58);
+      background:
+        linear-gradient(0deg, transparent 0, transparent calc(100% - 1px), var(--grid-line) calc(100% - 1px), var(--grid-line) 100%),
+        linear-gradient(90deg, transparent 0, transparent calc(100% - 1px), var(--grid-line) calc(100% - 1px), var(--grid-line) 100%),
+        linear-gradient(180deg, rgba(173, 216, 255, 0.06), rgba(112, 162, 220, 0.08)),
+        var(--plane-fill);
+      background-size: 10% 10%, 10% 10%, 100% 100%, 100% 100%;
+      border-radius: 4px;
+      box-shadow:
+        0 0 0 1px rgba(188, 223, 255, 0.08) inset,
+        0 16px 44px rgba(0, 0, 0, 0.28);
+      pointer-events: none;
+    }
+
+    .board-surface.is-hidden {
+      opacity: 0;
+    }
+
+    .board-label {
+      position: absolute;
+      left: 12px;
+      top: 12px;
+      z-index: 1;
+      padding: 5px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(182, 220, 255, 0.28);
+      background: rgba(4, 14, 24, 0.48);
+      color: rgba(235, 245, 255, 0.74);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+
+    .card {
+      position: absolute;
+      width: 82px;
+      height: 136px;
+      border: 1px solid rgba(228, 242, 255, 0.65);
+      border-radius: 10px;
+      background: rgba(7, 17, 28, 0.42);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .card:active {
+      cursor: grabbing;
+    }
+
+    .card img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      pointer-events: none;
+    }
+
+    .card-name {
+      position: absolute;
+      left: 6px;
+      right: 6px;
+      bottom: 6px;
+      padding: 4px 6px;
+      border-radius: 6px;
+      background: rgba(5, 10, 18, 0.62);
+      font-size: 10px;
+      line-height: 1.2;
+      text-align: center;
+      letter-spacing: 0.03em;
+      pointer-events: none;
+    }
+
+    .handle,
+    .center-handle {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      margin-left: -9px;
+      margin-top: -9px;
+      border-radius: 50%;
+      border: 2px solid rgba(230, 242, 255, 0.92);
+      background: rgba(110, 175, 245, 0.86);
+      box-shadow: 0 0 0 5px rgba(95, 157, 230, 0.16);
+      cursor: pointer;
+      z-index: 50;
+      touch-action: none;
+    }
+
+    .center-handle {
+      width: 22px;
+      height: 22px;
+      margin-left: -11px;
+      margin-top: -11px;
+      background: rgba(248, 202, 124, 0.95);
+      border-color: rgba(255, 244, 221, 0.95);
+      box-shadow: 0 0 0 6px rgba(255, 203, 103, 0.16);
+    }
+
+    .controls {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      bottom: 18px;
+      width: 340px;
+      z-index: 70;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-width: 0;
+      overflow: auto;
+      background: rgba(7, 15, 28, 0.84);
+    }
+
+    .controls h2 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .panel-block {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(160, 204, 255, 0.14);
+      background: rgba(8, 16, 28, 0.5);
+    }
+
+    .panel-block p,
+    .panel-block label,
+    .panel-block span,
+    .panel-block li {
+      font-size: 13px;
+      color: rgba(230, 240, 255, 0.82);
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    button,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button,
+    select {
+      border: 1px solid rgba(178, 220, 255, 0.2);
+      border-radius: 10px;
+      background: rgba(107, 164, 231, 0.12);
+      color: #eff7ff;
+      padding: 9px 12px;
+    }
+
+    button {
+      cursor: pointer;
+      transition: background 0.18s ease, transform 0.18s ease;
+    }
+
+    button:hover,
+    select:hover {
+      background: rgba(125, 183, 248, 0.2);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 190px;
+      resize: vertical;
+      border: 1px solid rgba(178, 220, 255, 0.16);
+      border-radius: 12px;
+      background: rgba(4, 10, 18, 0.82);
+      color: #dcecff;
+      padding: 12px;
+      line-height: 1.45;
+    }
+
+    .list {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .status {
+      font-size: 12px;
+      color: rgba(206, 228, 255, 0.68);
+    }
+
+    @media (max-width: 1180px) {
+      .stage-meta {
+        max-width: calc(100vw - 36px);
+      }
+
+      .controls {
+        top: auto;
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        width: auto;
+        max-height: 42vh;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .stage-meta {
+        top: 12px;
+        left: 12px;
+        right: 12px;
+        max-width: none;
+      }
+
+      .stage-meta h1 {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="stage-shell">
+      <div class="stage-meta">
+        <div>
+          <h1>About 潜艇房间卡片平面透视验证</h1>
+          <p>已按 `about-submarine-room-validation.tsx` 的全屏背景方式对齐。现在导出的坐标可直接回填。</p>
+        </div>
+        <div class="hint-row">
+          <span class="hint-pill">拖蓝点 = 拉四角</span>
+          <span class="hint-pill">拖黄点 = 整板移动</span>
+          <span class="hint-pill">拖卡片 = 重排位置</span>
+        </div>
+      </div>
+
+      <div id="stage" class="stage">
+        <div id="board" class="board">
+          <div id="boardSurface" class="board-surface"></div>
+          <div class="board-label">Upright Plane</div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="controls">
+      <h2>验证控制</h2>
+
+      <div class="panel-block">
+        <div class="row">
+          <label for="bgSelect">背景图</label>
+          <select id="bgSelect">
+            <option value="../舱室开灯.png">舱室开灯</option>
+            <option value="../舱室关灯.png">舱室关灯</option>
+          </select>
+        </div>
+        <div class="row">
+          <button type="button" id="togglePlane">隐藏平面底图</button>
+          <button type="button" id="resetPlane">重置平面</button>
+          <button type="button" id="resetCards">重置卡片</button>
+          <button type="button" id="randomizeCards">随机散开</button>
+        </div>
+        <div class="row">
+          <button type="button" id="scaleDown">整板缩小</button>
+          <button type="button" id="scaleUp">整板放大</button>
+        </div>
+        <div class="status" id="statusText">就绪</div>
+      </div>
+
+      <div class="panel-block">
+        <span>建议流程</span>
+        <ol class="list">
+          <li>先保持平面直立，把服装卡片摆到满意。</li>
+          <li>再拖四角，让整个平面贴合您想要的透视面。</li>
+          <li>不够就拖黄色中心点整体平移，再微调四角。</li>
+          <li>满意后复制右侧导出，优先用 `复制 TS 配置` 直接回填。</li>
+        </ol>
+      </div>
+
+      <div class="panel-block">
+        <div class="row">
+          <button type="button" id="refreshExport">刷新导出</button>
+          <button type="button" id="copyExport">复制配置</button>
+          <button type="button" id="copyTsExport">复制 TS 配置</button>
+        </div>
+        <textarea id="exportBox" spellcheck="false"></textarea>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    const stage = document.getElementById("stage");
+    const board = document.getElementById("board");
+    const boardSurface = document.getElementById("boardSurface");
+    const bgSelect = document.getElementById("bgSelect");
+    const exportBox = document.getElementById("exportBox");
+    const statusText = document.getElementById("statusText");
+    const togglePlaneButton = document.getElementById("togglePlane");
+    const resetPlaneButton = document.getElementById("resetPlane");
+    const resetCardsButton = document.getElementById("resetCards");
+    const randomizeCardsButton = document.getElementById("randomizeCards");
+    const refreshExportButton = document.getElementById("refreshExport");
+    const copyExportButton = document.getElementById("copyExport");
+    const copyTsExportButton = document.getElementById("copyTsExport");
+    const scaleUpButton = document.getElementById("scaleUp");
+    const scaleDownButton = document.getElementById("scaleDown");
+
+    const boardSize = { width: 420, height: 620 };
+    const cardsSeed = [
+      { id: "oc1", name: "初始之服", src: "../public/assets/oc/oc1.png" },
+      { id: "oc2", name: "旗袍", src: "../public/assets/oc/oc2.png" },
+      { id: "oc3", name: "泳装", src: "../public/assets/oc/oc3.png" },
+      { id: "oc4", name: "黑客服", src: "../public/assets/oc/oc4.png" },
+      { id: "oc5", name: "赛车服", src: "../public/assets/oc/oc5.png" },
+      { id: "oc6", name: "校服", src: "../public/assets/oc/oc6.png" },
+      { id: "oc7", name: "礼服", src: "../public/assets/oc/oc7.png" },
+      { id: "oc8", name: "实验服", src: "../public/assets/oc/oc8.png" }
+    ];
+
+    let corners = [];
+    let handles = [];
+    let centerHandle = null;
+    let cards = [];
+    let zCounter = 10;
+    let transformMatrix = null;
+    let inverseMatrix = null;
+    let planeVisible = true;
+    let lastStageRect = null;
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function solveLinearSystem(matrix, vector) {
+      const size = vector.length;
+      const a = matrix.map((row, rowIndex) => [...row, vector[rowIndex]]);
+
+      for (let pivot = 0; pivot < size; pivot += 1) {
+        let maxRow = pivot;
+        for (let row = pivot + 1; row < size; row += 1) {
+          if (Math.abs(a[row][pivot]) > Math.abs(a[maxRow][pivot])) {
+            maxRow = row;
+          }
+        }
+
+        if (Math.abs(a[maxRow][pivot]) < 1e-10) {
+          return null;
+        }
+
+        if (maxRow !== pivot) {
+          [a[pivot], a[maxRow]] = [a[maxRow], a[pivot]];
+        }
+
+        const pivotValue = a[pivot][pivot];
+        for (let col = pivot; col <= size; col += 1) {
+          a[pivot][col] /= pivotValue;
+        }
+
+        for (let row = 0; row < size; row += 1) {
+          if (row === pivot) {
+            continue;
+          }
+          const factor = a[row][pivot];
+          for (let col = pivot; col <= size; col += 1) {
+            a[row][col] -= factor * a[pivot][col];
+          }
+        }
+      }
+
+      return a.map((row) => row[size]);
+    }
+
+    function computeHomography(source, destination) {
+      const matrix = [];
+      const vector = [];
+
+      for (let index = 0; index < 4; index += 1) {
+        const [x, y] = source[index];
+        const [X, Y] = destination[index];
+
+        matrix.push([x, y, 1, 0, 0, 0, -x * X, -y * X]);
+        vector.push(X);
+        matrix.push([0, 0, 0, x, y, 1, -x * Y, -y * Y]);
+        vector.push(Y);
+      }
+
+      const solution = solveLinearSystem(matrix, vector);
+      if (!solution) {
+        return null;
+      }
+
+      return [
+        solution[0], solution[1], solution[2],
+        solution[3], solution[4], solution[5],
+        solution[6], solution[7], 1
+      ];
+    }
+
+    function invert3x3(matrix) {
+      const [a, b, c, d, e, f, g, h, i] = matrix;
+      const A = e * i - f * h;
+      const B = -(d * i - f * g);
+      const C = d * h - e * g;
+      const D = -(b * i - c * h);
+      const E = a * i - c * g;
+      const F = -(a * h - b * g);
+      const G = b * f - c * e;
+      const H = -(a * f - c * d);
+      const I = a * e - b * d;
+      const determinant = a * A + b * B + c * C;
+
+      if (Math.abs(determinant) < 1e-10) {
+        return null;
+      }
+
+      return [
+        A / determinant, D / determinant, G / determinant,
+        B / determinant, E / determinant, H / determinant,
+        C / determinant, F / determinant, I / determinant
+      ];
+    }
+
+    function matrixToCss(matrix) {
+      return "matrix3d(" + [
+        matrix[0], matrix[3], 0, matrix[6],
+        matrix[1], matrix[4], 0, matrix[7],
+        0, 0, 1, 0,
+        matrix[2], matrix[5], 0, matrix[8]
+      ].join(",") + ")";
+    }
+
+    function projectPoint(matrix, x, y) {
+      const denominator = matrix[6] * x + matrix[7] * y + matrix[8];
+      return {
+        x: (matrix[0] * x + matrix[1] * y + matrix[2]) / denominator,
+        y: (matrix[3] * x + matrix[4] * y + matrix[5]) / denominator
+      };
+    }
+
+    function stagePointFromEvent(event) {
+      const rect = stage.getBoundingClientRect();
+      return {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top
+      };
+    }
+
+    function localPointFromStage(point) {
+      if (!inverseMatrix) {
+        return { x: 0, y: 0 };
+      }
+      return projectPoint(inverseMatrix, point.x, point.y);
+    }
+
+    function createHandle(className) {
+      const handle = document.createElement("div");
+      handle.className = className;
+      stage.appendChild(handle);
+      return handle;
+    }
+
+    function createCard(cardData, index) {
+      const element = document.createElement("div");
+      element.className = "card";
+      element.dataset.cardId = cardData.id;
+
+      const image = document.createElement("img");
+      image.src = cardData.src;
+      image.alt = cardData.name;
+
+      const label = document.createElement("div");
+      label.className = "card-name";
+      label.textContent = cardData.name;
+
+      element.appendChild(image);
+      element.appendChild(label);
+      board.appendChild(element);
+
+      const column = index % 2;
+      const row = Math.floor(index / 2);
+      return {
+        id: cardData.id,
+        name: cardData.name,
+        element,
+        x: 18 + column * 98,
+        y: 22 + row * 148,
+        width: 82,
+        height: 136,
+        rotation: Math.round(-20 + Math.random() * 40),
+        z: ++zCounter
+      };
+    }
+
+    function applyCardStyles() {
+      cards.forEach((card) => {
+        card.element.style.left = card.x + "px";
+        card.element.style.top = card.y + "px";
+        card.element.style.zIndex = String(card.z);
+        card.element.style.transform = "rotate(" + card.rotation + "deg)";
+      });
+    }
+
+    function updateHandles() {
+      corners.forEach((corner, index) => {
+        const handle = handles[index];
+        handle.style.left = corner.x + "px";
+        handle.style.top = corner.y + "px";
+      });
+
+      const center = corners.reduce(
+        (accumulator, corner) => ({
+          x: accumulator.x + corner.x / 4,
+          y: accumulator.y + corner.y / 4
+        }),
+        { x: 0, y: 0 }
+      );
+
+      centerHandle.style.left = center.x + "px";
+      centerHandle.style.top = center.y + "px";
+    }
+
+    function updateBoardTransform() {
+      const source = [
+        [0, 0],
+        [boardSize.width, 0],
+        [boardSize.width, boardSize.height],
+        [0, boardSize.height]
+      ];
+      const destination = corners.map((corner) => [corner.x, corner.y]);
+      const homography = computeHomography(source, destination);
+
+      if (!homography) {
+        statusText.textContent = "当前四角无法形成有效平面，请重新拖拽。";
+        return;
+      }
+
+      transformMatrix = homography;
+      inverseMatrix = invert3x3(homography);
+      board.style.transform = matrixToCss(homography);
+      updateHandles();
+      exportState();
+      statusText.textContent = "已更新平面。";
+    }
+
+    function exportState() {
+      const payload = {
+        boardSize,
+        corners: corners.map((corner) => ({
+          x: Number(corner.x.toFixed(2)),
+          y: Number(corner.y.toFixed(2))
+        })),
+        cards: cards.map((card) => ({
+          id: card.id,
+          x: Number(card.x.toFixed(2)),
+          y: Number(card.y.toFixed(2)),
+          rotation: Number(card.rotation.toFixed(2)),
+          z: card.z
+        }))
+      };
+      exportBox.value = JSON.stringify(payload, null, 2);
+      exportBox.dataset.tsExport =
+`const floorBoardConfig = ${JSON.stringify(payload, null, 2)};`;
+    }
+
+    function resetPlane() {
+      const width = stage.clientWidth;
+      const height = stage.clientHeight;
+      corners = [
+        { x: width * 0.57, y: height * 0.18 },
+        { x: width * 0.87, y: height * 0.18 },
+        { x: width * 0.87, y: height * 0.88 },
+        { x: width * 0.57, y: height * 0.88 }
+      ];
+      updateBoardTransform();
+    }
+
+    function resetCards() {
+      cards.forEach((card, index) => {
+        const column = index % 2;
+        const row = Math.floor(index / 2);
+        card.x = 18 + column * 98;
+        card.y = 22 + row * 148;
+        card.rotation = Math.round(-20 + Math.random() * 40);
+        card.z = ++zCounter;
+      });
+      applyCardStyles();
+      exportState();
+      statusText.textContent = "已重置卡片。";
+    }
+
+    function overlapArea(a, b) {
+      const left = Math.max(a.x, b.x);
+      const top = Math.max(a.y, b.y);
+      const right = Math.min(a.x + a.width, b.x + b.width);
+      const bottom = Math.min(a.y + a.height, b.y + b.height);
+      return Math.max(0, right - left) * Math.max(0, bottom - top);
+    }
+
+    function randomizeCards() {
+      const placed = [];
+      const padding = 3;
+      const maxOverlap = 1080;
+      const clusters = [
+        { x: 0.18, y: 0.18 },
+        { x: 0.7, y: 0.18 },
+        { x: 0.2, y: 0.58 },
+        { x: 0.7, y: 0.62 },
+        { x: 0.46, y: 0.36 }
+      ];
+
+      cards.forEach((card, index) => {
+        let chosen = null;
+
+        for (let attempt = 0; attempt < 260; attempt += 1) {
+          const cluster = clusters[Math.floor(Math.random() * clusters.length)];
+          const preferCluster = attempt < 190;
+          const spreadX = preferCluster ? 110 + Math.random() * 45 : boardSize.width - card.width - 20;
+          const spreadY = preferCluster ? 130 + Math.random() * 60 : boardSize.height - card.height - 20;
+          const baseX = preferCluster
+            ? cluster.x * boardSize.width - spreadX / 2
+            : 10;
+          const baseY = preferCluster
+            ? cluster.y * boardSize.height - spreadY / 2
+            : 10;
+
+          const candidate = {
+            x: Math.round(
+              clamp(baseX + Math.random() * spreadX, 8, boardSize.width - card.width - 8)
+            ),
+            y: Math.round(
+              clamp(baseY + Math.random() * spreadY, 8, boardSize.height - card.height - 8)
+            ),
+            width: card.width,
+            height: card.height
+          };
+
+          let totalOverlap = 0;
+          let tooClose = false;
+
+          for (const other of placed) {
+            const expanded = {
+              x: other.x - padding,
+              y: other.y - padding,
+              width: other.width + padding * 2,
+              height: other.height + padding * 2
+            };
+            const overlap = overlapArea(candidate, expanded);
+            totalOverlap += overlap;
+            if (overlap > maxOverlap * 1.1) {
+              tooClose = true;
+              break;
+            }
+          }
+
+          if (!tooClose && totalOverlap < maxOverlap * 1.75) {
+            chosen = candidate;
+            break;
+          }
+        }
+
+        if (!chosen) {
+          chosen = {
+            x: 18 + (index % 2) * 98,
+            y: 22 + Math.floor(index / 2) * 148,
+            width: card.width,
+            height: card.height
+          };
+        }
+
+        card.x = chosen.x;
+        card.y = chosen.y;
+        card.rotation = Math.round(-34 + Math.random() * 68);
+        card.z = ++zCounter;
+        placed.push(chosen);
+      });
+
+      applyCardStyles();
+      exportState();
+      statusText.textContent = "已生成较凌乱、低遮挡的随机摆放。";
+    }
+
+    function moveAllCorners(dx, dy) {
+      corners = corners.map((corner) => ({
+        x: corner.x + dx,
+        y: corner.y + dy
+      }));
+      updateBoardTransform();
+    }
+
+    function scaleCorners(factor) {
+      const center = corners.reduce(
+        (accumulator, corner) => ({
+          x: accumulator.x + corner.x / 4,
+          y: accumulator.y + corner.y / 4
+        }),
+        { x: 0, y: 0 }
+      );
+
+      corners = corners.map((corner) => ({
+        x: center.x + (corner.x - center.x) * factor,
+        y: center.y + (corner.y - center.y) * factor
+      }));
+      updateBoardTransform();
+    }
+
+    function bindCornerDragging(handle, index) {
+      handle.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        handle.setPointerCapture(event.pointerId);
+
+        const onMove = (moveEvent) => {
+          const point = stagePointFromEvent(moveEvent);
+          corners[index] = {
+            x: clamp(point.x, 0, stage.clientWidth),
+            y: clamp(point.y, 0, stage.clientHeight)
+          };
+          updateBoardTransform();
+        };
+
+        const onUp = () => {
+          window.removeEventListener("pointermove", onMove);
+          window.removeEventListener("pointerup", onUp);
+        };
+
+        window.addEventListener("pointermove", onMove);
+        window.addEventListener("pointerup", onUp);
+      });
+    }
+
+    function bindCenterDragging() {
+      centerHandle.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        centerHandle.setPointerCapture(event.pointerId);
+        let previous = stagePointFromEvent(event);
+
+        const onMove = (moveEvent) => {
+          const point = stagePointFromEvent(moveEvent);
+          moveAllCorners(point.x - previous.x, point.y - previous.y);
+          previous = point;
+        };
+
+        const onUp = () => {
+          window.removeEventListener("pointermove", onMove);
+          window.removeEventListener("pointerup", onUp);
+        };
+
+        window.addEventListener("pointermove", onMove);
+        window.addEventListener("pointerup", onUp);
+      });
+    }
+
+    function bindCardDragging(card) {
+      card.element.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        card.element.setPointerCapture(event.pointerId);
+        card.z = ++zCounter;
+        applyCardStyles();
+
+        const localStart = localPointFromStage(stagePointFromEvent(event));
+        const offsetX = localStart.x - card.x;
+        const offsetY = localStart.y - card.y;
+
+        const onMove = (moveEvent) => {
+          const localPoint = localPointFromStage(stagePointFromEvent(moveEvent));
+        card.x = clamp(localPoint.x - offsetX, 0, boardSize.width - card.width);
+        card.y = clamp(localPoint.y - offsetY, 0, boardSize.height - card.height);
+        applyCardStyles();
+          exportState();
+        };
+
+        const onUp = () => {
+          window.removeEventListener("pointermove", onMove);
+          window.removeEventListener("pointerup", onUp);
+          statusText.textContent = "卡片已移动。";
+        };
+
+        window.addEventListener("pointermove", onMove);
+        window.addEventListener("pointerup", onUp);
+      });
+    }
+
+    function initHandles() {
+      handles = Array.from({ length: 4 }, () => createHandle("handle"));
+      centerHandle = createHandle("center-handle");
+      handles.forEach((handle, index) => bindCornerDragging(handle, index));
+      bindCenterDragging();
+    }
+
+    function initCards() {
+      cards = cardsSeed.map((cardData, index) => createCard(cardData, index));
+      cards.forEach(bindCardDragging);
+      applyCardStyles();
+    }
+
+    function syncStageResize() {
+      const rect = stage.getBoundingClientRect();
+      if (!lastStageRect) {
+        lastStageRect = { width: rect.width, height: rect.height };
+        return;
+      }
+
+      const widthRatio = rect.width / lastStageRect.width;
+      const heightRatio = rect.height / lastStageRect.height;
+      if (!Number.isFinite(widthRatio) || !Number.isFinite(heightRatio)) {
+        return;
+      }
+
+      corners = corners.map((corner) => ({
+        x: corner.x * widthRatio,
+        y: corner.y * heightRatio
+      }));
+
+      lastStageRect = { width: rect.width, height: rect.height };
+      updateBoardTransform();
+    }
+
+    togglePlaneButton.addEventListener("click", () => {
+      planeVisible = !planeVisible;
+      boardSurface.classList.toggle("is-hidden", !planeVisible);
+      togglePlaneButton.textContent = planeVisible ? "隐藏平面底图" : "显示平面底图";
+    });
+
+    resetPlaneButton.addEventListener("click", () => {
+      resetPlane();
+      statusText.textContent = "已重置平面。";
+    });
+
+    resetCardsButton.addEventListener("click", resetCards);
+    randomizeCardsButton.addEventListener("click", randomizeCards);
+    refreshExportButton.addEventListener("click", exportState);
+    scaleUpButton.addEventListener("click", () => scaleCorners(1.04));
+    scaleDownButton.addEventListener("click", () => scaleCorners(0.96));
+
+    copyExportButton.addEventListener("click", async () => {
+      exportState();
+      try {
+        await navigator.clipboard.writeText(exportBox.value);
+        statusText.textContent = "配置已复制。";
+      } catch (error) {
+        statusText.textContent = "复制失败，请手动复制。";
+      }
+    });
+
+    copyTsExportButton.addEventListener("click", async () => {
+      exportState();
+      try {
+        await navigator.clipboard.writeText(exportBox.dataset.tsExport || "");
+        statusText.textContent = "TS 配置已复制。";
+      } catch (error) {
+        statusText.textContent = "复制失败，请手动复制。";
+      }
+    });
+
+    bgSelect.addEventListener("change", () => {
+      stage.style.backgroundImage = 'url("' + bgSelect.value + '")';
+      statusText.textContent = "背景已切换。HTML 现按全屏舞台模拟 validation 页面。";
+    });
+
+    window.addEventListener("resize", syncStageResize);
+
+    stage.style.backgroundImage = 'url("' + bgSelect.value + '")';
+    initHandles();
+    initCards();
+    resetPlane();
+    resetCards();
+    lastStageRect = {
+      width: stage.getBoundingClientRect().width,
+      height: stage.getBoundingClientRect().height
+    };
+    exportState();
+  </script>
+</body>
+</html>

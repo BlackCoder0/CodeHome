@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>海洋深度背景系统 — CodeRains 改版</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #020a12;
+    font-family: 'Georgia', 'Noto Serif SC', 'SimSun', serif;
+    overflow-x: hidden;
+    color: #c8ddf0;
+    cursor: default;
+  }
+
+  /* ===== 固定 Canvas 背景 ===== */
+  #oceanCanvas {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  }
+
+  /* ===== 深度 HUD ===== */
+  #hud {
+    position: fixed; top: 18px; right: 18px; z-index: 100;
+    background: rgba(2,10,18,0.72); backdrop-filter: blur(6px);
+    border: 1px solid rgba(100,180,220,0.3); border-radius: 10px;
+    padding: 12px 16px;
+    font-family: 'Courier New', 'SimHei', monospace; font-size: 12px;
+    line-height: 1.9; pointer-events: none;
+    transition: border-color 0.6s;
+  }
+  #hud .zone { font-size: 18px; font-weight: bold; letter-spacing: 3px; margin-bottom: 2px; }
+  #hud .row { display: flex; justify-content: space-between; gap: 14px; }
+  #hud .row .v { color: #a0d8f0; }
+
+  /* ===== 内容层 ===== */
+  #content { position: relative; z-index: 10; pointer-events: none; }
+  #content > section {
+    height: 100vh; display: flex; align-items: center; justify-content: center;
+  }
+  #content .card {
+    pointer-events: auto;
+    background: rgba(8,22,46,0.5); backdrop-filter: blur(8px);
+    border: 1px solid rgba(100,190,230,0.2); border-radius: 16px;
+    padding: 40px 50px; max-width: 520px; text-align: center;
+    transition: border-color 0.5s, background 0.5s;
+  }
+  #content .card h2 { font-size: 28px; margin-bottom: 8px; letter-spacing: 4px; color: #e0f0ff; }
+  #content .card .sub { font-size: 14px; color: #70a8c8; letter-spacing: 2px; }
+  #content .card .desc { margin-top: 14px; font-size: 13px; color: #5a8aaa; line-height: 2.1; }
+
+  /* 底部 */
+  #footer {
+    position: relative; z-index: 10; text-align: center;
+    padding: 40px; color: rgba(80,140,180,0.4);
+    font-size: 13px; letter-spacing: 2px;
+  }
+
+  /* 提示箭头 */
+  #arrow {
+    position: fixed; bottom: 38px; left: 50%; transform: translateX(-50%); z-index: 100;
+    color: rgba(180,220,240,0.6); font-size: 14px; letter-spacing: 3px;
+    pointer-events: none; transition: opacity 0.4s;
+  }
+  #arrow span { display: block; text-align: center; font-size: 20px; animation: bob 2s ease-in-out infinite; }
+  @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
+</style>
+</head>
+<body>
+
+<canvas id="oceanCanvas"></canvas>
+
+<div id="hud">
+  <div class="zone" id="zoneName">蓝调时刻</div>
+  <div class="row"><span>深度</span><span class="v" id="vD">0.00</span></div>
+  <div class="row"><span>光线</span><span class="v" id="vL">1.00</span></div>
+  <div class="row"><span>颗粒</span><span class="v" id="vM">0.05</span></div>
+  <div class="row"><span>生物</span><span class="v" id="vC">0.05</span></div>
+</div>
+<div id="arrow">向下滚动 · 开始下潜<span>↓</span></div>
+
+<div id="content">
+  <section style="height:130vh"><div class="card">
+    <h2>Intro · 海面</h2>
+    <div class="sub">蓝调时刻 · 远海渔灯</div>
+    <div class="desc">海面微幅起伏 / 湿空气与轻雾<br>渔灯是第一个情绪锚点<br>安静但不空旷</div>
+  </div></section>
+
+  <section><div class="card">
+    <h2>Projects · 浅海</h2>
+    <div class="sub">访客代入式下潜入口</div>
+    <div class="desc">身影跃入海中 / 水波与浪花<br>浅海折射中展开作品<br>输出与身体性同在</div>
+  </div></section>
+
+  <section><div class="card">
+    <h2>Hobbies · 浅中过渡</h2>
+    <div class="sub">混合体打捞舱 + 档案舱</div>
+    <div class="desc">漂浮颗粒更明显 / 偶发荧光<br>舱体残骸在左侧缓慢呼吸<br>右侧是密封的私人记录</div>
+  </div></section>
+
+  <section><div class="card">
+    <h2>Bangumi · 中层海域</h2>
+    <div class="sub">观察档案带</div>
+    <div class="desc">光线更柔更暗 / 水流缓慢<br>卡片像悬浮档案盒沿轨道漂移<br>发光生物偶发掠过</div>
+  </div></section>
+
+  <section><div class="card">
+    <h2>About · 深海</h2>
+    <div class="sub">私人观测室</div>
+    <div class="desc">外部墨蓝近黑 / 内部台灯暖黄<br>远处巨物轮廓偶尔掠过<br>深海中保留宇宙感</div>
+  </div></section>
+
+  <section><div class="card">
+    <h2>Contact · 深渊海底</h2>
+    <div class="sub">前文明遗迹</div>
+    <div class="desc">石质废墟 / 金属骨架 / 裸露电线<br>点阵图腾被重新唤醒<br>回声与信号成为主角</div>
+  </div></section>
+</div>
+<div id="footer">— 海底 · 沉积与静默 —</div>
+
+<script>
+(function() {
+  const canvas = document.getElementById('oceanCanvas');
+  const ctx = canvas.getContext('2d');
+
+  // ============ 深度区间定义 ============
+  const ZONES = [
+    { name: '蓝调时刻', max: 0.08, color: [0.42,0.63,0.78] },
+    { name: '浅海',     max: 0.28, color: [0.25,0.50,0.68] },
+    { name: '浅中过渡', max: 0.48, color: [0.12,0.35,0.55] },
+    { name: '中层海域', max: 0.68, color: [0.05,0.20,0.38] },
+    { name: '深海',     max: 0.88, color: [0.02,0.10,0.22] },
+    { name: '深渊海底', max: 1.00, color: [0.01,0.04,0.10] },
+  ];
+
+  function waterColor(depth) {
+    if (depth <= 0) return ZONES[0].color;
+    for (let i = 0; i < ZONES.length - 1; i++) {
+      if (depth <= ZONES[i].max) {
+        const t = (depth - (i===0?0:ZONES[i-1].max)) / (ZONES[i].max - (i===0?0:ZONES[i-1].max));
+        const a = ZONES[i].color, b = ZONES[Math.min(i+1, ZONES.length-1)].color;
+        return [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t];
+      }
+    }
+    return ZONES[ZONES.length-1].color;
+  }
+
+  function clamp(v,l,h) { return Math.max(l,Math.min(h,v)); }
+  function lerp(a,b,t) { return a+(b-a)*t; }
+
+  // ============ Canvas 尺寸 ============
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio||1, 2);
+    canvas.width = window.innerWidth * dpr;
+    canvas.height = window.innerHeight * dpr;
+    canvas.style.width = window.innerWidth+'px';
+    canvas.style.height = window.innerHeight+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // ============ 渔灯系统 ============
+  const fishingBoats = [];
+  for (let i = 0; i < 6; i++) {
+    fishingBoats.push({
+      x: Math.random() * window.innerWidth,
+      y: 25 + Math.random() * 70,
+      size: 1.5 + Math.random() * 3,
+      intensity: 0.35 + Math.random() * 0.55,
+      flicker: Math.random() * Math.PI * 2,
+      flickerSpeed: 0.04 + Math.random() * 0.08,
+      reflectLen: 30 + Math.random() * 60,
+    });
+  }
+
+  // ============ 鱼群系统 ============
+  const fishSchools = [];
+  function spawnSchool(preferShallow) {
+    const y = preferShallow ? Math.random() * 200 + 50 : 150 + Math.random() * 350;
+    const count = 8 + Math.floor(Math.random() * 18);
+    const school = {
+      fish: [],
+      baseX: Math.random() * window.innerWidth,
+      baseY: y,
+      vx: (Math.random() > 0.5 ? 1 : -1) * (0.3 + Math.random() * 0.7),
+      life: 300 + Math.random() * 500,
+      age: 0,
+    };
+    for (let f = 0; f < count; f++) {
+      school.fish.push({
+        rx: (Math.random() - 0.5) * 80,
+        ry: (Math.random() - 0.5) * 40,
+        size: 3 + Math.random() * 7,
+        phase: Math.random() * Math.PI * 2,
+      });
+    }
+    return school;
+  }
+
+  // ============ 水母 ============
+  const jellyfish = [];
+  function spawnJelly() {
+    return {
+      x: Math.random() * window.innerWidth,
+      y: window.innerHeight + 30,
+      vx: (Math.random() - 0.5) * 0.25,
+      vy: -(0.15 + Math.random() * 0.4),
+      size: 10 + Math.random() * 22,
+      opacity: 0.1 + Math.random() * 0.3,
+      phase: Math.random() * Math.PI * 2,
+      life: 400 + Math.random() * 700,
+      age: 0,
+    };
+  }
+
+  // ============ 巨物 ============
+  const giants = [];
+  function spawnGiant() {
+    const fromRight = Math.random() > 0.5;
+    return {
+      x: fromRight ? window.innerWidth + 150 : -150,
+      y: window.innerHeight * (0.2 + Math.random() * 0.45),
+      vx: (fromRight ? -1 : 1) * (0.08 + Math.random() * 0.2),
+      size: 70 + Math.random() * 150,
+      opacity: 0.025 + Math.random() * 0.055,
+      shape: Math.floor(Math.random() * 4),
+      life: 500 + Math.random() * 900,
+      age: 0,
+    };
+  }
+
+  // ============ 颗粒（海洋雪） ============
+  const particles = [];
+  function fillParticles(count) {
+    while (particles.length < count && particles.length < 300) {
+      particles.push({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        vx: (Math.random()-0.5)*0.25,
+        vy: -(0.08+Math.random()*0.35),
+        size: 0.4+Math.random()*2,
+        opacity: 0.1+Math.random()*0.45,
+        twinkle: Math.random()*Math.PI*2,
+        ts: 0.015+Math.random()*0.04,
+      });
+    }
+    while (particles.length > count) particles.pop();
+  }
+
+  // 生物荧光点（中层以下）
+  const biolumes = [];
+  function fillBiolumes(count) {
+    while (biolumes.length < count && biolumes.length < 120) {
+      biolumes.push({
+        x: Math.random()*window.innerWidth, y: Math.random()*window.innerHeight,
+        vx: (Math.random()-0.5)*0.12, vy: -(0.03+Math.random()*0.12),
+        size: 1+Math.random()*2.5, intensity: 0.2+Math.random()*0.6,
+        pulse: Math.random()*Math.PI*2, ps: 0.02+Math.random()*0.05,
+      });
+    }
+    while (biolumes.length > count) biolumes.pop();
+  }
+
+  // ============ 海底沉淀碎石 ============
+  const seabedRocks = [];
+  for (let i = 0; i < 60; i++) {
+    seabedRocks.push({
+      x: Math.random() * window.innerWidth,
+      y: window.innerHeight - 6 - Math.random() * 30,
+      w: 2 + Math.random() * 14,
+      h: 1 + Math.random() * 6,
+    });
+  }
+
+  // ============ 光柱预设 ============
+  const lightShafts = [];
+  for (let i = 0; i < 6; i++) {
+    lightShafts.push({
+      x: Math.random()*window.innerWidth,
+      w: 18+Math.random()*55,
+      opacity: 0.025+Math.random()*0.06,
+      flicker: Math.random()*Math.PI*2,
+      fs: 0.005+Math.random()*0.02,
+    });
+  }
+
+  // ============ 海面沫线 ============
+  // 预设几条白沫线的 x 位置
+  const foamLines = [];
+  for (let i = 0; i < 8; i++) {
+    foamLines.push({ x: Math.random()*window.innerWidth, length: 20+Math.random()*60 });
+  }
+
+  // ============ 主循环 ============
+  let frameCount = 0;
+
+  function render(ts) {
+    requestAnimationFrame(render);
+    frameCount++;
+    const t = ts * 0.001;
+    const W = window.innerWidth, H = window.innerHeight;
+
+    const maxScroll = Math.max(document.body.scrollHeight - H, 1);
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const depth = clamp(scrollTop / maxScroll, 0, 1);
+
+    // 深度参数
+    const surfLight = Math.pow(1 - depth, 2.8);
+    const mist = depth < 0.05 ? 0.04 : depth < 0.4 ? lerp(0.08,0.65,depth/0.4)
+                : depth < 0.7 ? lerp(0.65,0.25,(depth-0.4)/0.3) : lerp(0.25,0.06,(depth-0.7)/0.3);
+    const creature = depth < 0.04 ? 0.03 : depth < 0.4 ? lerp(0.08,0.65,depth/0.4)
+                   : depth < 0.85 ? lerp(0.65,0.12,(depth-0.4)/0.45) : 0.04;
+    const giantP = depth < 0.55 ? 0 : depth < 0.88 ? (depth-0.55)/0.33 * 0.45 : 0.45;
+    const ruinSig = depth < 0.85 ? 0 : (depth - 0.85) / 0.15;
+
+    const color = waterColor(depth);
+    const botColor = waterColor(Math.min(depth + 0.12, 1));
+
+    // --- 管理生物 ---
+    // 鱼群（浅海-中层）
+    const targetSchools = Math.floor(creature * 8);
+    while (fishSchools.length < targetSchools && fishSchools.length < 12) {
+      fishSchools.push(spawnSchool(depth < 0.35));
+    }
+    while (fishSchools.length > targetSchools) fishSchools.shift();
+
+    // 水母（中层）
+    const targetJelly = Math.floor(creature * 5);
+    while (jellyfish.length < targetJelly && jellyfish.length < 10) {
+      if (depth > 0.15 && depth < 0.75) jellyfish.push(spawnJelly());
+    }
+    while (jellyfish.length > targetJelly) jellyfish.shift();
+
+    // 巨物（深海）
+    const targetGiants = Math.floor(giantP * 3);
+    while (giants.length < targetGiants && giants.length < 4) {
+      if (Math.random() < giantP * 0.3) giants.push(spawnGiant());
+    }
+    while (giants.length > targetGiants) giants.shift();
+
+    // 颗粒
+    fillParticles(Math.floor(mist * 280));
+    // 生物荧光（中层以下）
+    fillBiolumes(depth > 0.2 ? Math.floor(creature * 100) : 0);
+
+    // --- 清除 ---
+    ctx.clearRect(0, 0, W, H);
+
+    // ===== 1. 海色渐变 =====
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, `rgb(${Math.round(color[0]*255)},${Math.round(color[1]*255)},${Math.round(color[2]*255)})`);
+    grad.addColorStop(1, `rgb(${Math.round(botColor[0]*255)},${Math.round(botColor[1]*255)},${Math.round(botColor[2]*255)})`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // ===== 2. 海面雾（depth < 0.1） =====
+    if (depth < 0.12) {
+      const fogA = (0.12 - depth) / 0.12 * 0.15;
+      const fogGrad = ctx.createLinearGradient(0, 0, 0, H * 0.55);
+      fogGrad.addColorStop(0, `rgba(200,220,240,${fogA})`);
+      fogGrad.addColorStop(0.5, `rgba(180,200,220,${fogA*0.5})`);
+      fogGrad.addColorStop(1, 'rgba(180,200,220,0)');
+      ctx.fillStyle = fogGrad;
+      ctx.fillRect(0, 0, W, H * 0.55);
+    }
+
+    // ===== 3. 渔灯（海面） =====
+    if (depth < 0.15) {
+      fishingBoats.forEach(fl => {
+        const flicker = Math.sin(t * fl.flickerSpeed * 60 + fl.flicker) * 0.35 + 0.65;
+        const alpha = fl.intensity * flicker * Math.max(0, (0.15 - depth) / 0.15);
+        if (alpha < 0.02) return;
+        // 光晕
+        const glow = ctx.createRadialGradient(fl.x, fl.y, 0, fl.x, fl.y, 35);
+        glow.addColorStop(0, `rgba(255,200,130,${alpha})`);
+        glow.addColorStop(0.25, `rgba(255,170,80,${alpha*0.5})`);
+        glow.addColorStop(1, 'rgba(255,150,50,0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(fl.x-35, fl.y-35, 70, 70);
+        // 水平拉长反光
+        ctx.fillStyle = `rgba(255,200,140,${alpha*0.45})`;
+        ctx.fillRect(fl.x - fl.reflectLen, fl.y + 6, fl.reflectLen * 2, 1.5);
+        ctx.fillRect(fl.x - fl.reflectLen * 0.6, fl.y + 12, fl.reflectLen * 1.2, 1);
+        // 灯芯
+        ctx.fillStyle = `rgba(255,220,170,${alpha*0.9})`;
+        ctx.beginPath();
+        ctx.arc(fl.x, fl.y, fl.size, 0, Math.PI*2);
+        ctx.fill();
+      });
+    }
+
+    // ===== 4. 海面白沫线（depth < 0.06） =====
+    if (depth < 0.06) {
+      const foamA = (0.06 - depth) / 0.06 * 0.25;
+      foamLines.forEach(fl => {
+        ctx.fillStyle = `rgba(220,240,255,${foamA})`;
+        const fy = 30 + Math.sin(fl.x * 0.01 + t * 0.3) * 10;
+        ctx.fillRect(fl.x, fy, fl.length, 1.2);
+      });
+    }
+
+    // ===== 5. 光柱 =====
+    if (surfLight > 0.02) {
+      lightShafts.forEach(ls => {
+        const flicker = Math.sin(t * ls.fs * 60 + ls.flicker) * 0.4 + 0.6;
+        const alpha = ls.opacity * surfLight * flicker;
+        if (alpha < 0.002) return;
+        const sGrad = ctx.createLinearGradient(0, 0, 0, H);
+        sGrad.addColorStop(0, `rgba(170,215,250,${alpha})`);
+        sGrad.addColorStop(0.25, `rgba(130,190,235,${alpha*0.55})`);
+        sGrad.addColorStop(0.6, `rgba(60,140,200,${alpha*0.15})`);
+        sGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = sGrad;
+        ctx.fillRect(ls.x - ls.w/2, 0, ls.w, H);
+      });
+    }
+
+    // ===== 6. 颗粒（海洋雪） =====
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.y < -8) { p.y = H + 8; p.x = Math.random() * W; }
+      if (p.x < -8) p.x = W + 8;
+      if (p.x > W + 8) p.x = -8;
+      const twinkle = Math.sin(t * p.ts * 60 + p.twinkle) * 0.4 + 0.6;
+      const alpha = p.opacity * twinkle * mist;
+      if (alpha < 0.015) return;
+      ctx.fillStyle = `rgba(170,210,240,${alpha})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+      ctx.fill();
+    });
+
+    // ===== 7. 鱼群 =====
+    for (let si = fishSchools.length - 1; si >= 0; si--) {
+      const school = fishSchools[si];
+      school.age++;
+      school.baseX += school.vx;
+      if (school.age > school.life || school.baseX < -100 || school.baseX > W + 100) {
+        fishSchools.splice(si, 1); continue;
+      }
+      const lifeFade = school.age < 30 ? school.age/30 : school.age > school.life - 40 ? (school.life-school.age)/40 : 1;
+      school.fish.forEach(f => {
+        const fx = school.baseX + f.rx;
+        const fy = school.baseY + f.ry + Math.sin(t * 3 + f.phase) * 4;
+        const alpha = 0.25 * lifeFade * creature;
+        if (alpha < 0.02) return;
+        // 小鱼剪影
+        ctx.fillStyle = `rgba(30,60,100,${alpha})`;
+        const dir = school.vx > 0 ? 1 : -1;
+        ctx.beginPath();
+        ctx.moveTo(fx + dir * f.size, fy);
+        ctx.lineTo(fx - dir * f.size * 0.55, fy - f.size * 0.35);
+        ctx.lineTo(fx - dir * f.size * 0.4, fy);
+        ctx.lineTo(fx - dir * f.size * 0.55, fy + f.size * 0.35);
+        ctx.closePath();
+        ctx.fill();
+      });
+    }
+
+    // ===== 8. 水母 =====
+    for (let ji = jellyfish.length - 1; ji >= 0; ji--) {
+      const j = jellyfish[ji];
+      j.age++; j.x += j.vx; j.y += j.vy;
+      if (j.age > j.life || j.x < -80 || j.x > W+80 || j.y < -80 || j.y > H+80) {
+        jellyfish.splice(ji, 1); continue;
+      }
+      const lifeFade = j.age < 30 ? j.age/30 : j.age > j.life - 50 ? (j.life-j.age)/50 : 1;
+      const alpha = j.opacity * lifeFade * creature;
+      const pulse = Math.sin(t * 2 + j.phase) * 0.2 + 0.8;
+      const sz = j.size * pulse;
+      // 伞
+      ctx.fillStyle = `rgba(140,190,220,${alpha*0.5})`;
+      ctx.beginPath();
+      ctx.ellipse(j.x, j.y, sz, sz*0.5, 0, Math.PI, 0);
+      ctx.fill();
+      // 触手
+      ctx.strokeStyle = `rgba(120,180,210,${alpha*0.35})`;
+      ctx.lineWidth = 0.7;
+      for (let tt = 0; tt < 4; tt++) {
+        const tx = j.x + (tt - 1.5) * sz * 0.35;
+        ctx.beginPath();
+        ctx.moveTo(tx, j.y);
+        ctx.quadraticCurveTo(tx + Math.sin(t*3+tt)*2.5, j.y+sz*0.7, tx, j.y+sz*1.1);
+        ctx.stroke();
+      }
+    }
+
+    // ===== 9. 生物荧光点 =====
+    biolumes.forEach(b => {
+      b.x += b.vx; b.y += b.vy;
+      if (b.y < -5) b.y = H+5;
+      if (b.y > H+5) b.y = -5;
+      if (b.x < -5) b.x = W+5;
+      if (b.x > W+5) b.x = -5;
+      const pulse = Math.sin(t * b.ps * 60 + b.pulse) * 0.5 + 0.5;
+      const alpha = b.intensity * pulse * creature;
+      if (alpha < 0.02) return;
+      const gl = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.size*4);
+      gl.addColorStop(0, `rgba(90,200,240,${alpha})`);
+      gl.addColorStop(0.4, `rgba(40,150,210,${alpha*0.4})`);
+      gl.addColorStop(1, 'transparent');
+      ctx.fillStyle = gl;
+      ctx.fillRect(b.x-b.size*4, b.y-b.size*4, b.size*8, b.size*8);
+    });
+
+    // ===== 10. 巨物剪影（深海） =====
+    for (let gi = giants.length - 1; gi >= 0; gi--) {
+      const g = giants[gi];
+      g.age++; g.x += g.vx;
+      if (g.age > g.life || g.x < -250 || g.x > W+250) { giants.splice(gi,1); continue; }
+      const fadeIn = Math.min(g.age/100, 1);
+      const fadeOut = g.age > g.life - 120 ? Math.max(0, (g.life-g.age)/120) : 1;
+      const alpha = g.opacity * fadeIn * fadeOut * giantP;
+      if (alpha < 0.003) continue;
+      ctx.fillStyle = `rgba(3,10,22,${alpha})`;
+      ctx.beginPath();
+      if (g.shape === 0) {
+        ctx.ellipse(g.x, g.y, g.size*1.7, g.size*0.32, 0.02, 0, Math.PI*2);
+      } else if (g.shape === 1) {
+        ctx.moveTo(g.x, g.y);
+        ctx.quadraticCurveTo(g.x+g.size*1.3, g.y-g.size*0.6, g.x+g.size*1.6, g.y-g.size*0.25);
+        ctx.quadraticCurveTo(g.x+g.size*0.7, g.y+g.size*0.12, g.x, g.y+g.size*0.08);
+      } else if (g.shape === 2) {
+        for (let n=0; n<5; n++) {
+          const sx=g.x+(n-2)*g.size*0.2;
+          ctx.moveTo(sx, g.y-g.size*0.2);
+          ctx.bezierCurveTo(sx+g.size*0.12, g.y+g.size*0.25, sx-g.size*0.08, g.y+g.size*0.45, sx+g.size*0.04*(n-2), g.y+g.size*0.6);
+        }
+      } else {
+        ctx.ellipse(g.x, g.y, g.size*1.4, g.size*0.5, 0.03, 0, Math.PI*2);
+      }
+      ctx.fill();
+    }
+
+    // ===== 11. 海底沉积（深渊） =====
+    if (depth > 0.8) {
+      const sedA = (depth - 0.8) / 0.2;
+      // 底部暗带
+      const sedGrad = ctx.createLinearGradient(0, H - 60, 0, H);
+      sedGrad.addColorStop(0, 'transparent');
+      sedGrad.addColorStop(0.4, `rgba(6,14,24,${sedA*0.5})`);
+      sedGrad.addColorStop(1, `rgba(4,10,18,${sedA*0.8})`);
+      ctx.fillStyle = sedGrad;
+      ctx.fillRect(0, H - 60, W, 60);
+
+      // 碎石
+      seabedRocks.forEach(r => {
+        ctx.fillStyle = `rgba(20,30,42,${sedA*0.5})`;
+        ctx.fillRect(r.x, r.y, r.w, r.h);
+      });
+
+      // 信号微光（深渊遗迹预兆）
+      if (ruinSig > 0.1) {
+        const pulse = Math.sin(t * 0.7) * 0.5 + 0.5;
+        const sigGlow = ctx.createRadialGradient(W/2, H*0.88, 0, W/2, H*0.88, W*0.5);
+        sigGlow.addColorStop(0, `rgba(40,180,200,${ruinSig*0.12*pulse})`);
+        sigGlow.addColorStop(1, 'transparent');
+        ctx.fillStyle = sigGlow;
+        ctx.fillRect(W*0.1, H*0.5, W*0.8, H*0.5);
+      }
+    }
+
+    // ===== 更新 HUD =====
+    if (frameCount % 6 === 0) {
+      const zone = ZONES.find(z => depth <= z.max) || ZONES[ZONES.length-1];
+      document.getElementById('zoneName').textContent = zone.name;
+      document.getElementById('vD').textContent = depth.toFixed(2);
+      document.getElementById('vL').textContent = surfLight.toFixed(2);
+      document.getElementById('vM').textContent = mist.toFixed(2);
+      document.getElementById('vC').textContent = creature.toFixed(2);
+
+      const arrow = document.getElementById('arrow');
+      arrow.style.opacity = depth < 0.06 ? 1 : Math.max(0, 1 - depth/0.06);
+    }
+  }
+
+  resize();
+  requestAnimationFrame(render);
+
+  console.log('🌊 海洋深度背景系统 v2 已启动');
+  console.log('   渔灯 · 鱼群 · 光柱 · 水母 · 荧光 · 巨物 · 海底沉积');
+  console.log('   6个深度区：蓝调时刻→浅海→浅中→中层→深海→深渊');
+})();
+</script>
+</body>
+</html>

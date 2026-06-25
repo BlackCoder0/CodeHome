@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bangumi 子模块验证</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      color-scheme: dark;
+      --bg-top: #102236;
+      --bg-mid: #12192b;
+      --bg-bottom: #0c1017;
+      --line: rgba(177, 224, 240, 0.16);
+      --text: #eef8fc;
+      --muted: rgba(216, 231, 238, 0.74);
+    }
+
+    body {
+      min-height: 100vh;
+      overflow-x: hidden;
+      background: linear-gradient(180deg, var(--bg-top), var(--bg-mid) 42%, var(--bg-bottom));
+      color: var(--text);
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    .page {
+      min-height: 100vh;
+      padding: 20px;
+      background:
+        radial-gradient(circle at 18% 14%, rgba(106, 185, 255, 0.1), transparent 28%),
+        radial-gradient(circle at 84% 28%, rgba(175, 122, 255, 0.08), transparent 30%),
+        radial-gradient(circle at 50% 100%, rgba(255, 181, 92, 0.06), transparent 36%);
+    }
+
+    .info {
+      width: min(460px, 100%);
+      padding: 16px 18px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(7, 14, 22, 0.62);
+      backdrop-filter: blur(12px);
+    }
+
+    .info strong,
+    .section-title strong,
+    .detail-card strong,
+    .metric strong {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(191, 228, 240, 0.78);
+    }
+
+    .info h1 {
+      margin-top: 10px;
+      font-size: 30px;
+      line-height: 1.05;
+      font-weight: 600;
+    }
+
+    .info p,
+    .section-title p,
+    .detail-card p,
+    .metric p,
+    .chip,
+    .entry p {
+      margin-top: 10px;
+      font-size: 13px;
+      line-height: 1.72;
+      color: var(--muted);
+    }
+
+    .shell {
+      margin-top: 14px;
+      border-radius: 28px;
+      overflow: hidden;
+      border: 1px solid rgba(190, 228, 240, 0.08);
+      background:
+        linear-gradient(180deg, rgba(14, 24, 37, 0.84), rgba(8, 13, 21, 0.92)),
+        radial-gradient(circle at 80% 22%, rgba(117, 194, 255, 0.08), transparent 26%);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02), 0 24px 80px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(10px);
+    }
+
+    .shell-grid {
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr) 380px;
+      gap: 18px;
+      padding: 24px;
+      min-height: calc(100vh - 120px);
+    }
+
+    .filters,
+    .detail-window {
+      border-radius: 22px;
+      border: 1px solid rgba(190, 228, 240, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(8px);
+    }
+
+    .filters {
+      padding: 18px;
+    }
+
+    .section-title {
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(190, 228, 240, 0.08);
+    }
+
+    .section-title h2,
+    .belt-header h2 {
+      margin-top: 10px;
+      font-size: 28px;
+      line-height: 1.1;
+      font-weight: 600;
+    }
+
+    .chip-list {
+      margin-top: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .chip {
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(190, 228, 240, 0.1);
+      background: rgba(255, 255, 255, 0.03);
+      cursor: pointer;
+      transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+    }
+
+    .chip.active {
+      background: rgba(112, 189, 255, 0.16);
+      border-color: rgba(167, 220, 240, 0.24);
+      color: #f4fbfe;
+    }
+
+    .chip:hover,
+    .entry:hover {
+      transform: translateY(-1px);
+    }
+
+    .metrics {
+      margin-top: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .metric {
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(190, 228, 240, 0.08);
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    .archive-belt {
+      position: relative;
+      overflow: hidden;
+      border-radius: 22px;
+      border: 1px solid rgba(190, 228, 240, 0.08);
+      background:
+        linear-gradient(180deg, rgba(7, 17, 26, 0.74), rgba(7, 12, 19, 0.84)),
+        radial-gradient(circle at 50% 20%, rgba(126, 199, 255, 0.08), transparent 26%);
+      padding: 20px;
+    }
+
+    .archive-belt::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 18%),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.015), transparent 14%, transparent 86%, rgba(255, 255, 255, 0.015));
+    }
+
+    .belt-header {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-end;
+      margin-bottom: 18px;
+    }
+
+    .belt-header p {
+      max-width: 30rem;
+      font-size: 13px;
+      line-height: 1.72;
+      color: var(--muted);
+    }
+
+    .belt-track {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(6, minmax(190px, 1fr));
+      gap: 14px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      scrollbar-width: thin;
+    }
+
+    .entry {
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(190, 228, 240, 0.08);
+      background: rgba(255, 255, 255, 0.035);
+      cursor: pointer;
+      transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+    }
+
+    .entry.active {
+      transform: translateY(-2px);
+      border-color: rgba(176, 222, 240, 0.22);
+      background: linear-gradient(180deg, rgba(114, 190, 255, 0.12), rgba(255, 255, 255, 0.04));
+    }
+
+    .poster {
+      aspect-ratio: 3 / 4;
+      border-radius: 14px;
+      background:
+        linear-gradient(180deg, rgba(110, 171, 255, 0.34), rgba(28, 40, 72, 0.88)),
+        radial-gradient(circle at 50% 24%, rgba(255, 255, 255, 0.2), transparent 18%);
+      border: 1px solid rgba(195, 229, 241, 0.08);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+    }
+
+    .entry h3 {
+      margin-top: 12px;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .entry .sub {
+      margin-top: 8px;
+      font-size: 12px;
+      color: rgba(200, 226, 236, 0.7);
+    }
+
+    .detail-window {
+      position: relative;
+      padding: 18px;
+      background:
+        linear-gradient(180deg, rgba(8, 18, 28, 0.84), rgba(5, 10, 16, 0.9)),
+        radial-gradient(circle at 50% 0%, rgba(127, 201, 255, 0.08), transparent 30%);
+    }
+
+    .detail-window::before {
+      content: "";
+      position: absolute;
+      inset: 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(190, 228, 240, 0.08);
+      pointer-events: none;
+    }
+
+    .detail-poster {
+      height: 240px;
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(126, 189, 255, 0.38), rgba(23, 35, 61, 0.94)),
+        radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.22), transparent 20%);
+      border: 1px solid rgba(190, 228, 240, 0.08);
+    }
+
+    .detail-card h3 {
+      margin-top: 12px;
+      font-size: 24px;
+      line-height: 1.12;
+    }
+
+    .detail-meta {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .detail-meta div {
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(190, 228, 240, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+      font-size: 12px;
+      color: rgba(217, 231, 238, 0.78);
+    }
+
+    .detail-meta span {
+      display: block;
+      margin-top: 4px;
+      font-size: 16px;
+      color: #f3fbfe;
+    }
+
+    .validation {
+      margin-top: 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .validation li {
+      list-style: none;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(190, 228, 240, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+      font-size: 12px;
+      line-height: 1.68;
+      color: rgba(217, 231, 238, 0.76);
+    }
+
+    @media (max-width: 1160px) {
+      .shell-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .belt-track {
+        grid-template-columns: repeat(6, minmax(220px, 260px));
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="info">
+      <strong>Bangumi Validation</strong>
+      <h1>验证归档带，不验证最终卡面</h1>
+      <p>
+        这一页只验证 `Bangumi.tsx` 是否应该从“筛选 + 横向卡带 + 普通弹窗”
+        收口为“左侧筛选层 + 中间归档带 + 右侧观察窗详情”。
+        重点是内容壳层和包裹强度，不是最终海报美术。
+      </p>
+    </section>
+
+    <section class="shell">
+      <div class="shell-grid">
+        <aside class="filters">
+          <div class="section-title">
+            <strong>Season Filter</strong>
+            <h2>追番分组</h2>
+            <p>沿用 `bangumi-data.ts` 的分组语义，把筛选从单个下拉改成更稳定的归档入口。</p>
+          </div>
+
+          <div class="chip-list" id="chipList"></div>
+
+          <div class="metrics">
+            <article class="metric">
+              <strong>Wrap Level</strong>
+              <p>默认包裹强度为中到强。内容仍可读，但不再像裸卡片直接悬在背景上。</p>
+            </article>
+            <article class="metric">
+              <strong>Detail Layer</strong>
+              <p>详情层改为“观察窗”而非普通 modal，不再切断整个 section 的空间连续性。</p>
+            </article>
+          </div>
+        </aside>
+
+        <section class="archive-belt">
+          <div class="belt-header">
+            <div>
+              <strong>Archive Belt</strong>
+              <h2 id="groupTitle">2026年1月</h2>
+            </div>
+            <p>
+              中间带状区用于展示同一季或同一收藏分组的条目。
+              视觉上应更像海中整理过的观察归档带，而不是普通媒体卡片墙。
+            </p>
+          </div>
+
+          <div class="belt-track" id="beltTrack"></div>
+        </section>
+
+        <aside class="detail-window">
+          <div class="detail-poster"></div>
+          <article class="detail-card">
+            <strong>Observation Window</strong>
+            <h3 id="detailTitle">超时空辉夜姬！</h3>
+            <p id="detailSummary">
+              这里不是普通弹窗，而是固定在当前 section 内的观察窗。用户切条目时，
+              详情在同一空间内更新，不需要切出海域上下文。
+            </p>
+
+            <div class="detail-meta">
+              <div>分组<span id="detailGroup">2026年1月</span></div>
+              <div>放送<span id="detailWeekday">未定</span></div>
+              <div>集数<span id="detailEps">12</span></div>
+              <div>状态<span id="detailState">追番中</span></div>
+            </div>
+
+            <ul class="validation">
+              <li>详情区应和卡带共存，而不是把整屏打断成一个 modal 世界。</li>
+              <li>卡带容器需要克制，避免海报、滤镜、光斑同时争抢主视觉。</li>
+              <li>左筛选、中卡带、右详情这三个层级应长期稳定，不随单条目切换而重排。</li>
+            </ul>
+          </article>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const groups = [
+      {
+        label: "喜欢的番剧",
+        items: [
+          { title: "魔法少女小圆", sub: "Favorite", summary: "验证收藏分组是否也能进入同一归档带结构。", weekday: "已完结", eps: "12", state: "收藏" },
+          { title: "游戏人生", sub: "Favorite", summary: "详情层仍固定在右侧观察窗，不改为居中弹层。", weekday: "已完结", eps: "12", state: "收藏" },
+          { title: "MyGO!!!!!", sub: "Favorite", summary: "验证高关注条目在同一结构下是否仍有识别度。", weekday: "已完结", eps: "13", state: "收藏" }
+        ]
+      },
+      {
+        label: "2026年1月",
+        items: [
+          { title: "超时空辉夜姬！", sub: "2026 Winter", summary: "验证新季条目在中层海域归档带中的容器关系。", weekday: "未定", eps: "12", state: "追番中" },
+          { title: "葬送的芙莉莲 第二季", sub: "2026 Winter", summary: "观察窗应承接简介、放送、集数和状态信息。", weekday: "周五", eps: "24", state: "追番中" },
+          { title: "金牌得主 第二季", sub: "2026 Winter", summary: "卡带视图维持横向浏览，避免退回卡墙。", weekday: "周日", eps: "12", state: "追番中" },
+          { title: "Fate/strange Fake", sub: "2026 Winter", summary: "长标题也应能在统一卡带容器里稳定显示。", weekday: "未定", eps: "未定", state: "待播" }
+        ]
+      },
+      {
+        label: "2025年7月",
+        items: [
+          { title: "青春猪头少年不做圣诞服女郎的梦", sub: "2025 Summer", summary: "旧季追番同样应复用同一套归档带结构。", weekday: "周六", eps: "12", state: "追番中" },
+          { title: "Silent Witch", sub: "2025 Summer", summary: "条目切换只更新观察窗，不弹出新层。", weekday: "周三", eps: "12", state: "追番中" },
+          { title: "Bad Girl 不良少女", sub: "2025 Summer", summary: "验证不同题材封面占位下的版式稳定性。", weekday: "周四", eps: "12", state: "追番中" }
+        ]
+      }
+    ];
+
+    const chipList = document.getElementById("chipList");
+    const beltTrack = document.getElementById("beltTrack");
+    const groupTitle = document.getElementById("groupTitle");
+    const detailTitle = document.getElementById("detailTitle");
+    const detailSummary = document.getElementById("detailSummary");
+    const detailGroup = document.getElementById("detailGroup");
+    const detailWeekday = document.getElementById("detailWeekday");
+    const detailEps = document.getElementById("detailEps");
+    const detailState = document.getElementById("detailState");
+
+    let activeGroup = 1;
+    let activeItem = 0;
+
+    function renderChips() {
+      chipList.innerHTML = "";
+      groups.forEach((group, index) => {
+        const chip = document.createElement("button");
+        chip.className = "chip" + (index === activeGroup ? " active" : "");
+        chip.textContent = group.label;
+        chip.addEventListener("click", () => {
+          activeGroup = index;
+          activeItem = 0;
+          render();
+        });
+        chipList.appendChild(chip);
+      });
+    }
+
+    function renderEntries() {
+      beltTrack.innerHTML = "";
+      const group = groups[activeGroup];
+      groupTitle.textContent = group.label;
+
+      group.items.forEach((item, index) => {
+        const entry = document.createElement("article");
+        entry.className = "entry" + (index === activeItem ? " active" : "");
+        entry.innerHTML = `
+          <div class="poster"></div>
+          <h3>${item.title}</h3>
+          <div class="sub">${item.sub}</div>
+          <p>${item.summary}</p>
+        `;
+        entry.addEventListener("click", () => {
+          activeItem = index;
+          renderDetail();
+          renderEntries();
+        });
+        beltTrack.appendChild(entry);
+      });
+    }
+
+    function renderDetail() {
+      const group = groups[activeGroup];
+      const item = group.items[activeItem];
+      detailTitle.textContent = item.title;
+      detailSummary.textContent = item.summary;
+      detailGroup.textContent = group.label;
+      detailWeekday.textContent = item.weekday;
+      detailEps.textContent = item.eps;
+      detailState.textContent = item.state;
+    }
+
+    function render() {
+      renderChips();
+      renderEntries();
+      renderDetail();
+    }
+
+    render();
+  </script>
+</body>
+</html>

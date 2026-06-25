@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Helicopter Wreck Split View</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #03080d;
+      color: #d8eef5;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    body {
+      user-select: none;
+      touch-action: none;
+    }
+
+    .shell {
+      width: 100%;
+      height: 100%;
+      padding: clamp(14px, 2vw, 28px);
+      background:
+        radial-gradient(circle at 20% 12%, rgba(77, 174, 209, 0.12), transparent 28%),
+        radial-gradient(circle at 74% 18%, rgba(48, 117, 148, 0.16), transparent 32%),
+        linear-gradient(180deg, #07111a 0%, #03080d 100%);
+    }
+
+    .panel {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.72fr);
+      gap: clamp(14px, 1.7vw, 24px);
+    }
+
+    .viewport {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      border-radius: 28px;
+      background: linear-gradient(180deg, rgba(8, 20, 29, 0.94), rgba(3, 10, 15, 0.98));
+      box-shadow:
+        inset 0 0 0 1px rgba(164, 223, 244, 0.12),
+        0 28px 80px rgba(0, 0, 0, 0.35);
+    }
+
+    .viewport::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(176, 229, 245, 0.08), transparent 20%),
+        radial-gradient(circle at 50% 50%, rgba(72, 195, 255, 0.08), transparent 48%);
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .viewport canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    #bgCanvas {
+      z-index: 0;
+    }
+
+    #glCanvas {
+      z-index: 1;
+      cursor: grab;
+    }
+
+    #glCanvas.dragging {
+      cursor: grabbing;
+    }
+
+    .hud {
+      position: absolute;
+      left: 18px;
+      top: 16px;
+      z-index: 4;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(5, 15, 22, 0.48);
+      backdrop-filter: blur(8px);
+      pointer-events: none;
+    }
+
+    .hud p:first-child {
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      color: rgba(173, 225, 241, 0.72);
+    }
+
+    .hud p:last-child {
+      margin-top: 6px;
+      font-size: 14px;
+      color: rgba(230, 246, 252, 0.92);
+    }
+
+    .side {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-width: 0;
+      border-radius: 28px;
+      padding: clamp(20px, 2.4vw, 30px);
+      background:
+        linear-gradient(180deg, rgba(8, 17, 24, 0.92), rgba(5, 11, 16, 0.97));
+      box-shadow:
+        inset 0 0 0 1px rgba(164, 223, 244, 0.1),
+        0 28px 80px rgba(0, 0, 0, 0.28);
+    }
+
+    .side h1 {
+      font-size: clamp(24px, 2.7vw, 40px);
+      line-height: 1.04;
+      font-weight: 600;
+      color: #edf9fd;
+    }
+
+    .side p {
+      color: rgba(194, 224, 233, 0.78);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .meta {
+      display: grid;
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .meta div {
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: rgba(12, 28, 37, 0.65);
+      box-shadow: inset 0 0 0 1px rgba(131, 192, 213, 0.08);
+    }
+
+    .meta strong {
+      display: block;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      color: rgba(152, 214, 235, 0.72);
+    }
+
+    .meta span {
+      display: block;
+      margin-top: 6px;
+      color: rgba(236, 246, 251, 0.92);
+      font-size: 15px;
+    }
+
+    @media (max-width: 980px) {
+      .panel {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(0, 1fr) auto;
+      }
+
+      .viewport {
+        min-height: 58vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="panel">
+      <section class="viewport" id="viewport">
+        <canvas id="bgCanvas"></canvas>
+        <canvas id="glCanvas"></canvas>
+        <div class="hud">
+          <p>HOBBIES SAMPLE CABIN</p>
+          <p>拖拽旋转残骸视角</p>
+        </div>
+      </section>
+      <aside class="side">
+        <div>
+          <h1>Helicopter Wreck</h1>
+          <div class="meta">
+            <div>
+              <strong>VIEW</strong>
+              <span>Left viewport only: contour field + direct GLB</span>
+            </div>
+            <div>
+              <strong>INTERACTION</strong>
+              <span>Pointer drag rotates the wreck with damped motion</span>
+            </div>
+            <div>
+              <strong>STATUS</strong>
+              <span>Viewport fitting and debug logs are enabled in console</span>
+            </div>
+          </div>
+        </div>
+        <p>
+          This panel is placeholder copy only. The left side is the actual prototype target:
+          one contained viewport with topographic contour motion and the helicopter wreck model
+          centered and scaled to occupy most of the frame.
+        </p>
+      </aside>
+    </div>
+  </div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./node_modules/three/build/three.module.js"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { GLTFLoader } from "./node_modules/three/examples/jsm/loaders/GLTFLoader.js";
+
+    const viewportEl = document.getElementById("viewport");
+    const bgCanvas = document.getElementById("bgCanvas");
+    const bgCtx = bgCanvas.getContext("2d");
+    const glCanvas = document.getElementById("glCanvas");
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(28, 1, 0.01, 300);
+    const renderer = new THREE.WebGLRenderer({
+      canvas: glCanvas,
+      alpha: true,
+      antialias: true,
+      powerPreference: "high-performance"
+    });
+
+    renderer.setClearColor(0x000000, 0);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    renderer.setScissorTest(true);
+
+    scene.add(new THREE.AmbientLight(0xd7eff8, 1.7));
+
+    const hemi = new THREE.HemisphereLight(0xebfbff, 0x07141d, 1.7);
+    scene.add(hemi);
+
+    const key = new THREE.DirectionalLight(0xffffff, 2.2);
+    key.position.set(4, 6, 7);
+    scene.add(key);
+
+    const fill = new THREE.DirectionalLight(0x7fddff, 1.45);
+    fill.position.set(-5, 2, 5);
+    scene.add(fill);
+
+    const rim = new THREE.DirectionalLight(0xa0ffe6, 1.15);
+    rim.position.set(-2, 3, -7);
+    scene.add(rim);
+
+    let pageWidth = 1;
+    let pageHeight = 1;
+    let dpr = 1;
+    let rafId = 0;
+    let viewportRect = null;
+    let isDragging = false;
+    let lastPointerX = 0;
+    let lastPointerY = 0;
+
+    let wreckRoot = null;
+    let modelMetrics = null;
+    let meshCount = 0;
+
+    let currentRotY = 0.42;
+    let currentRotX = -0.18;
+    let targetRotY = currentRotY;
+    let targetRotX = currentRotX;
+    let cameraDistance = 4.6;
+    let lookAtY = 0;
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function requestRender() {
+      if (!rafId) {
+        rafId = requestAnimationFrame(render);
+      }
+    }
+
+    function updateViewportMetrics() {
+      pageWidth = Math.max(window.innerWidth, 1);
+      pageHeight = Math.max(window.innerHeight, 1);
+      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      viewportRect = viewportEl.getBoundingClientRect();
+
+      bgCanvas.width = Math.max(1, Math.round(viewportRect.width * dpr));
+      bgCanvas.height = Math.max(1, Math.round(viewportRect.height * dpr));
+      bgCanvas.style.width = viewportRect.width + "px";
+      bgCanvas.style.height = viewportRect.height + "px";
+      bgCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      renderer.setPixelRatio(dpr);
+      renderer.setSize(pageWidth, pageHeight, false);
+
+      camera.aspect = Math.max(viewportRect.width / Math.max(viewportRect.height, 1), 0.01);
+      fitCamera();
+      logDebug("resize");
+      requestRender();
+    }
+
+    function drawContours() {
+      if (!viewportRect) return;
+
+      const vw = viewportRect.width;
+      const vh = viewportRect.height;
+      bgCtx.clearRect(0, 0, vw, vh);
+
+      const fill = bgCtx.createLinearGradient(0, 0, 0, vh);
+      fill.addColorStop(0, "#081620");
+      fill.addColorStop(0.48, "#07131b");
+      fill.addColorStop(1, "#030a10");
+      bgCtx.fillStyle = fill;
+      bgCtx.fillRect(0, 0, vw, vh);
+
+      const haze = bgCtx.createRadialGradient(
+        vw * 0.53,
+        vh * 0.48,
+        vw * 0.08,
+        vw * 0.53,
+        vh * 0.48,
+        vw * 0.72
+      );
+      haze.addColorStop(0, "rgba(99, 214, 255, 0.14)");
+      haze.addColorStop(0.46, "rgba(45, 106, 136, 0.08)");
+      haze.addColorStop(1, "rgba(0, 0, 0, 0)");
+      bgCtx.fillStyle = haze;
+      bgCtx.fillRect(0, 0, vw, vh);
+
+      const yawShift = currentRotY * 68;
+      const pitchShift = currentRotX * 90;
+      const lineCount = vw < 700 ? 18 : 26;
+
+      for (let i = 0; i < lineCount; i += 1) {
+        const t = i / (lineCount - 1);
+        const baseY = vh * (-0.09 + t * 1.18);
+        const amp = vh * (0.038 + (1 - t) * 0.028);
+        const startX = -vw * 0.18;
+        const endX = vw * 1.18;
+        const major = i % 3 === 0;
+
+        bgCtx.beginPath();
+        bgCtx.lineWidth = major ? 2.2 : 1.1;
+        bgCtx.strokeStyle = major
+          ? `rgba(221, 246, 255, ${0.3 - t * 0.08})`
+          : `rgba(140, 206, 230, ${0.16 - t * 0.03})`;
+
+        for (let step = 0; step <= 76; step += 1) {
+          const x = startX + ((endX - startX) * step) / 76;
+          const nx = (x + yawShift * 3.2) / Math.max(vw, 1);
+          const waveA = Math.sin(nx * Math.PI * 2.4 + i * 0.28) * amp;
+          const waveB = Math.sin(nx * Math.PI * 5.6 - i * 0.36) * amp * 0.28;
+          const waveC = Math.cos(nx * Math.PI * 1.4 + currentRotX * 2.1) * amp * 0.16;
+          const y = baseY + waveA + waveB + waveC + pitchShift * (0.5 - t) * 0.08;
+
+          if (step === 0) {
+            bgCtx.moveTo(x, y);
+          } else {
+            bgCtx.lineTo(x, y);
+          }
+        }
+
+        bgCtx.stroke();
+      }
+    }
+
+    function prepareModel(model) {
+      const box = new THREE.Box3().setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      const maxSide = Math.max(size.x, size.y, size.z, 1e-6);
+      const scale = 2.25 / maxSide;
+
+      model.position.sub(center);
+      model.scale.setScalar(scale);
+
+      const scaledBox = new THREE.Box3().setFromObject(model);
+      const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
+      const scaledSize = scaledBox.getSize(new THREE.Vector3());
+      const sphere = scaledBox.getBoundingSphere(new THREE.Sphere());
+
+      model.position.sub(scaledCenter);
+
+      modelMetrics = {
+        size: scaledSize,
+        radius: sphere.radius
+      };
+    }
+
+    function applyVisibleMaterial(mesh) {
+      const source = mesh.material;
+      const baseColor = source && source.color ? source.color.clone() : new THREE.Color("#7c949d");
+      const emissive = baseColor.clone().multiplyScalar(0.08);
+
+      mesh.material = new THREE.MeshStandardMaterial({
+        color: baseColor,
+        metalness: 0.18,
+        roughness: 0.74,
+        emissive,
+        emissiveIntensity: 0.55
+      });
+    }
+
+    function fitCamera() {
+      if (!modelMetrics || !viewportRect) return;
+
+      const halfFov = THREE.MathUtils.degToRad(camera.fov * 0.5);
+      const aspect = Math.max(viewportRect.width / Math.max(viewportRect.height, 1), 0.01);
+      const fitHeight = (modelMetrics.size.y * 0.5) / (Math.tan(halfFov) * 0.8);
+      const fitWidth = (modelMetrics.size.x * 0.5) / (Math.tan(halfFov) * aspect * 0.88);
+
+      cameraDistance = Math.max(fitHeight, fitWidth, modelMetrics.radius * 2.45);
+      lookAtY = modelMetrics.size.y * 0.02;
+      camera.near = 0.01;
+      camera.far = Math.max(50, cameraDistance * 18);
+      camera.updateProjectionMatrix();
+    }
+
+    function updateCamera() {
+      camera.position.set(0, modelMetrics ? modelMetrics.size.y * 0.04 : 0, cameraDistance);
+      camera.lookAt(0, lookAtY, 0);
+    }
+
+    function render() {
+      rafId = 0;
+
+      const moving = Math.abs(targetRotY - currentRotY) > 0.0004 || Math.abs(targetRotX - currentRotX) > 0.0004;
+      if (moving) {
+        currentRotY += (targetRotY - currentRotY) * 0.14;
+        currentRotX += (targetRotX - currentRotX) * 0.14;
+      } else {
+        currentRotY = targetRotY;
+        currentRotX = targetRotX;
+      }
+
+      drawContours();
+
+      renderer.clear(true, true, true);
+      if (wreckRoot && modelMetrics && viewportRect) {
+        const left = Math.round(viewportRect.left * dpr);
+        const bottom = Math.round((pageHeight - viewportRect.bottom) * dpr);
+        const width = Math.max(1, Math.round(viewportRect.width * dpr));
+        const height = Math.max(1, Math.round(viewportRect.height * dpr));
+
+        renderer.setViewport(left, bottom, width, height);
+        renderer.setScissor(left, bottom, width, height);
+
+        wreckRoot.rotation.set(currentRotX, currentRotY, 0);
+        updateCamera();
+        renderer.render(scene, camera);
+      }
+
+      if (moving) {
+        requestRender();
+      }
+    }
+
+    function logDebug(tag) {
+      if (!viewportRect) return;
+      console.info("[HobbiesWreck]", tag, {
+        viewport: {
+          left: Number(viewportRect.left.toFixed(1)),
+          top: Number(viewportRect.top.toFixed(1)),
+          width: Number(viewportRect.width.toFixed(1)),
+          height: Number(viewportRect.height.toFixed(1)),
+          dpr: Number(dpr.toFixed(2))
+        },
+        model: modelMetrics
+          ? {
+              size: {
+                x: Number(modelMetrics.size.x.toFixed(3)),
+                y: Number(modelMetrics.size.y.toFixed(3)),
+                z: Number(modelMetrics.size.z.toFixed(3))
+              },
+              radius: Number(modelMetrics.radius.toFixed(3)),
+              meshCount
+            }
+          : null,
+        cameraDistance: Number(cameraDistance.toFixed(3)),
+        rotation: {
+          x: Number(currentRotX.toFixed(3)),
+          y: Number(currentRotY.toFixed(3))
+        }
+      });
+    }
+
+    const loader = new GLTFLoader();
+    loader.load(
+      "./helicopter_wreck.glb",
+      (gltf) => {
+        wreckRoot = new THREE.Group();
+        const model = gltf.scene;
+
+        meshCount = 0;
+        model.traverse((child) => {
+          if (!child.isMesh) return;
+          meshCount += 1;
+          child.castShadow = false;
+          child.receiveShadow = false;
+          applyVisibleMaterial(child);
+        });
+
+        wreckRoot.add(model);
+        scene.add(wreckRoot);
+        prepareModel(model);
+        fitCamera();
+        logDebug("loaded");
+        requestRender();
+      },
+      undefined,
+      (error) => {
+        console.error("[HobbiesWreck] load failed", error);
+      }
+    );
+
+    glCanvas.addEventListener("pointerdown", (event) => {
+      isDragging = true;
+      lastPointerX = event.clientX;
+      lastPointerY = event.clientY;
+      glCanvas.classList.add("dragging");
+      glCanvas.setPointerCapture(event.pointerId);
+    });
+
+    glCanvas.addEventListener("pointermove", (event) => {
+      if (!isDragging) return;
+      const dx = event.clientX - lastPointerX;
+      const dy = event.clientY - lastPointerY;
+      lastPointerX = event.clientX;
+      lastPointerY = event.clientY;
+
+      targetRotY += dx * 0.008;
+      targetRotX = clamp(targetRotX + dy * 0.005, -0.65, 0.65);
+      requestRender();
+    });
+
+    function endDrag(event) {
+      if (!isDragging) return;
+      isDragging = false;
+      glCanvas.classList.remove("dragging");
+      if (event) {
+        glCanvas.releasePointerCapture(event.pointerId);
+      }
+      logDebug("drag-end");
+      requestRender();
+    }
+
+    glCanvas.addEventListener("pointerup", endDrag);
+    glCanvas.addEventListener("pointercancel", endDrag);
+    window.addEventListener("resize", updateViewportMetrics);
+
+    updateViewportMetrics();
+    requestRender();
+  </script>
+</body>
+</html>

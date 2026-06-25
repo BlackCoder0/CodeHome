@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Projects Dive Runtime Lab</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      background: #02070d;
+      color: #edf9fd;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    body {
+      overflow-x: hidden;
+    }
+
+    .stage {
+      min-height: 420vh;
+      position: relative;
+    }
+
+    .sticky {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% -18%, rgba(225, 245, 255, 0.42), transparent 24%),
+        linear-gradient(180deg, #8bc2dc 0%, #4b8fba 18%, #145477 48%, #0a3048 68%, #041522 100%);
+    }
+
+    #diveCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 0;
+    }
+
+    .hud {
+      position: absolute;
+      left: 20px;
+      top: 20px;
+      z-index: 2;
+      width: min(360px, calc(100vw - 32px));
+      padding: 16px 16px 14px;
+      border-radius: 20px;
+      background: rgba(4, 15, 22, 0.66);
+      box-shadow:
+        inset 0 0 0 1px rgba(160, 223, 242, 0.12),
+        0 24px 60px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(16px);
+    }
+
+    .hud strong {
+      display: block;
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(180, 229, 242, 0.78);
+    }
+
+    .hud h1 {
+      margin-top: 10px;
+      font-size: 32px;
+      line-height: 1;
+      font-weight: 600;
+    }
+
+    .hud p {
+      margin-top: 10px;
+      font-size: 13px;
+      line-height: 1.7;
+      color: rgba(205, 230, 238, 0.74);
+    }
+
+    .runtime-grid {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .runtime-card {
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      box-shadow: inset 0 0 0 1px rgba(160, 223, 242, 0.08);
+    }
+
+    .runtime-card span {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(161, 214, 231, 0.72);
+    }
+
+    .runtime-card strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 18px;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #f3fbfe;
+    }
+
+    .weights {
+      margin-top: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .weight-row {
+      display: grid;
+      grid-template-columns: 84px 1fr 44px;
+      gap: 10px;
+      align-items: center;
+      font-size: 12px;
+      color: rgba(212, 235, 243, 0.8);
+    }
+
+    .weight-bar {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+
+    .weight-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #76dfff, #d4f8ff);
+      box-shadow: 0 0 18px rgba(118, 223, 255, 0.24);
+    }
+
+    .caption {
+      position: absolute;
+      right: 20px;
+      bottom: 20px;
+      z-index: 2;
+      width: min(320px, calc(100vw - 32px));
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(4, 15, 22, 0.62);
+      box-shadow:
+        inset 0 0 0 1px rgba(160, 223, 242, 0.1),
+        0 24px 60px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(16px);
+    }
+
+    .caption div:first-child {
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(175, 224, 239, 0.76);
+    }
+
+    .caption h2 {
+      margin-top: 10px;
+      font-size: 24px;
+      line-height: 1.05;
+      font-weight: 600;
+    }
+
+    .caption p {
+      margin-top: 10px;
+      font-size: 13px;
+      line-height: 1.7;
+      color: rgba(208, 231, 237, 0.74);
+    }
+
+    .scroll-ghost {
+      position: absolute;
+      left: 50%;
+      bottom: 4vh;
+      z-index: 1;
+      transform: translateX(-50%) translateY(var(--cards-shift, 160px)) scale(var(--cards-scale, 0.94));
+      width: min(1160px, calc(100vw - 24px));
+      opacity: var(--cards-alpha, 0);
+      transition: opacity 0.25s ease;
+    }
+
+    .ghost-grid {
+      display: grid;
+      grid-template-columns: 1.35fr 0.9fr 0.9fr;
+      gap: 14px;
+    }
+
+    .ghost-card {
+      min-height: 180px;
+      padding: 18px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.05);
+      box-shadow:
+        inset 0 0 0 1px rgba(164, 221, 240, 0.1),
+        0 22px 60px rgba(0, 0, 0, 0.22);
+      backdrop-filter: blur(12px);
+    }
+
+    .ghost-card.large {
+      min-height: 374px;
+      grid-row: span 2;
+    }
+
+    .ghost-card span {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(155, 218, 238, 0.74);
+    }
+
+    .ghost-card h3 {
+      margin-top: 8px;
+      font-size: 20px;
+      line-height: 1.15;
+    }
+
+    .ghost-card p {
+      margin-top: 10px;
+      font-size: 13px;
+      line-height: 1.7;
+      color: rgba(205, 229, 237, 0.72);
+    }
+
+    @media (max-width: 900px) {
+      .runtime-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .ghost-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .ghost-card.large {
+        min-height: 220px;
+        grid-row: span 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="stage" id="stage">
+    <div class="sticky">
+      <canvas id="diveCanvas"></canvas>
+
+      <section class="hud">
+        <strong>Projects Dive Runtime</strong>
+        <h1 id="stateTitle">Approach</h1>
+        <p id="stateCopy">
+          The figure is only a proxy. This page validates the runtime: scroll mapping,
+          state transitions, impact timing, and reveal timing.
+        </p>
+
+        <div class="runtime-grid">
+          <div class="runtime-card">
+            <span>Progress</span>
+            <strong id="progressValue">0.00</strong>
+          </div>
+          <div class="runtime-card">
+            <span>Impact</span>
+            <strong id="impactValue">waiting</strong>
+          </div>
+          <div class="runtime-card">
+            <span>Character X</span>
+            <strong id="charXValue">0</strong>
+          </div>
+          <div class="runtime-card">
+            <span>Character Y</span>
+            <strong id="charYValue">0</strong>
+          </div>
+        </div>
+
+        <div class="weights" id="weights"></div>
+      </section>
+
+      <aside class="caption">
+        <div>Validation Focus</div>
+        <h2 id="phaseName">Approach</h2>
+        <p id="phaseBody">
+          Scroll pushes one deterministic runtime through approach, takeoff, impact,
+          underwater, and reveal. No autoplay timeline is hiding inside it.
+        </p>
+      </aside>
+
+      <div class="scroll-ghost" id="cardsGhost">
+        <div class="ghost-grid">
+          <article class="ghost-card large">
+            <span>Projects</span>
+            <h3>Shallow work layer</h3>
+            <p>
+              This block exists only to verify reveal timing. The cards should not appear
+              until the character has already crossed the waterline and the motion energy
+              has settled.
+            </p>
+          </article>
+          <article class="ghost-card">
+            <span>Container</span>
+            <h3>Observation shell</h3>
+            <p>Reveal should feel carried in by water, not popped in by layout.</p>
+          </article>
+          <article class="ghost-card">
+            <span>Timing</span>
+            <h3>Late enough</h3>
+            <p>The splash and underwater drift must land before cards assert themselves.</p>
+          </article>
+          <article class="ghost-card">
+            <span>Environment</span>
+            <h3>Still in sea</h3>
+            <p>Readable content, but still obviously living in the same ocean field.</p>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const stage = document.getElementById("stage");
+    const canvas = document.getElementById("diveCanvas");
+    const ctx = canvas.getContext("2d");
+    const stateTitle = document.getElementById("stateTitle");
+    const stateCopy = document.getElementById("stateCopy");
+    const progressValue = document.getElementById("progressValue");
+    const impactValue = document.getElementById("impactValue");
+    const charXValue = document.getElementById("charXValue");
+    const charYValue = document.getElementById("charYValue");
+    const phaseName = document.getElementById("phaseName");
+    const phaseBody = document.getElementById("phaseBody");
+    const weightsRoot = document.getElementById("weights");
+    const cardsGhost = document.getElementById("cardsGhost");
+
+    const stateDefs = [
+      {
+        key: "approach",
+        title: "Approach",
+        copy: "Run starts on the left platform. Runtime focus: stable horizontal travel before the jump.",
+        start: 0,
+        end: 0.2
+      },
+      {
+        key: "takeoff",
+        title: "Takeoff",
+        copy: "The body leaves the platform. Runtime focus: continuous motion, no sudden snap at the edge.",
+        start: 0.2,
+        end: 0.36
+      },
+      {
+        key: "airborne",
+        title: "Airborne",
+        copy: "Runtime focus: path arc and body rotation agree with the direction of travel.",
+        start: 0.36,
+        end: 0.58
+      },
+      {
+        key: "impact",
+        title: "Impact",
+        copy: "The splash event must trigger exactly when the character reaches the surface contact point.",
+        start: 0.58,
+        end: 0.68
+      },
+      {
+        key: "underwater",
+        title: "Underwater",
+        copy: "Runtime focus: continuity after entry. Bubbles, direction, and drift all continue from the impact point.",
+        start: 0.68,
+        end: 0.9
+      },
+      {
+        key: "reveal",
+        title: "Reveal",
+        copy: "Only after the motion settles do the project containers rise into view.",
+        start: 0.9,
+        end: 1
+      }
+    ];
+
+    const weightKeys = ["runWeight", "diveWeight", "swimWeight", "cardsWeight"];
+    const weightRefs = {};
+
+    let width = 1;
+    let height = 1;
+    let dpr = 1;
+    let targetProgress = 0;
+    let progress = 0;
+    let rafId = 0;
+    let lastTime = 0;
+    let particles = [];
+    let bubbles = [];
+    let droplets = [];
+    let impactTriggered = false;
+    let lastStateKey = "";
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    function smoothstep(min, max, value) {
+      const x = clamp((value - min) / Math.max(max - min, 0.0001), 0, 1);
+      return x * x * (3 - 2 * x);
+    }
+
+    function easeOutCubic(t) {
+      return 1 - Math.pow(1 - t, 3);
+    }
+
+    function easeInOutSine(t) {
+      return -(Math.cos(Math.PI * t) - 1) * 0.5;
+    }
+
+    function buildWeights() {
+      for (const key of weightKeys) {
+        const row = document.createElement("div");
+        row.className = "weight-row";
+
+        const label = document.createElement("div");
+        label.textContent = key;
+
+        const bar = document.createElement("div");
+        bar.className = "weight-bar";
+
+        const fill = document.createElement("div");
+        fill.className = "weight-fill";
+        bar.appendChild(fill);
+
+        const value = document.createElement("div");
+        value.textContent = "0.00";
+
+        row.appendChild(label);
+        row.appendChild(bar);
+        row.appendChild(value);
+        weightsRoot.appendChild(row);
+
+        weightRefs[key] = { fill, value };
+      }
+    }
+
+    function seedParticles() {
+      particles = [];
+      bubbles = [];
+      droplets = [];
+      impactTriggered = false;
+
+      const count = width < 900 ? 60 : 100;
+      for (let i = 0; i < count; i += 1) {
+        particles.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          r: Math.random() * 2.2 + 0.4,
+          speed: Math.random() * 0.45 + 0.1,
+          drift: Math.random() * 0.75 + 0.15,
+          alpha: Math.random() * 0.2 + 0.04
+        });
+      }
+    }
+
+    function resize() {
+      width = Math.max(window.innerWidth, 1);
+      height = Math.max(window.innerHeight, 1);
+      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      canvas.style.width = width + "px";
+      canvas.style.height = height + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      seedParticles();
+      requestRender();
+    }
+
+    function getSurfaceY() {
+      return height * 0.46;
+    }
+
+    function getPlatformRect() {
+      const left = width < 900 ? 10 : 26;
+      const widthPx = width < 900 ? width * 0.24 : Math.min(170, width * 0.11);
+      return {
+        x: left,
+        y: getSurfaceY() - 14,
+        width: widthPx,
+        height: 12
+      };
+    }
+
+    function getWeights(p) {
+      return {
+        runWeight: clamp(1 - smoothstep(0.26, 0.46, p), 0, 1),
+        diveWeight: Math.max(
+          smoothstep(0.16, 0.34, p) * (1 - smoothstep(0.66, 0.82, p)),
+          smoothstep(0.32, 0.6, p)
+        ),
+        swimWeight: smoothstep(0.64, 0.82, p),
+        cardsWeight: smoothstep(0.88, 1, p)
+      };
+    }
+
+    function getRuntimeState(p) {
+      const surfaceY = getSurfaceY();
+      const platform = getPlatformRect();
+      const impactX = width * 0.5;
+      const runStartX = platform.x + 18;
+      const runEndX = platform.x + platform.width - 12;
+      const peakX = width * 0.36;
+      const peakY = surfaceY - (width < 900 ? 108 : 154);
+      const swimEndX = width * (width < 900 ? 0.68 : 0.66);
+      const swimEndY = surfaceY + (width < 900 ? 126 : 158);
+
+      let x = runStartX;
+      let y = platform.y - 18;
+      let rotation = 0;
+      let phase = stateDefs[0];
+      let local = 0;
+
+      if (p < 0.2) {
+        phase = stateDefs[0];
+        local = smoothstep(0, 0.2, p);
+        x = lerp(runStartX, runEndX, local);
+        y = platform.y - 18;
+        rotation = 0;
+      } else if (p < 0.36) {
+        phase = stateDefs[1];
+        local = smoothstep(0.2, 0.36, p);
+        x = lerp(runEndX, runEndX + 48, easeOutCubic(local));
+        y = lerp(platform.y - 18, platform.y - 36, easeOutCubic(local));
+        rotation = lerp(0, -0.58, local);
+      } else if (p < 0.58) {
+        phase = stateDefs[2];
+        local = smoothstep(0.36, 0.58, p);
+        const t = easeInOutSine(local);
+        const a = 1 - t;
+        const b = t;
+        const c = 2 * a * b;
+        x = a * a * (runEndX + 48) + c * peakX + b * b * impactX;
+        y = a * a * (platform.y - 36) + c * peakY + b * b * (surfaceY - 12);
+        rotation = lerp(-0.58, 0.94, t);
+      } else if (p < 0.68) {
+        phase = stateDefs[3];
+        local = smoothstep(0.58, 0.68, p);
+        x = impactX;
+        y = lerp(surfaceY - 12, surfaceY + 12, local);
+        rotation = lerp(0.94, 1.18, local);
+      } else if (p < 0.9) {
+        phase = stateDefs[4];
+        local = smoothstep(0.68, 0.9, p);
+        x = lerp(impactX + 12, swimEndX, easeInOutSine(local));
+        y = lerp(surfaceY + 16, swimEndY, easeInOutSine(local));
+        rotation = lerp(1.02, 0.44, local);
+      } else {
+        phase = stateDefs[5];
+        local = smoothstep(0.9, 1, p);
+        x = lerp(swimEndX, swimEndX + 30, local);
+        y = lerp(swimEndY, swimEndY + 8, local);
+        rotation = lerp(0.44, 0.24, local);
+      }
+
+      return {
+        x,
+        y,
+        rotation,
+        phase,
+        local,
+        surfaceY,
+        impactX,
+        impactY: surfaceY
+      };
+    }
+
+    function getRunningPose(p) {
+      const cycle = Math.sin(p * Math.PI * 4);
+      return {
+        torso: -0.06,
+        head: -0.08,
+        armFront: -0.95 * cycle,
+        forearmFront: -0.5 * cycle,
+        armBack: 0.95 * cycle,
+        forearmBack: 0.5 * cycle,
+        thighFront: 1.05 * cycle,
+        shinFront: -0.76 * Math.max(cycle, 0),
+        thighBack: -1.05 * cycle,
+        shinBack: 0.82 * Math.max(-cycle, 0)
+      };
+    }
+
+    function mixPoses(a, b, t) {
+      const out = {};
+      for (const key of Object.keys(a)) {
+        out[key] = lerp(a[key], b[key], t);
+      }
+      return out;
+    }
+
+    function getPose(state, p) {
+      const runA = getRunningPose(p);
+      const launch = {
+        torso: -0.28,
+        head: -0.16,
+        armFront: -1.18,
+        forearmFront: -0.54,
+        armBack: 0.42,
+        forearmBack: 0.18,
+        thighFront: 0.72,
+        shinFront: -0.36,
+        thighBack: -0.48,
+        shinBack: 0.36
+      };
+      const arc = {
+        torso: 0.16,
+        head: 0.08,
+        armFront: -0.1,
+        forearmFront: 0.1,
+        armBack: 0.24,
+        forearmBack: 0.12,
+        thighFront: 0.18,
+        shinFront: -0.12,
+        thighBack: -0.12,
+        shinBack: 0.08
+      };
+      const entry = {
+        torso: 0.28,
+        head: 0.06,
+        armFront: 0.12,
+        forearmFront: 0.14,
+        armBack: 0.1,
+        forearmBack: 0.1,
+        thighFront: 0.08,
+        shinFront: -0.04,
+        thighBack: 0.06,
+        shinBack: -0.04
+      };
+      const swimA = {
+        torso: 0.2,
+        head: 0.04,
+        armFront: -0.86,
+        forearmFront: 0.34,
+        armBack: 0.64,
+        forearmBack: -0.32,
+        thighFront: 0.34,
+        shinFront: -0.18,
+        thighBack: -0.28,
+        shinBack: 0.2
+      };
+      const swimB = {
+        torso: 0.2,
+        head: 0.04,
+        armFront: 0.62,
+        forearmFront: -0.28,
+        armBack: -0.84,
+        forearmBack: 0.38,
+        thighFront: -0.26,
+        shinFront: 0.2,
+        thighBack: 0.36,
+        shinBack: -0.16
+      };
+
+      if (state.phase.key === "approach") {
+        return runA;
+      }
+      if (state.phase.key === "takeoff") {
+        return mixPoses(runA, launch, state.local);
+      }
+      if (state.phase.key === "airborne") {
+        return mixPoses(launch, arc, state.local);
+      }
+      if (state.phase.key === "impact") {
+        return mixPoses(arc, entry, state.local);
+      }
+      if (state.phase.key === "underwater") {
+        const wave = (Math.sin(state.local * Math.PI * 4) + 1) * 0.5;
+        return mixPoses(swimA, swimB, wave);
+      }
+      return mixPoses(swimA, swimB, 0.5);
+    }
+
+    function rotatePoint(x, y, angle) {
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      return {
+        x: x * cos - y * sin,
+        y: x * sin + y * cos
+      };
+    }
+
+    function drawSegment(x1, y1, x2, y2, widthPx) {
+      ctx.lineWidth = widthPx;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+
+    function drawFigure(state, pose) {
+      const scale = width < 900 ? 0.9 : 1;
+      const rootX = state.x;
+      const rootY = state.y;
+      const baseAngle = state.rotation;
+
+      const torsoLen = 32 * scale;
+      const neckLen = 6 * scale;
+      const headR = 8 * scale;
+      const upperArm = 18 * scale;
+      const lowerArm = 16 * scale;
+      const upperLeg = 22 * scale;
+      const lowerLeg = 20 * scale;
+      const limbWidth = 9 * scale;
+
+      function world(localX, localY) {
+        const p = rotatePoint(localX, localY, baseAngle);
+        return { x: rootX + p.x, y: rootY + p.y };
+      }
+
+      const hip = world(0, 0);
+      const shoulder = world(0, -torsoLen);
+      const neck = world(0, -torsoLen - neckLen);
+      const head = world(0, -torsoLen - neckLen - headR);
+
+      const frontShoulderLocal = rotatePoint(0, -torsoLen, pose.armFront);
+      const frontElbowLocal = rotatePoint(frontShoulderLocal.x, frontShoulderLocal.y + upperArm, pose.forearmFront);
+
+      const backShoulderLocal = rotatePoint(0, -torsoLen, pose.armBack);
+      const backElbowLocal = rotatePoint(backShoulderLocal.x, backShoulderLocal.y + upperArm, pose.forearmBack);
+
+      const frontHipLocal = rotatePoint(0, 0, pose.thighFront);
+      const frontKneeLocal = rotatePoint(frontHipLocal.x, frontHipLocal.y + upperLeg, pose.shinFront);
+
+      const backHipLocal = rotatePoint(0, 0, pose.thighBack);
+      const backKneeLocal = rotatePoint(backHipLocal.x, backHipLocal.y + upperLeg, pose.shinBack);
+
+      const frontHand = world(frontElbowLocal.x, frontElbowLocal.y + lowerArm);
+      const frontElbow = world(frontShoulderLocal.x, frontShoulderLocal.y + upperArm);
+      const frontShoulder = shoulder;
+
+      const backHand = world(backElbowLocal.x, backElbowLocal.y + lowerArm);
+      const backElbow = world(backShoulderLocal.x, backShoulderLocal.y + upperArm);
+      const backShoulder = shoulder;
+
+      const frontFoot = world(frontKneeLocal.x, frontKneeLocal.y + lowerLeg);
+      const frontKnee = world(frontHipLocal.x, frontHipLocal.y + upperLeg);
+      const frontHip = hip;
+
+      const backFoot = world(backKneeLocal.x, backKneeLocal.y + lowerLeg);
+      const backKnee = world(backHipLocal.x, backHipLocal.y + upperLeg);
+      const backHip = hip;
+
+      ctx.save();
+      ctx.strokeStyle = "rgba(247, 252, 255, 0.96)";
+      ctx.fillStyle = "rgba(247, 252, 255, 0.96)";
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.shadowBlur = 18;
+      ctx.shadowColor = "rgba(138, 230, 255, 0.72)";
+
+      drawSegment(backShoulder.x, backShoulder.y, backElbow.x, backElbow.y, limbWidth * 0.9);
+      drawSegment(backElbow.x, backElbow.y, backHand.x, backHand.y, limbWidth * 0.86);
+      drawSegment(backHip.x, backHip.y, backKnee.x, backKnee.y, limbWidth);
+      drawSegment(backKnee.x, backKnee.y, backFoot.x, backFoot.y, limbWidth * 0.92);
+      drawSegment(hip.x, hip.y, shoulder.x, shoulder.y, limbWidth * 1.22);
+      drawSegment(frontShoulder.x, frontShoulder.y, frontElbow.x, frontElbow.y, limbWidth);
+      drawSegment(frontElbow.x, frontElbow.y, frontHand.x, frontHand.y, limbWidth * 0.92);
+      drawSegment(frontHip.x, frontHip.y, frontKnee.x, frontKnee.y, limbWidth * 1.08);
+      drawSegment(frontKnee.x, frontKnee.y, frontFoot.x, frontFoot.y, limbWidth * 0.96);
+
+      ctx.beginPath();
+      ctx.arc(head.x, head.y, headR, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function spawnImpact(x, y, amount) {
+      const dropletCount = width < 900 ? 22 : 36;
+      const bubbleCount = width < 900 ? 12 : 18;
+
+      for (let i = 0; i < dropletCount; i += 1) {
+        droplets.push({
+          x,
+          y,
+          vx: (Math.random() - 0.5) * (8 + amount * 8),
+          vy: -Math.random() * (7 + amount * 4) - 1,
+          size: Math.random() * 3 + 1.2,
+          alpha: Math.random() * 0.42 + 0.42
+        });
+      }
+
+      for (let i = 0; i < bubbleCount; i += 1) {
+        bubbles.push({
+          x: x + (Math.random() - 0.5) * 20,
+          y: y + Math.random() * 18,
+          vx: (Math.random() - 0.5) * 1.5,
+          vy: -Math.random() * 2.8 - 0.6,
+          size: Math.random() * 2.8 + 1.2,
+          alpha: Math.random() * 0.34 + 0.24
+        });
+      }
+    }
+
+    function updateParticles(time) {
+      for (const particle of particles) {
+        particle.y += particle.speed + smoothstep(0.24, 1, progress) * 0.24;
+        particle.x += Math.sin(time * 0.5 + particle.y * 0.012) * particle.drift * 0.18;
+        if (particle.y > height + 12) {
+          particle.y = -12;
+          particle.x = Math.random() * width;
+        }
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(207, 235, 244, ${particle.alpha + smoothstep(0.24, 1, progress) * 0.08})`;
+        ctx.arc(particle.x, particle.y, particle.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function updateDroplets() {
+      for (let i = droplets.length - 1; i >= 0; i -= 1) {
+        const drop = droplets[i];
+        drop.x += drop.vx;
+        drop.y += drop.vy;
+        drop.vy += 0.18;
+        drop.alpha -= 0.014;
+        if (drop.alpha <= 0) {
+          droplets.splice(i, 1);
+          continue;
+        }
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(241, 251, 255, ${drop.alpha})`;
+        ctx.arc(drop.x, drop.y, drop.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function updateBubbles(time) {
+      for (let i = bubbles.length - 1; i >= 0; i -= 1) {
+        const bubble = bubbles[i];
+        bubble.x += bubble.vx + Math.sin(time + bubble.y * 0.012) * 0.34;
+        bubble.y += bubble.vy;
+        bubble.alpha -= 0.0026;
+        if (bubble.alpha <= 0 || bubble.y < -24) {
+          bubbles.splice(i, 1);
+          continue;
+        }
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(171, 236, 255, ${bubble.alpha})`;
+        ctx.lineWidth = 1.1;
+        ctx.arc(bubble.x, bubble.y, bubble.size, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    function drawWaterAndPlatform(time) {
+      const surfaceY = getSurfaceY();
+
+      const sky = ctx.createLinearGradient(0, 0, 0, surfaceY + height * 0.06);
+      sky.addColorStop(0, "rgba(221, 244, 255, 0.42)");
+      sky.addColorStop(1, "rgba(221, 244, 255, 0)");
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, width, surfaceY + height * 0.06);
+
+      const surfaceGlow = ctx.createRadialGradient(width * 0.5, surfaceY, 0, width * 0.5, surfaceY, width * 0.5);
+      surfaceGlow.addColorStop(0, `rgba(235, 248, 255, ${0.22 * (1 - smoothstep(0.4, 1, progress))})`);
+      surfaceGlow.addColorStop(1, "rgba(235, 248, 255, 0)");
+      ctx.fillStyle = surfaceGlow;
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.fillStyle = "rgba(240, 250, 255, 0.94)";
+      ctx.fillRect(0, surfaceY, width, 2);
+
+      ctx.strokeStyle = "rgba(232, 249, 255, 0.24)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      for (let x = 0; x <= width; x += 10) {
+        const y = surfaceY + Math.sin(x * 0.016 + time * 1.7) * 2.6 + Math.sin(x * 0.034 + time) * 1.4;
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      const underFog = ctx.createLinearGradient(0, surfaceY, 0, height);
+      underFog.addColorStop(0, "rgba(146, 214, 235, 0.06)");
+      underFog.addColorStop(1, "rgba(4, 16, 24, 0.32)");
+      ctx.fillStyle = underFog;
+      ctx.fillRect(0, surfaceY, width, height - surfaceY);
+
+      const platform = getPlatformRect();
+      const fade = 1 - smoothstep(0.44, 0.74, progress);
+      ctx.save();
+      ctx.globalAlpha = 0.18 + fade * 0.34;
+      ctx.fillStyle = "rgba(6, 20, 29, 0.94)";
+      ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+      ctx.fillStyle = "rgba(146, 228, 255, 0.18)";
+      ctx.fillRect(platform.x + platform.width - 16, platform.y - 2, 16, platform.height + 2);
+      ctx.strokeStyle = "rgba(230, 248, 255, 0.24)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(platform.x, platform.y, platform.width, platform.height);
+      ctx.restore();
+    }
+
+    function drawRipples(state) {
+      const impact = Math.sin(smoothstep(0.58, 0.68, progress) * Math.PI);
+      if (impact <= 0.001) return;
+
+      ctx.save();
+      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = `rgba(229, 248, 255, ${0.26 + impact * 0.42})`;
+      const rings = width < 900 ? 3 : 4;
+      for (let i = 0; i < rings; i += 1) {
+        const r = 44 + i * 20 + impact * (24 + i * 8);
+        ctx.beginPath();
+        ctx.ellipse(state.impactX, state.impactY + 2, r, r * 0.18, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function updateHud(state, weights, contact) {
+      stateTitle.textContent = state.phase.title;
+      stateCopy.textContent = state.phase.copy;
+      phaseName.textContent = state.phase.title;
+      phaseBody.textContent = state.phase.copy;
+      progressValue.textContent = progress.toFixed(2);
+      impactValue.textContent = contact ? "hit" : "waiting";
+      charXValue.textContent = Math.round(state.x);
+      charYValue.textContent = Math.round(state.y);
+
+      for (const key of weightKeys) {
+        const value = weights[key];
+        weightRefs[key].fill.style.width = `${value * 100}%`;
+        weightRefs[key].value.textContent = value.toFixed(2);
+      }
+    }
+
+    function updateCards(weights) {
+      const alpha = weights.cardsWeight;
+      const shift = lerp(160, 0, alpha);
+      const scale = lerp(0.94, 1, alpha);
+      cardsGhost.style.setProperty("--cards-alpha", alpha.toFixed(4));
+      cardsGhost.style.setProperty("--cards-shift", `${shift.toFixed(2)}px`);
+      cardsGhost.style.setProperty("--cards-scale", scale.toFixed(4));
+    }
+
+    function updateProgress() {
+      const total = Math.max(stage.offsetHeight - window.innerHeight, 1);
+      targetProgress = clamp(window.scrollY / total, 0, 1);
+    }
+
+    function render(timeMs) {
+      rafId = 0;
+      const dt = lastTime ? Math.min((timeMs - lastTime) / 1000, 0.03) : 0.016;
+      lastTime = timeMs;
+      const time = timeMs * 0.001;
+
+      progress += (targetProgress - progress) * clamp(10 * dt, 0, 1);
+
+      const state = getRuntimeState(progress);
+      const weights = getWeights(progress);
+      const pose = getPose(state, progress);
+      const contact = state.phase.key === "impact" && state.y >= state.impactY;
+
+      if (contact && !impactTriggered) {
+        spawnImpact(state.impactX, state.impactY + 2, 0.6);
+        impactTriggered = true;
+        console.info("[DiveRuntime] impact event", {
+          progress: Number(progress.toFixed(3)),
+          x: Number(state.impactX.toFixed(1)),
+          y: Number(state.impactY.toFixed(1))
+        });
+      }
+
+      if (state.phase.key !== "impact") {
+        impactTriggered = false;
+      }
+
+      if (state.phase.key !== lastStateKey) {
+        lastStateKey = state.phase.key;
+        console.info("[DiveRuntime] phase", {
+          phase: state.phase.key,
+          progress: Number(progress.toFixed(3))
+        });
+      }
+
+      ctx.clearRect(0, 0, width, height);
+      drawWaterAndPlatform(time);
+      updateParticles(time);
+      drawRipples(state);
+      updateDroplets();
+      updateBubbles(time);
+      drawFigure(state, pose);
+      updateHud(state, weights, contact);
+      updateCards(weights);
+
+      const needsMoreFrames =
+        Math.abs(targetProgress - progress) > 0.0008 ||
+        droplets.length > 0 ||
+        bubbles.length > 0;
+
+      if (needsMoreFrames) {
+        requestRender();
+      }
+    }
+
+    function requestRender() {
+      if (!rafId) {
+        rafId = requestAnimationFrame(render);
+      }
+    }
+
+    buildWeights();
+    resize();
+    updateProgress();
+    requestRender();
+
+    window.addEventListener("resize", resize);
+    window.addEventListener("scroll", () => {
+      updateProgress();
+      requestRender();
+    }, { passive: true });
+  </script>
+</body>
+</html>

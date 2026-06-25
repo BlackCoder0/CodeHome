@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>海底遗迹点阵 — CodeRains 改版</title>
+<style>
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #020810;
+    overflow: hidden; height: 100vh;
+    font-family: 'Courier New','SimHei',monospace;
+    cursor: crosshair;
+  }
+  canvas { display:block; position:fixed; inset:0; }
+
+  #info {
+    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); z-index:20;
+    background: rgba(3,8,18,0.78); backdrop-filter: blur(4px);
+    border: 1px solid rgba(50,150,170,0.22); border-radius: 10px;
+    padding: 14px 26px; pointer-events: none; text-align: center;
+    color: rgba(90,180,195,0.65); font-size: 12px; letter-spacing: 1.5px;
+  }
+  #info .t { font-size: 17px; letter-spacing: 4px; color: rgba(130,210,225,0.75); margin-bottom: 3px; }
+  #info .h { color: rgba(60,140,160,0.4); font-size: 10px; margin-top: 4px; }
+
+  #pulse {
+    position: fixed; top: 18px; left: 50%; transform: translateX(-50%); z-index:20;
+    width: 6px; height: 6px; border-radius: 50%; pointer-events: none;
+    background: rgba(70,190,210,0.6); box-shadow: 0 0 14px rgba(70,190,210,0.4);
+    transition: box-shadow 0.4s, background 0.4s;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+<div id="pulse"></div>
+<div id="info">
+  <div class="t">◈ 前文明遗迹 ◈</div>
+  <div>信号图腾 · 残存终端</div>
+  <div class="h">移动鼠标靠近图腾</div>
+</div>
+
+<script>
+(function() {
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+
+  let W, H;
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio||1, 2);
+    canvas.width = (W=window.innerWidth) * dpr;
+    canvas.height = (H=window.innerHeight) * dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // ============ 遗迹建筑参数（比例布局） ============
+  function layout() {
+    return {
+      // 中央图腾区域
+      totemCX: W * 0.5,
+      totemCY: H * 0.48,
+      totemW: Math.min(W * 0.45, 420),
+      totemH: Math.min(H * 0.38, 280),
+
+      // 左石柱
+      pillarLX: W * 0.12,
+      pillarLTop: H * 0.08,
+      pillarLBot: H * 0.78,
+      pillarLW: W * 0.07,
+
+      // 右石柱
+      pillarRX: W * 0.88,
+      pillarRTop: H * 0.05,
+      pillarRBot: H * 0.82,
+      pillarRW: W * 0.06,
+
+      // 中央后墙
+      wallX: W * 0.25,
+      wallW: W * 0.5,
+      wallTop: H * 0.02,
+      wallBot: H * 0.65,
+
+      // 断裂拱门
+      archCX: W * 0.5,
+      archCY: H * 0.12,
+      archR: Math.min(W * 0.18, H * 0.2),
+
+      // 底座平台
+      platTop: H * 0.72,
+      platBot: H * 0.88,
+    };
+  }
+
+  // ============ 石质纹理辅助 ============
+  // 预生成裂缝路径
+  function crackPath(layout) {
+    const paths = [];
+    // 左柱裂缝
+    const lx = layout.pillarLX;
+    for (let c = 0; c < 4; c++) {
+      const pts = [];
+      let cy = layout.pillarLTop + Math.random() * (layout.pillarLBot - layout.pillarLTop);
+      let cx = lx + (Math.random() - 0.5) * layout.pillarLW;
+      const segs = 3 + Math.floor(Math.random() * 6);
+      for (let s = 0; s < segs; s++) {
+        pts.push({x: cx, y: cy});
+        cx += (Math.random()-0.5) * layout.pillarLW * 0.8;
+        cy += 15 + Math.random() * 35;
+      }
+      paths.push(pts);
+    }
+    // 右柱裂缝
+    const rx = layout.pillarRX;
+    for (let c = 0; c < 3; c++) {
+      const pts = [];
+      let cy = layout.pillarRTop + Math.random() * (layout.pillarRBot - layout.pillarRTop);
+      let cx = rx + (Math.random() - 0.5) * layout.pillarRW;
+      const segs = 3 + Math.floor(Math.random() * 5);
+      for (let s = 0; s < segs; s++) {
+        pts.push({x: cx, y: cy});
+        cx += (Math.random()-0.5) * layout.pillarRW * 0.7;
+        cy += 12 + Math.random() * 30;
+      }
+      paths.push(pts);
+    }
+    // 后墙裂缝
+    for (let c = 0; c < 5; c++) {
+      const pts = [];
+      let cy = layout.wallTop + Math.random() * (layout.wallBot - layout.wallTop);
+      let cx = layout.wallX + Math.random() * layout.wallW;
+      const segs = 2 + Math.floor(Math.random() * 4);
+      for (let s = 0; s < segs; s++) {
+        pts.push({x: cx, y: cy});
+        cx += (Math.random()-0.5) * 100;
+        cy += 10 + Math.random() * 25;
+      }
+      paths.push(pts);
+    }
+    return paths;
+  }
+
+  // ============ 点阵图腾粒子系统 ============
+  const totemParticles = [];
+  const PARTICLE_SPACING = 6;
+
+  function initTotemParticles(lay) {
+    totemParticles.length = 0;
+    // 在离屏 Canvas 上绘制文字
+    const off = document.createElement('canvas');
+    const octx = off.getContext('2d');
+    off.width = 500; off.height = 200;
+    octx.fillStyle = '#ffffff';
+    octx.font = 'bold 90px "Georgia","Noto Serif SC",serif';
+    octx.textAlign = 'center';
+    octx.textBaseline = 'middle';
+    octx.fillText('晓  雨', 250, 100);
+
+    const img = octx.getImageData(0, 0, off.width, off.height);
+    const spacing = PARTICLE_SPACING;
+
+    // 冷调配色池
+    const colors = [
+      {r:70,g:195,b:215}, {r:110,g:205,b:225}, {r:55,g:165,b:185},
+      {r:85,g:175,b:165}, {r:95,g:155,b:195}, {r:65,g:135,b:175},
+    ];
+
+    for (let y = 0; y < off.height; y += spacing) {
+      for (let x = 0; x < off.width; x += spacing) {
+        const idx = (y * off.width + x) * 4;
+        if (img.data[idx + 3] > 50) {
+          const color = colors[Math.floor(Math.random() * colors.length)];
+          const tx = lay.totemCX + (x - 250) * (lay.totemW / 480);
+          const ty = lay.totemCY + (y - 100) * (lay.totemH / 190);
+          totemParticles.push({
+            ox: tx, oy: ty,      // 原始位置
+            x: tx + (Math.random()-0.5)*20,
+            y: ty + (Math.random()-0.5)*20,
+            tx, ty,
+            color, size: 1+Math.random()*2.2,
+            glow: 0.15+Math.random()*0.4,
+            vx:0, vy:0,
+            spring: 0.025+Math.random()*0.03,
+            friction: 0.91,
+            signalBoost:0,
+            signalDecay: 0.018,
+          });
+        }
+      }
+    }
+
+    // 散布碎片粒子（不在图腾上的遗迹灰尘）
+    for (let i = 0; i < 250; i++) {
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      const x = Math.random() * W, y = Math.random() * H;
+      totemParticles.push({
+        ox:x, oy:y, x, y, tx:x, ty:y,
+        color: {r:Math.floor(color.r*0.45), g:Math.floor(color.g*0.45), b:Math.floor(color.b*0.45)},
+        size: 0.4+Math.random()*1.1, glow:0.04+Math.random()*0.18,
+        vx:0, vy:0, spring:0.015, friction:0.93,
+        signalBoost:0, signalDecay:0.012,
+      });
+    }
+
+    // 电线连接（图腾粒子 → 柱体/框架）
+    wires.length = 0;
+    const mainParticles = totemParticles.filter((_,i) => i < totemParticles.length - 250);
+    if (mainParticles.length > 8) {
+      for (let w = 0; w < 20; w++) {
+        const a = mainParticles[Math.floor(Math.random() * mainParticles.length)];
+        const b = mainParticles[Math.floor(Math.random() * mainParticles.length)];
+        const dx = a.tx - b.tx, dy = a.ty - b.ty;
+        if (Math.sqrt(dx*dx+dy*dy) < 160 && Math.sqrt(dx*dx+dy*dy) > 25) {
+          wires.push({a, b});
+        }
+      }
+    }
+  }
+
+  const wires = [];
+
+  // ============ 信号环 ============
+  const signalRings = [];
+  function spawnRing(lay) {
+    signalRings.push({
+      x: lay.totemCX + (Math.random()-0.5)*lay.totemW*0.6,
+      y: lay.totemCY + (Math.random()-0.5)*lay.totemH*0.6,
+      radius: 0,
+      maxR: Math.min(W,H)*0.55 + Math.random()*120,
+      speed: 1.2+Math.random()*2.2,
+      opacity: 0.2+Math.random()*0.35,
+      lw: 0.7+Math.random()*1.3,
+    });
+  }
+
+  // ============ 鼠标 ============
+  let mouseX = -999, mouseY = -999, mouseActive = false;
+  canvas.addEventListener('mousemove', e => { mouseX=e.clientX; mouseY=e.clientY; mouseActive=true; });
+  canvas.addEventListener('mouseleave', () => { mouseActive=false; });
+  canvas.addEventListener('touchmove', e => {
+    if (e.touches.length>0) { mouseX=e.touches[0].clientX; mouseY=e.touches[0].clientY; mouseActive=true; }
+  }, {passive:true});
+  canvas.addEventListener('touchend', () => { mouseActive=false; });
+
+  // ============ 建筑元素绘制 ============
+  // 这些在每帧绘制，因为窗口 resize 后布局会变
+
+  function drawStonePillar(x, topY, botY, width, cracks) {
+    // 柱体主体（石质）
+    const grad = ctx.createLinearGradient(x - width/2, 0, x + width/2, 0);
+    grad.addColorStop(0, '#151e28');
+    grad.addColorStop(0.3, '#1e2a36');
+    grad.addColorStop(0.5, '#253240');
+    grad.addColorStop(0.7, '#1e2a36');
+    grad.addColorStop(1, '#141c26');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x - width/2, topY, width, botY - topY);
+
+    // 柱体边缘高光
+    ctx.strokeStyle = 'rgba(60,80,100,0.3)';
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(x - width/2, topY, width, botY - topY);
+
+    // 柱头（略宽）
+    const capH = 18;
+    ctx.fillStyle = '#1a2432';
+    ctx.fillRect(x - width/2 - 6, topY, width + 12, capH);
+    ctx.strokeStyle = 'rgba(70,90,110,0.25)';
+    ctx.strokeRect(x - width/2 - 6, topY, width + 12, capH);
+
+    // 柱基
+    const baseH = 20;
+    ctx.fillStyle = '#18222e';
+    ctx.fillRect(x - width/2 - 8, botY - baseH, width + 16, baseH);
+    ctx.strokeRect(x - width/2 - 8, botY - baseH, width + 16, baseH);
+
+    // 金属包边（柱体上下各一圈）
+    ctx.fillStyle = 'rgba(60,80,100,0.4)';
+    ctx.fillRect(x - width/2 - 2, topY + capH + 8, width + 4, 4);
+    ctx.fillRect(x - width/2 - 2, botY - baseH - 18, width + 4, 4);
+
+    // 裂缝
+    cracks.forEach(pts => {
+      if (pts.length < 2) return;
+      ctx.strokeStyle = 'rgba(30,40,55,0.5)';
+      ctx.lineWidth = 0.7;
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(50,160,180,0.08)';
+      ctx.lineWidth = 0.3;
+      ctx.stroke();
+    });
+  }
+
+  function drawArch(lay) {
+    const cx = lay.archCX, cy = lay.archCY, r = lay.archR;
+    // 拱门
+    ctx.strokeStyle = 'rgba(50,75,90,0.4)';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, Math.PI, 0);
+    ctx.stroke();
+
+    // 拱门内缘线
+    ctx.strokeStyle = 'rgba(60,85,100,0.25)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r - 6, Math.PI, 0);
+    ctx.stroke();
+
+    // 拱门基石（左右）
+    const keystoneW = 14;
+    ctx.fillStyle = '#1a2634';
+    ctx.fillRect(cx - r - 2, cy - keystoneW/2, 10, keystoneW);
+    ctx.fillRect(cx + r - 8, cy - keystoneW/2, 10, keystoneW);
+
+    // 拱顶石
+    ctx.fillStyle = '#1d2a38';
+    ctx.fillRect(cx - keystoneW/2, cy - r - 6, keystoneW, 12);
+  }
+
+  // ============ 渲染 ============
+  let frameCount = 0;
+  let cracksData = [];
+
+  function render(ts) {
+    requestAnimationFrame(render);
+    frameCount++;
+    const t = ts * 0.001;
+    const lay = layout();
+
+    // 初始化/更新裂缝
+    if (cracksData.length === 0 || frameCount % 300 === 0) {
+      cracksData = crackPath(lay);
+    }
+
+    // 初始化粒子（首次）
+    if (totemParticles.length === 0) {
+      initTotemParticles(lay);
+    }
+
+    // --- 背景：深渊暗色 ---
+    const bgGrad = ctx.createRadialGradient(W/2, H*0.4, 0, W/2, H/2, Math.max(W,H)*0.85);
+    bgGrad.addColorStop(0, '#071320');
+    bgGrad.addColorStop(0.5, '#040c18');
+    bgGrad.addColorStop(1, '#01050c');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+
+    // --- 远处微弱光 ---
+    const farGlow = ctx.createRadialGradient(W/2, H*0.45, 0, W/2, H*0.45, W*0.6);
+    farGlow.addColorStop(0, 'rgba(20,60,80,0.08)');
+    farGlow.addColorStop(1, 'transparent');
+    ctx.fillStyle = farGlow;
+    ctx.fillRect(0, 0, W, H);
+
+    // ===== 绘制建筑遗迹 =====
+
+    // --- 后墙 ---
+    const wallGrad = ctx.createLinearGradient(0, lay.wallTop, 0, lay.wallBot);
+    wallGrad.addColorStop(0, 'rgba(14,22,34,0.75)');
+    wallGrad.addColorStop(0.5, 'rgba(18,28,42,0.8)');
+    wallGrad.addColorStop(1, 'rgba(12,18,28,0.7)');
+    ctx.fillStyle = wallGrad;
+    ctx.fillRect(lay.wallX, lay.wallTop, lay.wallW, lay.wallBot - lay.wallTop);
+
+    // 墙顶金属横梁
+    ctx.fillStyle = 'rgba(50,70,90,0.35)';
+    ctx.fillRect(lay.wallX - 4, lay.wallTop, lay.wallW + 8, 6);
+
+    // 墙面裂缝
+    cracksData.filter((_,i) => i >= 7).forEach(pts => {
+      if (pts.length < 2) return;
+      ctx.strokeStyle = 'rgba(25,35,50,0.45)';
+      ctx.lineWidth = 0.6;
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+      ctx.stroke();
+    });
+
+    // --- 断裂拱门 ---
+    drawArch(lay);
+
+    // --- 左石柱 ---
+    drawStonePillar(lay.pillarLX, lay.pillarLTop, lay.pillarLBot, lay.pillarLW,
+      cracksData.filter((_,i) => i < 4));
+
+    // --- 右石柱 ---
+    drawStonePillar(lay.pillarRX, lay.pillarRTop, lay.pillarRBot, lay.pillarRW,
+      cracksData.filter((_,i) => i >= 4 && i < 7));
+
+    // --- 底座平台 ---
+    const platGrad = ctx.createLinearGradient(0, lay.platTop, 0, lay.platBot);
+    platGrad.addColorStop(0, '#1a2838');
+    platGrad.addColorStop(0.3, '#233548');
+    platGrad.addColorStop(1, '#0f1824');
+    ctx.fillStyle = platGrad;
+    ctx.fillRect(W*0.08, lay.platTop, W*0.84, lay.platBot - lay.platTop);
+
+    // 平台边缘金属条
+    ctx.fillStyle = 'rgba(55,80,100,0.35)';
+    ctx.fillRect(W*0.08, lay.platTop, W*0.84, 3);
+    ctx.fillRect(W*0.08, lay.platBot - 4, W*0.84, 3);
+
+    // 平台沉积线
+    ctx.strokeStyle = 'rgba(30,45,60,0.25)';
+    ctx.lineWidth = 0.5;
+    for (let l = 0; l < 5; l++) {
+      const ly = lay.platTop + 20 + l * 18;
+      ctx.beginPath();
+      for (let x = W*0.1; x < W*0.9; x += 10) {
+        const wob = Math.sin(x*0.015 + l*1.2) * 1.2;
+        if (x === W*0.1) ctx.moveTo(x, ly+wob); else ctx.lineTo(x, ly+wob);
+      }
+      ctx.stroke();
+    }
+
+    // --- 图腾后方的金属框架 ---
+    const frameX = lay.totemCX - lay.totemW/2 - 15;
+    const frameY = lay.totemCY - lay.totemH/2 - 12;
+    const frameW = lay.totemW + 30;
+    const frameH = lay.totemH + 24;
+    ctx.strokeStyle = 'rgba(60,85,105,0.35)';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(frameX, frameY, frameW, frameH);
+    ctx.strokeStyle = 'rgba(80,110,130,0.2)';
+    ctx.lineWidth = 0.6;
+    ctx.strokeRect(frameX+3, frameY+3, frameW-6, frameH-6);
+
+    // 框架四角装饰
+    const cornerR = 8;
+    [
+      [frameX, frameY], [frameX+frameW, frameY],
+      [frameX, frameY+frameH], [frameX+frameW, frameY+frameH]
+    ].forEach(([cx,cy]) => {
+      ctx.fillStyle = 'rgba(70,100,120,0.35)';
+      ctx.beginPath();
+      ctx.arc(cx, cy, cornerR, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(90,120,140,0.25)';
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+    });
+
+    // ===== 信号环 =====
+    if (frameCount % 80 === 0) spawnRing(lay);
+    for (let i = signalRings.length - 1; i >= 0; i--) {
+      const r = signalRings[i];
+      r.radius += r.speed;
+      if (r.radius > r.maxR) { signalRings.splice(i,1); continue; }
+      const fade = 1 - r.radius / r.maxR;
+      const a = r.opacity * fade;
+      ctx.strokeStyle = `rgba(70,190,210,${a})`;
+      ctx.lineWidth = r.lw * fade;
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, r.radius, 0, Math.PI*2);
+      ctx.stroke();
+      // 回声圈
+      if (fade > 0.35) {
+        ctx.strokeStyle = `rgba(90,170,190,${a*0.35})`;
+        ctx.lineWidth = r.lw * 0.4;
+        ctx.beginPath();
+        ctx.arc(r.x, r.y, r.radius*0.82, 0, Math.PI*2);
+        ctx.stroke();
+      }
+    }
+
+    // ===== 电线 =====
+    wires.forEach(({a, b}) => {
+      ctx.strokeStyle = 'rgba(80,115,135,0.22)';
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      const midX = (a.x + b.x)/2, midY = (a.y + b.y)/2 + 12;
+      ctx.quadraticCurveTo(midX, midY, b.x, b.y);
+      ctx.stroke();
+    });
+
+    // ===== 图腾粒子 =====
+    const mouseR = 75;
+    let boosted = false;
+
+    totemParticles.forEach(p => {
+      // 鼠标排斥
+      const dx = p.x - mouseX, dy = p.y - mouseY;
+      const dist = Math.sqrt(dx*dx+dy*dy);
+      if (mouseActive && dist < mouseR && dist > 0.5) {
+        const force = (mouseR - dist) / mouseR;
+        p.vx += (dx / dist) * force * 3.5;
+        p.vy += (dy / dist) * force * 3.5;
+        p.signalBoost = Math.max(p.signalBoost, force * 0.65);
+      }
+
+      // 信号环影响
+      signalRings.forEach(r => {
+        const rdx = p.x - r.x, rdy = p.y - r.y;
+        const rdist = Math.sqrt(rdx*rdx + rdy*rdy);
+        const thickness = 18;
+        if (Math.abs(rdist - r.radius) < thickness) {
+          const inf = 1 - Math.abs(rdist - r.radius) / thickness;
+          p.signalBoost = Math.max(p.signalBoost, inf * 0.45);
+          boosted = true;
+        }
+      });
+
+      // 弹簧
+      p.vx += (p.tx - p.x) * p.spring;
+      p.vy += (p.ty - p.y) * p.spring;
+      p.vx *= p.friction;
+      p.vy *= p.friction;
+      p.x += p.vx;
+      p.y += p.vy;
+
+      // 衰减
+      p.signalBoost = Math.max(0, p.signalBoost - p.signalDecay);
+
+      // 绘制
+      const boost = p.signalBoost;
+      const cr = Math.min(255, p.color.r + boost * 130);
+      const cg = Math.min(255, p.color.g + boost * 85);
+      const cb = Math.min(255, p.color.b + boost * 65);
+      const alpha = Math.min(1, p.glow + boost * 0.55);
+
+      // 辉光
+      const glR = p.size * 3.5 + boost * 7;
+      const gl = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glR);
+      gl.addColorStop(0, `rgba(${cr},${cg},${cb},${alpha})`);
+      gl.addColorStop(0.45, `rgba(${Math.floor(cr*0.45)},${Math.floor(cg*0.45)},${Math.floor(cb*0.45)},${alpha*0.3})`);
+      gl.addColorStop(1, 'transparent');
+      ctx.fillStyle = gl;
+      ctx.fillRect(p.x-glR, p.y-glR, glR*2, glR*2);
+
+      // 核心
+      ctx.fillStyle = `rgba(${Math.min(255,cr+35)},${Math.min(255,cg+25)},${Math.min(255,cb+25)},${Math.min(1,alpha+0.25)})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size + boost*1.2, 0, Math.PI*2);
+      ctx.fill();
+    });
+
+    // --- 脉冲指示器 ---
+    const pulseEl = document.getElementById('pulse');
+    if (boosted || signalRings.length > 2) {
+      pulseEl.style.background = 'rgba(90,220,240,0.85)';
+      pulseEl.style.boxShadow = '0 0 24px rgba(90,220,240,0.7), 0 0 50px rgba(60,180,200,0.35)';
+    } else {
+      pulseEl.style.background = 'rgba(70,190,210,0.45)';
+      pulseEl.style.boxShadow = '0 0 10px rgba(70,190,210,0.25)';
+    }
+
+    // --- 底部沉积雾 ---
+    const sedGrad = ctx.createLinearGradient(0, H-50, 0, H);
+    sedGrad.addColorStop(0, 'transparent');
+    sedGrad.addColorStop(0.6, 'rgba(4,10,18,0.5)');
+    sedGrad.addColorStop(1, 'rgba(2,6,12,0.8)');
+    ctx.fillStyle = sedGrad;
+    ctx.fillRect(0, H-50, W, 50);
+
+    // 极慢漂移的沉积微粒
+    ctx.fillStyle = 'rgba(30,45,60,0.2)';
+    for (let d = 0; d < 30; d++) {
+      const dx = (d * 137 + frameCount * 0.02) % W;
+      const dy = H - 15 - (d * 29 % 35);
+      ctx.beginPath();
+      ctx.arc(dx, dy, 0.6 + (d%3)*0.4, 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+
+  // 窗口resize时重建
+  let resizeTO;
+  window.addEventListener('resize', () => {
+    resize();
+    clearTimeout(resizeTO);
+    resizeTO = setTimeout(() => {
+      cracksData = [];
+      initTotemParticles(layout());
+    }, 400);
+  });
+
+  resize();
+  initTotemParticles(layout());
+  cracksData = crackPath(layout());
+  requestAnimationFrame(render);
+
+  console.log('🏛 海底遗迹点阵 v2 已启动');
+  console.log('   石柱 · 断裂拱门 · 金属框架 · 信号图腾 · 电线');
+})();
+</script>
+</body>
+</html>

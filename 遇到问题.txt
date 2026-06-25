@@ -1,0 +1,78 @@
+[about-validation] detail state 
+Object { selectedIndex: null, isDetailOpen: false }
+about-submarine-room-validation.tsx:547:13
+[about-validation] scroll geometry 
+Object { totalScrollablePx: 3235, viewportHeight: 703, phaseDistancesPx: {…} }
+about-submarine-room-validation.tsx:595:15
+[Fast Refresh] rebuilding turbopack-hot-reloader-common.ts:41:15
+[Fast Refresh] done in 334ms report-hmr-latency.ts:26:11
+Components 对象已弃用，它很快就会被移除。 codex-about-validation
+[about-validation] room phase 
+Object { from: "outside-hull", to: "room-reveal", targetProgress: 0.44, progress: 0.349, targetScrollPx: 1423, renderedScrollPx: 1130, phaseStartPx: 1035, phaseEndPx: 1359, phaseSpanPx: 324, phaseProgress: 0.292, … }
+about-submarine-room-validation.tsx:629:15
+[about-validation] room phase 
+Object { from: "room-reveal", to: "crossfade", targetProgress: 0.516, progress: 0.433, targetScrollPx: 1668, renderedScrollPx: 1402, phaseStartPx: 1359, phaseEndPx: 1747, phaseSpanPx: 388, phaseProgress: 0.11, … }
+about-submarine-room-validation.tsx:629:15
+[about-validation] room transition tick 
+Object { phase: "crossfade", targetProgress: 0.516, progress: 0.433, targetScrollPx: 1668, renderedScrollPx: 1402, deltaTargetScrollPx: 85, displayLagPx: 266, totalScrollablePx: 3235, phaseStartPx: 1359, phaseEndPx: 1747, … }
+about-submarine-room-validation.tsx:649:15
+[about-validation] room transition tick 
+Object { phase: "crossfade", targetProgress: 0.516, progress: 0.459, targetScrollPx: 1668, renderedScrollPx: 1485, deltaTargetScrollPx: 0, displayLagPx: 183, totalScrollablePx: 3235, phaseStartPx: 1359, phaseEndPx: 1747, … }
+about-submarine-room-validation.tsx:649:15
+[about-validation] room transition tick 
+Object { phase: "crossfade", targetProgress: 0.516, progress: 0.476, targetScrollPx: 1668, renderedScrollPx: 1540, deltaTargetScrollPx: 0, displayLagPx: 128, totalScrollablePx: 3235, phaseStartPx: 1359, phaseEndPx: 1747, … }
+about-submarine-room-validation.tsx:649:15
+[about-validation] room transition tick 
+Object { phase: "crossfade", targetProgress: 0.516, progress: 0.488, targetScrollPx: 1668, renderedScrollPx: 1578, deltaTargetScrollPx: 0, displayLagPx: 90, totalScrollablePx: 3235, phaseStartPx: 1359, phaseEndPx: 1747, … }
+about-submarine-room-validation.tsx:649:15
+[about-validation] room transition tick 
+Object { phase: "crossfade", targetProgress: 0.516, progress: 0.496, targetScrollPx: 1668, renderedScrollPx: 1605, deltaTargetScrollPx: 0, displayLagPx: 63, totalScrollablePx: 3235, phaseStartPx: 1359, phaseEndPx: 1747, … }
+about-submarine-room-validation.tsx:649:15
+[about-validation] room transition tick 
+Object { phase: "crossfade", targetProgress: 0.516, progress: 0.506, targetScrollPx: 1668, renderedScrollPx: 1637, deltaTargetScrollPx: 0, displayLagPx: 31, totalScrollablePx: 3235, phaseStartPx: 1359, phaseEndPx: 1747, … }
+about-submarine-room-validation.tsx:649:15
+[about-validation] room transition tick 
+Object { phase: "crossfade", targetProgress: 0.516, progress: 0.516, targetScrollPx: 1668, renderedScrollPx: 1668, deltaTargetScrollPx: 0, displayLagPx: 0, totalScrollablePx: 3235, phaseStartPx: 1359, phaseEndPx: 1747, … }
+about-submarine-room-validation.tsx:649:15
+[about-validation] room phase 
+Object { from: "crossfade", to: "settle", targetProgress: 0.708, progress: 0.579, targetScrollPx: 2290, renderedScrollPx: 1873, phaseStartPx: 1747, phaseEndPx: 2226, phaseSpanPx: 479, phaseProgress: 0.263, … }
+about-submarine-room-validation.tsx:629:15
+[about-validation] room transition tick 
+Object { phase: "settle", targetProgress: 0.708, progress: 0.579, targetScrollPx: 2290, renderedScrollPx: 1873, deltaTargetScrollPx: 0, displayLagPx: 418, totalScrollablePx: 3235, phaseStartPx: 1747, phaseEndPx: 2226, … }
+about-submarine-room-validation.tsx:649:15
+[about-validation] room transition tick 
+Object { phase: "settle", targetProgress: 0.784, progress: 0.636, targetScrollPx: 2536, renderedScrollPx: 2057, deltaTargetScrollPx: 246, displayLagPx: 479, totalScrollablePx: 3235, phaseStartPx: 1747, phaseEndPx: 2226, … }
+about-submarine-room-validation.tsx:649:15
+[about-validation] room phase 
+Object { from: "settle", to: "interior", targetProgress: 0.824, progress: 0.701, targetScrollPx: 2666, renderedScrollPx: 2268, phaseStartPx: 2226, phaseEndPx: 3235, phaseSpanPx: 1009, phaseProgress: 0.041, … }
+about-submarine-room-validation.tsx:629:15
+[about-validation] room transition tick 
+Object { phase: "interior", targetProgress: 0.824, progress: 0.701, targetScrollPx: 2666, renderedScrollPx: 2268, deltaTargetScrollPx: 130, displayLagPx: 399, totalScrollablePx: 3235, phaseStartPx: 2226, phaseEndPx: 3235, … }
+about-submarine-room-validation.tsx:649:15
+[about-validation] room transition tick 
+Object { phase: "interior", targetProgress: 0.824, progress: 0.755, targetScrollPx: 2666, renderedScrollPx: 2443, deltaTargetScrollPx: 0, displayLagPx: 223, totalScrollablePx: 3235, phaseStartPx: 2226, phaseEndPx: 3235, … }
+about-submarine-room-validation.tsx:649:15
+[about-validation] room transition tick 
+Object { phase: "interior", targetProgress: 0.824, progress: 0.776, targetScrollPx: 2666, renderedScrollPx: 2510, deltaTargetScrollPx: 0, displayLagPx: 156, totalScrollablePx: 3235, phaseStartPx: 2226, phaseEndPx: 3235, … }
+about-submarine-room-validation.tsx:649:15
+[about-validation] room transition tick 
+Object { phase: "interior", targetProgress: 0.824, progress: 0.79, targetScrollPx: 2666, renderedScrollPx: 2557, deltaTargetScrollPx: 0, displayLagPx: 109, totalScrollablePx: 3235, phaseStartPx: 2226, phaseEndPx: 3235, … }
+about-submarine-room-validation.tsx:649:15
+[about-validation] room transition tick 
+Object { phase: "interior", targetProgress: 0.824, progress: 0.801, targetScrollPx: 2666, renderedScrollPx: 2590, deltaTargetScrollPx: 0, displayLagPx: 77, totalScrollablePx: 3235, phaseStartPx: 2226, phaseEndPx: 3235, … }
+about-submarine-room-validation.tsx:649:15
+[about-validation] room transition tick 
+Object { phase: "interior", targetProgress: 0.824, progress: 0.808, targetScrollPx: 2666, renderedScrollPx: 2613, deltaTargetScrollPx: 0, displayLagPx: 54, totalScrollablePx: 3235, phaseStartPx: 2226, phaseEndPx: 3235, … }
+about-submarine-room-validation.tsx:649:15
+[about-validation] room transition tick 
+Object { phase: "interior", targetProgress: 0.824, progress: 0.816, targetScrollPx: 2666, renderedScrollPx: 2640, deltaTargetScrollPx: 0, displayLagPx: 26, totalScrollablePx: 3235, phaseStartPx: 2226, phaseEndPx: 3235, … }
+about-submarine-room-validation.tsx:649:15
+[about-validation] room transition tick 
+Object { phase: "interior", targetProgress: 0.87, progress: 0.826, targetScrollPx: 2814, renderedScrollPx: 2673, deltaTargetScrollPx: 132, displayLagPx: 142, totalScrollablePx: 3235, phaseStartPx: 2226, phaseEndPx: 3235, … }
+about-submarine-room-validation.tsx:649:15
+[about-validation] room transition tick 
+Object { phase: "interior", targetProgress: 0.983, progress: 0.839, targetScrollPx: 3182, renderedScrollPx: 2715, deltaTargetScrollPx: 367, displayLagPx: 466, totalScrollablePx: 3235, phaseStartPx: 2226, phaseEndPx: 3235, … }
+about-submarine-room-validation.tsx:649:15
+[about-validation] room transition tick 
+Object { phase: "interior", targetProgress: 0.983, progress: 0.856, targetScrollPx: 3182, renderedScrollPx: 2770, deltaTargetScrollPx: 0, displayLagPx: 411, totalScrollablePx: 3235, phaseStartPx: 2226, phaseEndPx: 3235, … }
+about-submarine-room-validation.tsx:649:15

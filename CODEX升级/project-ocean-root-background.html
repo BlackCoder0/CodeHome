@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ocean Root Background Lab</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      background: #02070c;
+      color: #eef9fc;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    body {
+      overflow-x: hidden;
+    }
+
+    #oceanCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 0;
+    }
+
+    .chrome {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .topbar {
+      position: absolute;
+      left: 20px;
+      top: 20px;
+      width: min(420px, calc(100vw - 32px));
+      padding: 16px 18px;
+      border-radius: 20px;
+      background: rgba(4, 14, 21, 0.62);
+      box-shadow:
+        inset 0 0 0 1px rgba(162, 221, 240, 0.1),
+        0 24px 60px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(16px);
+    }
+
+    .topbar strong {
+      display: block;
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(177, 225, 240, 0.76);
+    }
+
+    .topbar h1 {
+      margin-top: 10px;
+      font-size: 34px;
+      line-height: 1;
+      font-weight: 600;
+    }
+
+    .topbar p {
+      margin-top: 10px;
+      font-size: 13px;
+      line-height: 1.7;
+      color: rgba(205, 229, 237, 0.74);
+    }
+
+    .status {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      width: min(280px, calc(100vw - 32px));
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(4, 14, 21, 0.62);
+      box-shadow:
+        inset 0 0 0 1px rgba(162, 221, 240, 0.1),
+        0 24px 60px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(16px);
+    }
+
+    .status-label {
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(173, 222, 238, 0.76);
+    }
+
+    .status-value {
+      margin-top: 8px;
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .status p {
+      margin-top: 10px;
+      font-size: 13px;
+      line-height: 1.7;
+      color: rgba(208, 230, 237, 0.72);
+    }
+
+    .stage {
+      position: relative;
+      z-index: 1;
+    }
+
+    .section {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5vw;
+    }
+
+    .section.about {
+      min-height: 120vh;
+    }
+
+    .shell {
+      width: min(1180px, 100%);
+      min-height: 68vh;
+      padding: clamp(20px, 3vw, 34px);
+      border-radius: 34px;
+      background: rgba(255, 255, 255, 0.04);
+      box-shadow:
+        inset 0 0 0 1px rgba(163, 220, 239, 0.1),
+        0 28px 80px rgba(0, 0, 0, 0.26);
+      backdrop-filter: blur(12px);
+      display: grid;
+      align-content: space-between;
+    }
+
+    .shell-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      color: rgba(190, 230, 241, 0.82);
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .shell-grid {
+      display: grid;
+      grid-template-columns: 1.25fr 0.85fr;
+      gap: 18px;
+      align-items: end;
+      min-height: 48vh;
+    }
+
+    .shell-copy h2 {
+      font-size: clamp(34px, 6vw, 62px);
+      line-height: 0.92;
+      font-weight: 600;
+      max-width: 8ch;
+    }
+
+    .shell-copy p {
+      margin-top: 16px;
+      max-width: 36rem;
+      font-size: 14px;
+      line-height: 1.8;
+      color: rgba(212, 233, 240, 0.75);
+    }
+
+    .shell-side {
+      justify-self: end;
+      width: min(360px, 100%);
+      padding: 18px;
+      border-radius: 24px;
+      background: rgba(6, 17, 24, 0.36);
+      box-shadow: inset 0 0 0 1px rgba(164, 220, 239, 0.08);
+    }
+
+    .shell-side strong {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(165, 220, 238, 0.74);
+    }
+
+    .shell-side ul {
+      margin-top: 12px;
+      list-style: none;
+      display: grid;
+      gap: 10px;
+      color: rgba(208, 231, 238, 0.74);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 960px) {
+      .shell-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .shell-side {
+        justify-self: start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="oceanCanvas"></canvas>
+
+  <div class="chrome">
+    <div class="topbar">
+      <strong>Ocean Root Background</strong>
+      <h1>One continuous sea</h1>
+      <p>
+        This page validates the root background only. The section shells are transparent
+        overlays so you can judge whether the ocean system still feels continuous across
+        the whole scroll path.
+      </p>
+    </div>
+    <div class="status">
+      <div class="status-label">Current Layer</div>
+      <div class="status-value" id="statusValue">Projects</div>
+      <p id="statusCopy">
+        Surface-biased water with open sky, boat light, and low environmental pressure.
+      </p>
+    </div>
+  </div>
+
+  <main class="stage">
+    <section class="section" data-phase="Projects">
+      <article class="shell">
+        <div class="shell-head">
+          <span>Transparent section shell</span>
+          <span>01 / Projects</span>
+        </div>
+        <div class="shell-grid">
+          <div class="shell-copy">
+            <h2>Projects layer</h2>
+            <p>
+              Readable, close to the surface, and still connected to the open sea above.
+              The shell does not own the background. It only floats inside the shared
+              ocean field.
+            </p>
+          </div>
+          <aside class="shell-side">
+            <strong>Checks</strong>
+            <ul>
+              <li>Sky and sea still coexist.</li>
+              <li>Section box is translucent, not a separate world.</li>
+              <li>Surface line remains globally stable.</li>
+            </ul>
+          </aside>
+        </div>
+      </article>
+    </section>
+
+    <section class="section" data-phase="Hobbies">
+      <article class="shell">
+        <div class="shell-head">
+          <span>Transparent section shell</span>
+          <span>02 / Hobbies</span>
+        </div>
+        <div class="shell-grid">
+          <div class="shell-copy">
+            <h2>Wreck sample layer</h2>
+            <p>
+              The shell is still a window into the same water body. Depth increases,
+              wreck cues appear, and particles grow denser without breaking continuity.
+            </p>
+          </div>
+          <aside class="shell-side">
+            <strong>Checks</strong>
+            <ul>
+              <li>Mid-depth lighting darkens smoothly.</li>
+              <li>Found-object cues begin before ruins fully appear.</li>
+              <li>Section translucency still feels plausible.</li>
+            </ul>
+          </aside>
+        </div>
+      </article>
+    </section>
+
+    <section class="section" data-phase="Bangumi">
+      <article class="shell">
+        <div class="shell-head">
+          <span>Transparent section shell</span>
+          <span>03 / Bangumi</span>
+        </div>
+        <div class="shell-grid">
+          <div class="shell-copy">
+            <h2>Archive current layer</h2>
+            <p>
+              This zone should feel like a calm mid-water observation track rather than a
+              normal card carousel. The root background carries most of the spatial story.
+            </p>
+          </div>
+          <aside class="shell-side">
+            <strong>Checks</strong>
+            <ul>
+              <li>Archive belts can ride the same global current.</li>
+              <li>Creature silhouettes are present but not noisy.</li>
+              <li>No hard cut between sections.</li>
+            </ul>
+          </aside>
+        </div>
+      </article>
+    </section>
+
+    <section class="section about" data-phase="About">
+      <article class="shell">
+        <div class="shell-head">
+          <span>Transparent section shell</span>
+          <span>04 / About</span>
+        </div>
+        <div class="shell-grid">
+          <div class="shell-copy">
+            <h2>Private habitat layer</h2>
+            <p>
+              The outside water should feel deep and cold, while the future About content
+              will introduce warmer internal light on top of this shared environment.
+            </p>
+          </div>
+          <aside class="shell-side">
+            <strong>Checks</strong>
+            <ul>
+              <li>Observatory cues remain outside the shell.</li>
+              <li>The root system can support a warmer internal room later.</li>
+              <li>Depth is strong, but readability is not crushed.</li>
+            </ul>
+          </aside>
+        </div>
+      </article>
+    </section>
+
+    <section class="section" data-phase="Contact">
+      <article class="shell">
+        <div class="shell-head">
+          <span>Transparent section shell</span>
+          <span>05 / Contact</span>
+        </div>
+        <div class="shell-grid">
+          <div class="shell-copy">
+            <h2>Ruin signal layer</h2>
+            <p>
+              This is the deepest layer. The shell stays transparent so the signal field,
+              terrain base, and ruins can still read as one continuous ocean destination.
+            </p>
+          </div>
+          <aside class="shell-side">
+            <strong>Checks</strong>
+            <ul>
+              <li>Seabed and ruins arrive gradually, not instantly.</li>
+              <li>Signal arcs integrate with the root field.</li>
+              <li>The last section still belongs to the same sea.</li>
+            </ul>
+          </aside>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const phaseDefs = [
+      {
+        name: "Projects",
+        description: "Surface-biased water with open sky, boat light, and low environmental pressure.",
+        top: [138, 194, 221],
+        bottom: [7, 31, 44],
+        surface: 1,
+        haze: 0.08,
+        caustic: 1,
+        silt: 0.18,
+        current: 0.18,
+        archive: 0,
+        habitat: 0,
+        ruins: 0,
+        whales: 0.06,
+        signals: 0
+      },
+      {
+        name: "Hobbies",
+        description: "Wreck cues enter, particles rise, and the root sea begins to feel inhabited by remains.",
+        top: [96, 150, 184],
+        bottom: [4, 24, 35],
+        surface: 0.62,
+        haze: 0.18,
+        caustic: 0.58,
+        silt: 0.32,
+        current: 0.34,
+        archive: 0.04,
+        habitat: 0,
+        ruins: 0.08,
+        whales: 0.14,
+        signals: 0.04
+      },
+      {
+        name: "Bangumi",
+        description: "Archive-track water. Calmer motion, more mid-depth density, and low-frequency life silhouettes.",
+        top: [56, 109, 148],
+        bottom: [3, 19, 30],
+        surface: 0.34,
+        haze: 0.28,
+        caustic: 0.24,
+        silt: 0.46,
+        current: 0.46,
+        archive: 1,
+        habitat: 0.08,
+        ruins: 0.14,
+        whales: 0.68,
+        signals: 0.1
+      },
+      {
+        name: "About",
+        description: "Deep and cold outside the shell, ready for a warmer interior observatory to be layered in later.",
+        top: [26, 77, 112],
+        bottom: [2, 13, 22],
+        surface: 0.16,
+        haze: 0.38,
+        caustic: 0.08,
+        silt: 0.56,
+        current: 0.58,
+        archive: 0.3,
+        habitat: 1,
+        ruins: 0.28,
+        whales: 0.52,
+        signals: 0.16
+      },
+      {
+        name: "Contact",
+        description: "Lowest layer. Seabed mass, ruins, and signal echo dominate while surface memory nearly disappears.",
+        top: [12, 40, 66],
+        bottom: [1, 7, 12],
+        surface: 0.04,
+        haze: 0.5,
+        caustic: 0,
+        silt: 0.72,
+        current: 0.68,
+        archive: 0.1,
+        habitat: 0.18,
+        ruins: 1,
+        whales: 0.18,
+        signals: 1
+      }
+    ];
+
+    const sections = [...document.querySelectorAll(".section")];
+    const canvas = document.getElementById("oceanCanvas");
+    const ctx = canvas.getContext("2d");
+    const statusValue = document.getElementById("statusValue");
+    const statusCopy = document.getElementById("statusCopy");
+
+    let width = 1;
+    let height = 1;
+    let dpr = 1;
+    let sectionMetrics = [];
+    let particles = [];
+    let fish = [];
+    let rafId = 0;
+    let lastPhaseName = "";
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    function mixColor(a, b, t) {
+      return [
+        Math.round(lerp(a[0], b[0], t)),
+        Math.round(lerp(a[1], b[1], t)),
+        Math.round(lerp(a[2], b[2], t))
+      ];
+    }
+
+    function smoothstep(min, max, value) {
+      const x = clamp((value - min) / Math.max(max - min, 0.0001), 0, 1);
+      return x * x * (3 - 2 * x);
+    }
+
+    function rgba(color, alpha) {
+      return `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${alpha})`;
+    }
+
+    function mixPhase(a, b, t) {
+      return {
+        name: t < 0.5 ? a.name : b.name,
+        description: t < 0.5 ? a.description : b.description,
+        top: mixColor(a.top, b.top, t),
+        bottom: mixColor(a.bottom, b.bottom, t),
+        surface: lerp(a.surface, b.surface, t),
+        haze: lerp(a.haze, b.haze, t),
+        caustic: lerp(a.caustic, b.caustic, t),
+        silt: lerp(a.silt, b.silt, t),
+        current: lerp(a.current, b.current, t),
+        archive: lerp(a.archive, b.archive, t),
+        habitat: lerp(a.habitat, b.habitat, t),
+        ruins: lerp(a.ruins, b.ruins, t),
+        whales: lerp(a.whales, b.whales, t),
+        signals: lerp(a.signals, b.signals, t)
+      };
+    }
+
+    function updateMetrics() {
+      sectionMetrics = sections.map((section, index) => ({
+        top: section.offsetTop,
+        height: section.offsetHeight,
+        index,
+        name: section.dataset.phase || phaseDefs[index].name
+      }));
+    }
+
+    function seedScene() {
+      particles = [];
+      fish = [];
+
+      const particleCount = width < 900 ? 110 : 180;
+      for (let i = 0; i < particleCount; i += 1) {
+        particles.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          r: Math.random() * 2.2 + 0.4,
+          speed: Math.random() * 0.42 + 0.08,
+          drift: Math.random() * 0.6 + 0.15,
+          alpha: Math.random() * 0.22 + 0.04
+        });
+      }
+
+      for (let i = 0; i < 16; i += 1) {
+        fish.push({
+          x: Math.random() * width,
+          y: height * (0.32 + Math.random() * 0.28),
+          size: 10 + Math.random() * 15,
+          speed: 0.3 + Math.random() * 0.5,
+          phase: Math.random() * Math.PI * 2
+        });
+      }
+    }
+
+    function resize() {
+      width = Math.max(window.innerWidth, 1);
+      height = Math.max(window.innerHeight, 1);
+      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      canvas.style.width = width + "px";
+      canvas.style.height = height + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      updateMetrics();
+      seedScene();
+      requestRender();
+    }
+
+    function getPhaseState() {
+      const scrollY = window.scrollY;
+      let active = sectionMetrics[0];
+
+      for (const metric of sectionMetrics) {
+        if (scrollY >= metric.top) active = metric;
+      }
+
+      const next = sectionMetrics[Math.min(active.index + 1, sectionMetrics.length - 1)];
+      const local = clamp((scrollY - active.top) / Math.max(active.height, 1), 0, 1);
+      const blend = active.index === next.index ? 0 : smoothstep(0.16, 0.84, local);
+      const phase = mixPhase(phaseDefs[active.index], phaseDefs[next.index], blend);
+
+      return {
+        phase,
+        activeIndex: active.index,
+        local
+      };
+    }
+
+    function drawScene(state, time) {
+      const p = state.phase;
+      const surfaceY = lerp(height * 0.17, height * 0.06, 1 - p.surface);
+
+      ctx.clearRect(0, 0, width, height);
+
+      if (p.surface > 0.06) {
+        const sky = ctx.createLinearGradient(0, 0, 0, surfaceY + height * 0.08);
+        sky.addColorStop(0, `rgba(194, 221, 232, ${0.88 * p.surface})`);
+        sky.addColorStop(0.72, `rgba(122, 169, 191, ${0.54 * p.surface})`);
+        sky.addColorStop(1, "rgba(122, 169, 191, 0)");
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, width, surfaceY + height * 0.08);
+      }
+
+      const water = ctx.createLinearGradient(0, surfaceY, 0, height);
+      water.addColorStop(0, rgba(p.top, 1));
+      water.addColorStop(0.44, rgba(mixColor(p.top, p.bottom, 0.42), 1));
+      water.addColorStop(1, rgba(p.bottom, 1));
+      ctx.fillStyle = water;
+      ctx.fillRect(0, surfaceY, width, height - surfaceY);
+
+      const glow = ctx.createRadialGradient(width * 0.5, surfaceY + 4, 0, width * 0.5, surfaceY + 4, width * 0.5);
+      glow.addColorStop(0, `rgba(239, 249, 255, ${0.24 * p.surface})`);
+      glow.addColorStop(1, "rgba(239, 249, 255, 0)");
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, width, height);
+
+      if (p.surface > 0.08) {
+        const boatX = width * 0.14;
+        const boatY = surfaceY - 8;
+        ctx.save();
+        ctx.translate(boatX, boatY);
+        ctx.scale(width < 900 ? 0.76 : 1, width < 900 ? 0.76 : 1);
+        ctx.globalAlpha = 0.68 * p.surface;
+        ctx.fillStyle = "rgba(12, 24, 33, 0.92)";
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(72, 0);
+        ctx.lineTo(58, 12);
+        ctx.lineTo(10, 12);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillRect(22, -18, 10, 18);
+        ctx.fillRect(27, -34, 2, 16);
+        ctx.beginPath();
+        ctx.moveTo(29, -34);
+        ctx.lineTo(46, -28);
+        ctx.lineTo(29, -22);
+        ctx.closePath();
+        ctx.fill();
+        const lamp = ctx.createRadialGradient(58, -1, 0, 58, -1, 30);
+        lamp.addColorStop(0, `rgba(255, 233, 169, ${0.56 * p.surface})`);
+        lamp.addColorStop(1, "rgba(255, 233, 169, 0)");
+        ctx.fillStyle = lamp;
+        ctx.beginPath();
+        ctx.arc(58, -1, 30, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      ctx.fillStyle = `rgba(235, 248, 255, ${0.92 * p.surface})`;
+      ctx.fillRect(0, surfaceY, width, 2);
+
+      ctx.strokeStyle = `rgba(228, 248, 255, ${0.16 + p.surface * 0.18})`;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      for (let x = 0; x <= width; x += 10) {
+        const y = surfaceY + Math.sin(x * 0.014 + time * 1.7) * 2.6 + Math.sin(x * 0.036 + time * 1.1) * 1.4;
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      const causticAlpha = p.caustic * 0.16;
+      if (causticAlpha > 0.01) {
+        ctx.save();
+        ctx.globalAlpha = causticAlpha;
+        for (let i = 0; i < 8; i += 1) {
+          const x = ((i / 8) * width + time * 26 + i * 90) % (width + 240) - 120;
+          const beam = ctx.createLinearGradient(x, surfaceY + 4, x + 150, surfaceY + height * 0.36);
+          beam.addColorStop(0, "rgba(255,255,255,0)");
+          beam.addColorStop(0.5, "rgba(231,248,255,0.96)");
+          beam.addColorStop(1, "rgba(255,255,255,0)");
+          ctx.fillStyle = beam;
+          ctx.beginPath();
+          ctx.moveTo(x, surfaceY + 6);
+          ctx.lineTo(x + 58, surfaceY + 6);
+          ctx.lineTo(x + 218, surfaceY + height * 0.38);
+          ctx.lineTo(x + 166, surfaceY + height * 0.38);
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      for (const mote of particles) {
+        mote.y += mote.speed + p.current * 0.24;
+        mote.x += Math.sin(time * 0.5 + mote.y * 0.012) * mote.drift * (0.4 + p.current);
+        if (mote.y > height + 12) {
+          mote.y = -12;
+          mote.x = Math.random() * width;
+        }
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(208, 233, 241, ${mote.alpha + p.silt * 0.08})`;
+        ctx.arc(mote.x, mote.y, mote.r + p.silt * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      const fishAlpha = p.whales > 0.3 ? 0.08 : 0.12;
+      if (p.archive > 0.05 || p.whales > 0.2) {
+        ctx.save();
+        ctx.strokeStyle = `rgba(192, 230, 241, ${fishAlpha})`;
+        ctx.lineWidth = 1;
+        for (const item of fish) {
+          item.x += item.speed + p.current * 0.2;
+          if (item.x > width + item.size * 2) item.x = -item.size * 2;
+          const y = item.y + Math.sin(time * 0.88 + item.phase) * 10;
+          ctx.beginPath();
+          ctx.moveTo(item.x - item.size, y);
+          ctx.quadraticCurveTo(item.x, y - item.size * 0.45, item.x + item.size, y);
+          ctx.quadraticCurveTo(item.x, y + item.size * 0.45, item.x - item.size, y);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      if (p.whales > 0.08) {
+        const x = width * (0.82 - state.local * 0.16) + Math.sin(time * 0.18) * 24;
+        const y = height * 0.48 + Math.sin(time * 0.24) * 12;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(width < 900 ? 0.62 : 0.86, width < 900 ? 0.62 : 0.86);
+        ctx.fillStyle = `rgba(8, 22, 33, ${p.whales * 0.26})`;
+        ctx.beginPath();
+        ctx.moveTo(-190, 0);
+        ctx.bezierCurveTo(-145, -36, -58, -60, 50, -52);
+        ctx.bezierCurveTo(128, -46, 186, -18, 212, 10);
+        ctx.bezierCurveTo(176, 42, 114, 60, 24, 62);
+        ctx.bezierCurveTo(-74, 62, -148, 38, -190, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(206, 10);
+        ctx.lineTo(270, -24);
+        ctx.lineTo(244, 10);
+        ctx.lineTo(270, 42);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+
+      if (p.archive > 0.04) {
+        ctx.save();
+        ctx.globalAlpha = p.archive;
+        ctx.strokeStyle = "rgba(175, 219, 235, 0.18)";
+        ctx.lineWidth = 1.5;
+        const baseY = height * 0.42;
+        for (let row = 0; row < 3; row += 1) {
+          const y = baseY + row * 68;
+          ctx.beginPath();
+          ctx.moveTo(width * 0.18, y);
+          ctx.quadraticCurveTo(width * 0.5, y - 24, width * 0.84, y + 8);
+          ctx.stroke();
+          for (let i = 0; i < 9; i += 1) {
+            const x = width * 0.2 + i * width * 0.07;
+            ctx.fillStyle = `rgba(201, 234, 246, ${0.06 + p.archive * 0.08})`;
+            ctx.fillRect(x, y - 8, 34, 16);
+          }
+        }
+        ctx.restore();
+      }
+
+      if (p.habitat > 0.06) {
+        const cx = width * 0.78;
+        const cy = height * 0.32;
+        ctx.save();
+        ctx.globalAlpha = p.habitat;
+        ctx.fillStyle = "rgba(10, 21, 30, 0.72)";
+        ctx.beginPath();
+        ctx.arc(cx, cy, 58, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(236, 229, 172, 0.32)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx - 12, cy + 58);
+        ctx.lineTo(cx - 62, cy + 132);
+        ctx.moveTo(cx + 12, cy + 58);
+        ctx.lineTo(cx + 62, cy + 132);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      if (p.ruins > 0.06) {
+        const baseY = height * 0.84;
+        ctx.save();
+        ctx.fillStyle = `rgba(11, 21, 30, ${0.7 + p.ruins * 0.12})`;
+        ctx.beginPath();
+        ctx.moveTo(0, baseY + 32);
+        for (let x = 0; x <= width; x += 16) {
+          const y = baseY + Math.sin(x * 0.012 + time * 0.1) * 10 + Math.sin(x * 0.032) * 7;
+          ctx.lineTo(x, y);
+        }
+        ctx.lineTo(width, height);
+        ctx.lineTo(0, height);
+        ctx.closePath();
+        ctx.fill();
+
+        const ruins = [
+          { x: width * 0.64, w: 64, h: 122 },
+          { x: width * 0.74, w: 90, h: 160 },
+          { x: width * 0.86, w: 52, h: 100 }
+        ];
+        ctx.strokeStyle = "rgba(157, 218, 239, 0.18)";
+        ctx.lineWidth = 2;
+        for (const ruin of ruins) {
+          ctx.fillStyle = `rgba(17, 30, 40, ${0.56 + p.ruins * 0.18})`;
+          ctx.fillRect(ruin.x, baseY - ruin.h, ruin.w, ruin.h);
+          ctx.strokeRect(ruin.x, baseY - ruin.h, ruin.w, ruin.h);
+        }
+        ctx.restore();
+      }
+
+      if (p.signals > 0.04) {
+        const cx = width * 0.78;
+        const cy = height * 0.68;
+        ctx.save();
+        ctx.lineWidth = 1.2;
+        for (let i = 0; i < 4; i += 1) {
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(149, 237, 255, ${0.08 + p.signals * 0.18})`;
+          ctx.arc(cx, cy, 16 + i * 18 + Math.sin(time * 1.5) * 2, -Math.PI * 0.26, Math.PI * 0.34);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+    }
+
+    function renderFrame(timeMs) {
+      rafId = 0;
+      const state = getPhaseState();
+      drawScene(state, timeMs * 0.001);
+
+      statusValue.textContent = phaseDefs[state.activeIndex].name;
+      statusCopy.textContent = phaseDefs[state.activeIndex].description;
+
+      const phaseName = phaseDefs[state.activeIndex].name;
+      if (phaseName !== lastPhaseName) {
+        lastPhaseName = phaseName;
+        console.info("[OceanRootBackground] phase", {
+          phase: phaseName,
+          scrollY: Number(window.scrollY.toFixed(1))
+        });
+      }
+    }
+
+    function requestRender() {
+      if (!rafId) {
+        rafId = requestAnimationFrame(renderFrame);
+      }
+    }
+
+    resize();
+    requestRender();
+
+    window.addEventListener("resize", resize);
+    window.addEventListener("scroll", requestRender, { passive: true });
+  </script>
+</body>
+</html>

@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深海观测室 — CodeRains 改版</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #020a12;
+    font-family: 'Georgia', 'Noto Serif SC', 'SimSun', serif;
+    overflow: hidden;
+    height: 100vh;
+    user-select: none;
+  }
+
+  /* ===== 全屏场景 ===== */
+  #scene {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.8s;
+  }
+
+  /* ===== 观测室容器 ===== */
+  #observatory {
+    position: relative;
+    width: min(780px, 90vw);
+    height: min(520px, 80vh);
+  }
+
+  /* ===== 窗外深海 Canvas ===== */
+  #windowCanvas {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: 16px;
+  }
+
+  /* ===== 窗框 ===== */
+  #windowFrame {
+    position: absolute;
+    inset: -8px;
+    z-index: 3;
+    border: 8px solid #1a2a38;
+    border-radius: 20px;
+    box-shadow:
+      inset 0 0 60px rgba(0,0,0,0.5),
+      0 0 30px rgba(10,20,40,0.6),
+      inset 0 0 0 2px rgba(60,80,100,0.3);
+    pointer-events: none;
+  }
+
+  /* 铆钉装饰 */
+  .rivet {
+    position: absolute;
+    width: 8px; height: 8px;
+    background: radial-gradient(circle at 40% 40%, #5a7a8a, #2a3a48);
+    border-radius: 50%;
+    box-shadow: 0 0 4px rgba(100,140,160,0.4);
+    z-index: 4;
+  }
+
+  /* 玻璃反光 */
+  #glassReflection {
+    position: absolute;
+    inset: 4px;
+    z-index: 4;
+    border-radius: 12px;
+    background: linear-gradient(
+      135deg,
+      rgba(200,230,255,0.06) 0%,
+      rgba(200,230,255,0.02) 30%,
+      transparent 50%,
+      rgba(200,230,255,0.01) 70%,
+      rgba(200,230,255,0.05) 100%
+    );
+    pointer-events: none;
+  }
+
+  /* ===== 台灯（左侧） ===== */
+  #lampArea {
+    position: absolute;
+    left: -80px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    cursor: pointer;
+    transition: transform 0.3s;
+  }
+  #lampArea:hover { transform: translateY(-50%) scale(1.05); }
+  #lampArea:active { transform: translateY(-50%) scale(0.95); }
+
+  /* 台灯本体（CSS 绘制） */
+  #lamp {
+    position: relative;
+    width: 50px;
+    height: 110px;
+  }
+  #lamp .base {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px; height: 12px;
+    background: linear-gradient(180deg, #5a6068, #3a4048);
+    border-radius: 4px 4px 8px 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  }
+  #lamp .pole {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px; height: 60px;
+    background: linear-gradient(180deg, #5a6068, #4a5058);
+  }
+  #lamp .joint {
+    position: absolute;
+    bottom: 68px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 10px; height: 10px;
+    background: #555;
+    border-radius: 50%;
+  }
+  #lamp .arm {
+    position: absolute;
+    bottom: 70px;
+    left: 8px;
+    width: 36px; height: 5px;
+    background: #5a6068;
+    border-radius: 3px;
+    transform: rotate(-25deg);
+    transform-origin: right center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+  #lamp .shade {
+    position: absolute;
+    bottom: 78px;
+    left: -5px;
+    width: 30px; height: 26px;
+    background: linear-gradient(180deg, #6a7078, #4a5058);
+    clip-path: polygon(0% 0%, 100% 0%, 80% 100%, 20% 100%);
+    transform: rotate(-15deg);
+  }
+  #lamp .bulb {
+    position: absolute;
+    bottom: 73px;
+    left: 5px;
+    width: 10px; height: 8px;
+    background: #ffcc66;
+    border-radius: 50%;
+    opacity: 0.9;
+    transition: opacity 0.5s, box-shadow 0.5s;
+  }
+
+  /* 台灯光晕 */
+  #lampGlow {
+    position: absolute;
+    top: -50px;
+    left: -40px;
+    width: 180px; height: 280px;
+    background: radial-gradient(ellipse at 30% 40%,
+      rgba(255,200,120,0.25) 0%,
+      rgba(255,180,80,0.15) 20%,
+      rgba(255,150,50,0.06) 45%,
+      transparent 65%
+    );
+    border-radius: 50%;
+    z-index: 5;
+    pointer-events: none;
+    transition: opacity 0.8s;
+    transform: rotate(15deg);
+  }
+
+  /* 光锥 */
+  #lightCone {
+    position: absolute;
+    top: 20px;
+    left: -10px;
+    width: 200px; height: 320px;
+    background:
+      conic-gradient(from 15deg at 30% 8%, rgba(255,190,100,0.18) 0deg, rgba(255,160,60,0.06) 25deg, transparent 50deg);
+    z-index: 5;
+    pointer-events: none;
+    transition: opacity 0.8s;
+    clip-path: polygon(30% 8%, 0% 100%, 60% 100%);
+  }
+
+  /* ===== 桌面 ===== */
+  #desk {
+    position: absolute;
+    bottom: -14px;
+    left: -110px;
+    width: 260px; height: 30px;
+    z-index: 8;
+    background: linear-gradient(180deg, #3a3832, #2a2824);
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  }
+  #desk::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 10px;
+    right: 10px;
+    height: 2px;
+    background: rgba(255,200,120,0.15);
+    border-radius: 1px;
+  }
+
+  /* ===== 信息标签 ===== */
+  #label {
+    position: fixed;
+    bottom: 36px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    color: rgba(160,200,220,0.6);
+    font-size: 14px;
+    letter-spacing: 3px;
+    pointer-events: none;
+    text-align: center;
+    line-height: 2;
+  }
+  #label .title {
+    font-size: 20px;
+    letter-spacing: 5px;
+    color: rgba(200,220,240,0.7);
+  }
+  #label .hint {
+    font-size: 11px;
+    color: rgba(120,170,200,0.45);
+  }
+
+  /* ===== 关灯状态 ===== */
+  body.lamp-off #lampGlow { opacity: 0.08; }
+  body.lamp-off #lightCone { opacity: 0.05; }
+  body.lamp-off #lamp .bulb { opacity: 0.2; box-shadow: none; }
+  body.lamp-off #desk { background: linear-gradient(180deg, #1a1816, #12100e); }
+  body.lamp-off #desk::after { opacity: 0.05; }
+  body.lamp-off #windowFrame { border-color: #0d1520; box-shadow: inset 0 0 40px rgba(0,0,0,0.7); }
+
+  /* 响应式 */
+  @media (max-width: 768px) {
+    #lampArea { left: -45px; transform: translateY(-50%) scale(0.7); }
+    #lampArea:hover { transform: translateY(-50%) scale(0.75); }
+    #desk { left: -70px; width: 180px; }
+    #observatory { height: 60vh; }
+  }
+</style>
+</head>
+<body>
+
+<div id="scene">
+  <div id="observatory">
+    <!-- 窗外深海 -->
+    <canvas id="windowCanvas"></canvas>
+
+    <!-- 窗框 -->
+    <div id="windowFrame"></div>
+    <!-- 铆钉 -->
+    <script>
+      const rivetPositions = [];
+      for (let r = 0; r < 12; r++) {
+        const angle = (r / 12) * Math.PI * 2;
+        const rx = 50 + Math.cos(angle) * 48;
+        const ry = 50 + Math.sin(angle) * 48;
+        rivetPositions.push({ left: rx + '%', top: ry + '%' });
+      }
+    </script>
+    <div id="glassReflection"></div>
+
+    <!-- 台灯（可点击切换） -->
+    <div id="lampArea" title="点击开关台灯">
+      <div id="lamp">
+        <div class="base"></div>
+        <div class="pole"></div>
+        <div class="joint"></div>
+        <div class="arm"></div>
+        <div class="shade"></div>
+        <div class="bulb"></div>
+      </div>
+    </div>
+    <div id="lampGlow"></div>
+    <div id="lightCone"></div>
+    <div id="desk"></div>
+  </div>
+</div>
+
+<div id="label">
+  <div class="title">深海观测室</div>
+  <div>外冷内暖 · 私人庇护所</div>
+  <div class="hint">点击台灯切换开关</div>
+</div>
+
+<script>
+(function() {
+  const canvas = document.getElementById('windowCanvas');
+  const ctx = canvas.getContext('2d');
+
+  let W, H;
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = canvas.clientWidth * dpr;
+    canvas.height = canvas.clientHeight * dpr;
+    W = canvas.width / dpr;
+    H = canvas.height / dpr;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+  }
+
+  // 监听容器尺寸
+  const observatory = document.getElementById('observatory');
+  const ro = new ResizeObserver(() => {
+    canvas.width = observatory.clientWidth;
+    canvas.height = observatory.clientHeight;
+    resize();
+  });
+  ro.observe(observatory);
+  resize();
+
+  // ============ 台灯开关 ============
+  let lampOn = true;
+  document.getElementById('lampArea').addEventListener('click', () => {
+    lampOn = !lampOn;
+    document.body.classList.toggle('lamp-off', !lampOn);
+  });
+
+  // ============ 水流带 ============
+  // 预设几层水平水流，不同速度和颜色
+  const flowBands = [];
+  for (let i = 0; i < 6; i++) {
+    flowBands.push({
+      y: Math.random() * H,
+      height: 15 + Math.random() * 50,
+      speed: 0.1 + Math.random() * 0.4,
+      opacity: 0.02 + Math.random() * 0.06,
+      offset: Math.random() * W,
+      colorShift: Math.random() * 30,
+    });
+  }
+
+  // ============ 漂浮微粒 ============
+  const particles = [];
+  for (let i = 0; i < 60; i++) {
+    particles.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.15,
+      vy: -(0.05 + Math.random() * 0.2),
+      size: 0.4 + Math.random() * 1.6,
+      opacity: 0.1 + Math.random() * 0.5,
+      twinkle: Math.random() * Math.PI * 2,
+      twinkleSpeed: 0.01 + Math.random() * 0.04,
+    });
+  }
+
+  // ============ 生物荧光点 ============
+  const biolumes = [];
+  for (let i = 0; i < 25; i++) {
+    biolumes.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.1,
+      vy: -(0.02 + Math.random() * 0.1),
+      size: 1 + Math.random() * 2.5,
+      intensity: 0.2 + Math.random() * 0.6,
+      pulse: Math.random() * Math.PI * 2,
+      pulseSpeed: 0.02 + Math.random() * 0.05,
+      lifePhase: Math.random(),
+    });
+  }
+
+  // ============ 巨物剪影系统 ============
+  let giant = null;
+  let giantTimer = 0;
+  const GIANT_INTERVAL_MIN = 12; // 最短间隔（秒）
+  const GIANT_INTERVAL_MAX = 28; // 最长间隔（秒）
+  let nextGiantTime = GIANT_INTERVAL_MIN + Math.random() * (GIANT_INTERVAL_MAX - GIANT_INTERVAL_MIN);
+
+  function createGiant() {
+    const fromRight = Math.random() > 0.5;
+    const shapeType = Math.floor(Math.random() * 4);
+    return {
+      x: fromRight ? W + 50 : -50,
+      y: H * (0.2 + Math.random() * 0.5),
+      vx: (fromRight ? -1 : 1) * (0.15 + Math.random() * 0.3),
+      vy: (Math.random() - 0.5) * 0.06,
+      size: 60 + Math.random() * 140,
+      opacity: 0.03 + Math.random() * 0.07,
+      shape: shapeType,
+      life: 0,
+      maxLife: 400 + Math.random() * 600,
+      fromRight,
+    };
+  }
+
+  // ============ 气泡 ============
+  const bubbles = [];
+  function spawnBubble() {
+    bubbles.push({
+      x: Math.random() * W,
+      y: H + 8,
+      vx: (Math.random() - 0.5) * 0.2,
+      vy: -(0.4 + Math.random() * 0.8),
+      size: 1 + Math.random() * 2.5,
+      opacity: 0.08 + Math.random() * 0.2,
+      wobble: Math.random() * Math.PI * 2,
+      wobbleSpeed: 0.03 + Math.random() * 0.05,
+      life: 300 + Math.random() * 400,
+      age: 0,
+    });
+  }
+
+  // ============ 渲染 ============
+  function render(timestamp) {
+    requestAnimationFrame(render);
+    const t = timestamp * 0.001;
+
+    // 背景
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, '#061828');
+    bgGrad.addColorStop(0.3, '#041220');
+    bgGrad.addColorStop(0.65, '#020d18');
+    bgGrad.addColorStop(1, '#010810');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+
+    // 水流带
+    flowBands.forEach(band => {
+      ctx.fillStyle = `rgba(30,80,130,${band.opacity})`;
+      band.offset += band.speed;
+      if (band.offset > W) band.offset -= W;
+      // 主带
+      ctx.fillRect(band.offset - W, band.y, W, band.height);
+      ctx.fillRect(band.offset, band.y, W, band.height);
+      // 边缘柔化
+      const edgeGrad = ctx.createLinearGradient(0, band.y - 8, 0, band.y + band.height + 8);
+      edgeGrad.addColorStop(0, 'transparent');
+      edgeGrad.addColorStop(0.3, `rgba(30,80,130,${band.opacity*0.5})`);
+      edgeGrad.addColorStop(0.7, `rgba(30,80,130,${band.opacity*0.5})`);
+      edgeGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = edgeGrad;
+      ctx.fillRect(0, band.y - 8, W, band.height + 16);
+    });
+
+    // 漂浮微粒
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < -10) p.x = W + 10;
+      if (p.x > W + 10) p.x = -10;
+      if (p.y < -10) p.y = H + 10;
+      if (p.y > H + 10) p.y = -10;
+
+      const twinkle = Math.sin(t * p.twinkleSpeed * 60 + p.twinkle) * 0.4 + 0.6;
+      const alpha = p.opacity * twinkle;
+      if (alpha < 0.02) return;
+      ctx.fillStyle = `rgba(140,200,230,${alpha})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // 生物荧光
+    biolumes.forEach(b => {
+      b.x += b.vx;
+      b.y += b.vy;
+      if (b.x < -5) b.x = W + 5;
+      if (b.x > W + 5) b.x = -5;
+      if (b.y < -5) b.y = H + 5;
+      if (b.y > H + 5) b.y = -5;
+
+      const pulse = Math.sin(t * b.pulseSpeed * 60 + b.pulse) * 0.5 + 0.5;
+      const intensity = b.intensity * pulse;
+      const glow = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.size * 4);
+      glow.addColorStop(0, `rgba(100,200,240,${intensity})`);
+      glow.addColorStop(0.4, `rgba(60,160,220,${intensity*0.5})`);
+      glow.addColorStop(1, 'transparent');
+      ctx.fillStyle = glow;
+      ctx.fillRect(b.x - b.size*4, b.y - b.size*4, b.size*8, b.size*8);
+    });
+
+    // 巨物剪影
+    giantTimer += 1/60; // 近似 delta
+    if (!giant && giantTimer > nextGiantTime) {
+      giant = createGiant();
+      giantTimer = 0;
+      nextGiantTime = GIANT_INTERVAL_MIN + Math.random() * (GIANT_INTERVAL_MAX - GIANT_INTERVAL_MIN);
+    }
+
+    if (giant) {
+      giant.life++;
+      giant.x += giant.vx;
+      giant.y += giant.vy;
+
+      const fadeIn = Math.min(giant.life / 80, 1);
+      const fadeOut = giant.life > giant.maxLife - 100 ? Math.max(0, (giant.maxLife - giant.life) / 100) : 1;
+      const alpha = giant.opacity * fadeIn * fadeOut;
+
+      if (alpha > 0.003) {
+        ctx.fillStyle = `rgba(4,12,25,${alpha})`;
+        ctx.beginPath();
+        const gx = giant.x, gy = giant.y, gs = giant.size;
+
+        switch (giant.shape) {
+          case 0: // 长体
+            ctx.ellipse(gx, gy, gs * 1.6, gs * 0.3, 0.02, 0, Math.PI * 2);
+            // 尾部
+            ctx.moveTo(gx - gs * 1.4, gy);
+            ctx.quadraticCurveTo(gx - gs * 2.0, gy - gs * 0.25, gx - gs * 2.2, gy + gs * 0.05);
+            ctx.quadraticCurveTo(gx - gs * 1.8, gy + gs * 0.15, gx - gs * 1.4, gy);
+            break;
+          case 1: // 巨大鳍
+            ctx.moveTo(gx, gy);
+            ctx.quadraticCurveTo(gx + gs * 1.2, gy - gs * 0.7, gx + gs * 1.5, gy - gs * 0.3);
+            ctx.quadraticCurveTo(gx + gs * 0.9, gy + gs * 0.1, gx, gy + gs * 0.08);
+            break;
+          case 2: // 触须群
+            for (let n = 0; n < 5; n++) {
+              const sx = gx + (n - 2) * gs * 0.25;
+              const sy = gy - gs * 0.2;
+              ctx.moveTo(sx, sy);
+              ctx.bezierCurveTo(
+                sx + gs * 0.15, sy + gs * 0.3,
+                sx - gs * 0.1, sy + gs * 0.5,
+                sx + gs * 0.05 * (n-2), sy + gs * 0.7
+              );
+            }
+            break;
+          case 3: // 巨大椭圆（鲸类轮廓）
+            ctx.ellipse(gx, gy, gs * 1.3, gs * 0.5, 0.03, 0, Math.PI * 2);
+            // 尾鳍
+            ctx.moveTo(gx - gs * 1.2, gy);
+            ctx.lineTo(gx - gs * 1.6, gy - gs * 0.5);
+            ctx.lineTo(gx - gs * 1.5, gy + gs * 0.5);
+            ctx.closePath();
+            break;
+        }
+        ctx.fill();
+      }
+
+      // 离开画面即清除
+      if (giant.life > giant.maxLife ||
+          giant.x < -250 || giant.x > W + 250 ||
+          giant.y < -150 || giant.y > H + 150) {
+        giant = null;
+      }
+    }
+
+    // 气泡
+    if (frameCount % 5 === 0) spawnBubble();
+    for (let i = bubbles.length - 1; i >= 0; i--) {
+      const b = bubbles[i];
+      b.age++;
+      if (b.age > b.life || b.y < -10) { bubbles.splice(i, 1); continue; }
+      b.y += b.vy;
+      b.x += b.vx + Math.sin(t * 60 * b.wobbleSpeed + b.wobble) * 0.4;
+      const fade = b.age < 20 ? b.age/20 : 1 - (b.age-20)/(b.life-20);
+      const a = b.opacity * Math.max(0, fade);
+      ctx.strokeStyle = `rgba(160,210,230,${a})`;
+      ctx.lineWidth = 0.6;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.size, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    frameCount++;
+  }
+
+  let frameCount = 0;
+  resize();
+  requestAnimationFrame(render);
+
+  console.log('🔭 深海观测室已启动');
+  console.log('   点击台灯切换开关 · 窗外巨物偶尔掠过');
+  console.log('   对应文档 §7.6');
+})();
+</script>
+</body>
+</html>

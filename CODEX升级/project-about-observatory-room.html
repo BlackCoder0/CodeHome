@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About 潜水艇舱室验证</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      color-scheme: dark;
+      --text: #f3f7fb;
+      --lamp-on: 1;
+      --room-light: 1;
+      --interior-strength: 0;
+      --hull-visibility: 1;
+      --porthole-scale: 1;
+      --planet-core-opacity: 0;
+      --room-reveal: 240px;
+    }
+    html, body {
+      min-height: 100%;
+      background: #03101b;
+      color: var(--text);
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    body {
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 18% 14%, rgba(101, 170, 211, 0.2), transparent 22%),
+        radial-gradient(circle at 84% 9%, rgba(48, 112, 156, 0.16), transparent 18%),
+        linear-gradient(180deg, #0d2236 0%, #08192a 32%, #04111d 70%, #020811 100%);
+    }
+    a { color: inherit; text-decoration: none; }
+    .blank-panel {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 18% 20%, rgba(124, 176, 210, 0.18), transparent 18%),
+        radial-gradient(circle at 78% 16%, rgba(76, 136, 182, 0.16), transparent 15%),
+        linear-gradient(180deg, #10263a 0%, #071524 52%, #030a12 100%);
+    }
+    .blank-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(rgba(188, 221, 242, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(188, 221, 242, 0.05) 1px, transparent 1px);
+      background-size: 56px 56px;
+      opacity: 0.2;
+      mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.12));
+    }
+    .blank-panel span {
+      position: relative;
+      z-index: 1;
+      padding: 1rem 1.25rem;
+      border-radius: 999px;
+      border: 1px solid rgba(192, 216, 230, 0.2);
+      background: rgba(6, 15, 24, 0.28);
+      backdrop-filter: blur(12px);
+      color: rgba(232, 241, 247, 0.88);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+    }
+    .about-scroll { position: relative; height: 600vh; }
+    .about-stage {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: hidden;
+      isolation: isolate;
+      background:
+        radial-gradient(circle at 20% 16%, rgba(53, 112, 156, 0.28), transparent 28%),
+        radial-gradient(circle at 80% 10%, rgba(29, 80, 125, 0.22), transparent 20%),
+        linear-gradient(180deg, #112a40 0%, #082033 40%, #04111d 72%, #020812 100%);
+    }
+    .room-scene, .room-layer, .water-caustics, .interior, .hull-overlay, .detail-overlay { position: absolute; inset: 0; }
+    .room-scene {
+      z-index: 1;
+      filter: brightness(var(--room-light)) saturate(calc(0.94 + var(--lamp-on) * 0.12));
+      transition: filter 0.2s linear;
+      clip-path: circle(var(--room-reveal) at 50% 50%);
+    }
+    .room-layer { background-position: center; background-repeat: no-repeat; background-size: cover; transition: opacity 0.3s ease; }
+    .room-lit { background-image: url("../舱室开灯.png"); opacity: var(--lamp-on); }
+    .room-dark { background-image: url("../舱室关灯.png"); opacity: calc(1 - var(--lamp-on)); }
+    .water-caustics {
+      z-index: 2;
+      pointer-events: none;
+      opacity: calc(0.16 + var(--lamp-on) * 0.08);
+      clip-path: circle(var(--room-reveal) at 50% 50%);
+      background:
+        radial-gradient(circle at 28% 24%, rgba(179, 239, 255, 0.18), transparent 18%),
+        radial-gradient(circle at 72% 18%, rgba(118, 223, 255, 0.12), transparent 15%),
+        radial-gradient(circle at 58% 58%, rgba(149, 233, 255, 0.08), transparent 20%);
+      mix-blend-mode: screen;
+    }
+    .interior {
+      z-index: 3;
+      opacity: calc(0.04 + var(--interior-strength) * 0.96);
+      transform: scale(calc(0.94 + var(--interior-strength) * 0.06));
+      clip-path: circle(var(--room-reveal) at 50% 50%);
+      transition: opacity 0.08s linear, transform 0.08s linear;
+    }
+    .about-room { position: relative; width: 100%; height: 100%; overflow: hidden; isolation: isolate; }
+    .about-plaque {
+      position: absolute;
+      top: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 8;
+      padding: 0.7rem 1.1rem;
+      border-radius: 999px;
+      border: 1px solid rgba(200, 223, 235, 0.18);
+      background: rgba(5, 14, 22, 0.12);
+      backdrop-filter: blur(8px);
+      color: rgba(242, 248, 251, 0.78);
+      font-size: 0.76rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      opacity: calc(0.3 + var(--interior-strength) * 0.42);
+      pointer-events: none;
+    }
+    .warm-glow {
+      position: absolute;
+      top: 12.5rem;
+      left: 3.4rem;
+      width: 12.5rem;
+      height: 12.5rem;
+      border-radius: 50%;
+      z-index: 4;
+      pointer-events: none;
+      background: radial-gradient(circle, rgba(255, 207, 128, 0.34) 0%, rgba(255, 218, 146, 0.14) 42%, transparent 76%);
+      filter: blur(26px);
+      opacity: calc(var(--lamp-on) * 0.42);
+      animation: pulse 3.4s ease-in-out infinite alternate;
+      transition: opacity 0.25s ease;
+    }
+    .lamp-shell {
+      position: absolute;
+      left: 0.6rem;
+      top: 16rem;
+      width: clamp(10rem, 18vw, 16rem);
+      height: clamp(10rem, 18vw, 16rem);
+      z-index: 6;
+      opacity: calc(0.72 + var(--interior-strength) * 0.18);
+    }
+    .lamp-mount { width: 100%; height: 100%; min-height: 320px; cursor: pointer; }
+    .planet-wrap {
+      position: absolute;
+      top: -2.5rem;
+      right: -3.6rem;
+      width: clamp(22rem, 38vw, 36rem);
+      height: clamp(22rem, 38vw, 36rem);
+      z-index: 5;
+      opacity: calc(0.64 + (1 - var(--lamp-on)) * 0.16);
+      transition: opacity 0.25s ease;
+      pointer-events: none;
+    }
+    .planet-system { position: relative; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+    .planet-ring { position: absolute; border: 2px solid rgba(255, 255, 255, 0.28); border-radius: 50%; pointer-events: none; }
+    .planet-orbit { position: absolute; left: 50%; top: 50%; animation: rotateRing linear infinite; }
+    .planet-icon-link {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      pointer-events: auto;
+      transition: transform 0.2s ease;
+    }
+    .planet-icon-link img, .planet-icon-link svg { width: 36px; height: 36px; display: block; color: #fff; fill: currentColor; }
+    .planet-core-glow {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 172px;
+      height: 172px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: var(--planet-core-opacity);
+      transition: opacity 0.6s ease;
+      background: radial-gradient(circle, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.98) 18%, rgba(255, 255, 255, 0.84) 36%, rgba(255, 255, 255, 0.46) 58%, rgba(255, 255, 255, 0.14) 78%, transparent 100%);
+      box-shadow: 0 0 74px rgba(255, 255, 255, 0.78), 0 0 154px rgba(255, 255, 255, 0.38), 0 0 220px rgba(188, 224, 255, 0.18);
+    }
+    .planet-toast {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 0.3rem 0.55rem;
+      border-radius: 0.4rem;
+      background: #22c55e;
+      color: #fff;
+      font-size: 0.75rem;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 3;
+    }
+    .planet-toast.show { opacity: 1; }
+    .floor-cards {
+      position: absolute;
+      inset: 0;
+      z-index: 7;
+      pointer-events: none;
+      opacity: calc(0.18 + var(--interior-strength) * 0.82);
+      transition: opacity 0.2s ease;
+    }
+    .floor-cards::before {
+      content: "";
+      position: absolute;
+      left: 40.4%;
+      top: 77.9%;
+      width: 25.3%;
+      height: 14.2%;
+      clip-path: polygon(16% 0%, 84% 0%, 100% 100%, 0% 100%);
+      background:
+        radial-gradient(circle at 50% 60%, rgba(10, 29, 46, 0.12), rgba(4, 15, 24, 0.03) 54%, transparent 78%),
+        linear-gradient(180deg, rgba(160, 208, 228, 0.02), transparent 28%);
+      pointer-events: none;
+    }
+    .floor-cards.detail-open .floor-card { opacity: 0.3; filter: blur(2px); }
+    .floor-card {
+      position: absolute;
+      width: var(--card-width);
+      aspect-ratio: 0.68;
+      border: 0;
+      background: transparent;
+      padding: 0;
+      cursor: pointer;
+      pointer-events: auto;
+      transform: translate(-50%, -50%) rotateZ(var(--card-rotate)) skewX(-8deg) scaleY(0.84) scale(var(--card-scale));
+      transform-origin: center center;
+      filter: saturate(0.92) brightness(0.94);
+      transition: transform 0.28s ease, opacity 0.2s ease, filter 0.2s ease;
+      opacity: 0.92;
+    }
+    .floor-card:hover {
+      transform: translate(-50%, calc(-50% - 8px)) rotateZ(var(--card-rotate)) skewX(-8deg) scaleY(0.84) scale(calc(var(--card-scale) + 0.035));
+    }
+    .floor-card.is-hidden { opacity: 0; pointer-events: none; }
+    .floor-card-frame {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 1.2rem;
+      overflow: hidden;
+      box-shadow: 0 6px 14px rgba(6, 30, 52, 0.16), 0 1px 0 rgba(255, 255, 255, 0.14) inset;
+      background: linear-gradient(180deg, rgba(240, 248, 253, 0.22), rgba(211, 233, 244, 0.08));
+    }
+    .floor-card-frame::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), transparent 34%, transparent 62%, rgba(255, 255, 255, 0.12));
+      pointer-events: none;
+    }
+    .floor-card img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      object-position: center;
+      user-select: none;
+      pointer-events: none;
+    }
+    .detail-overlay {
+      z-index: 9;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease;
+      backdrop-filter: blur(0px);
+    }
+    .detail-overlay.is-active {
+      opacity: 1;
+      pointer-events: auto;
+      backdrop-filter: blur(10px);
+      background: rgba(5, 15, 24, 0.14);
+    }
+    .detail-panel {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: min(1080px, 88vw);
+      transform: translate(-50%, calc(-50% + 18px));
+      opacity: 0;
+      transition: opacity 0.24s ease, transform 0.24s ease;
+    }
+    .detail-panel.is-visible {
+      opacity: 1;
+      transform: translate(-50%, -50%);
+    }
+    .detail-close {
+      position: absolute;
+      top: -0.25rem;
+      right: 0.25rem;
+      width: 2.4rem;
+      height: 2.4rem;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(13, 26, 38, 0.48);
+      color: rgba(241, 247, 250, 0.85);
+      font-size: 1.1rem;
+      cursor: pointer;
+      z-index: 2;
+    }
+    .testimonials-outer {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1.5rem 1.25rem;
+      font-family: inherit;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      gap: 6rem;
+      align-items: center;
+    }
+    .testimonials-visual { position: relative; width: 20rem; height: 500px; margin: 0 auto; }
+    .testimonial-photo {
+      position: absolute;
+      inset: 0;
+      transform-origin: bottom;
+      transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out;
+    }
+    .testimonial-photo img {
+      width: 100%;
+      height: 100%;
+      border-radius: 1.5rem;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+      user-select: none;
+      pointer-events: none;
+    }
+    .testimonial-photo::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 1.5rem;
+      background: rgba(31, 41, 55, 0.08);
+    }
+    .testimonial-photo.active { animation: activePhotoRise 0.4s ease-in-out; }
+    .testimonials-copy {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 500px;
+      padding: 1rem 0;
+    }
+    .copy-text { transition: opacity 0.2s ease, transform 0.2s ease; text-shadow: 0 4px 18px rgba(4, 13, 20, 0.3); }
+    .copy-text.updating { opacity: 0; transform: translateY(14px); }
+    .copy-text h3 { font-size: 1.5rem; font-weight: 700; color: rgba(255, 255, 255, 0.94); }
+    .copy-text .designation { margin-top: 0.2rem; font-size: 1rem; color: rgba(224, 231, 236, 0.72); }
+    .copy-text .quote { margin-top: 2rem; font-size: 1.1rem; line-height: 1.8; color: rgba(230, 236, 240, 0.8); }
+    .copy-text .quote a { color: #60a5fa; text-decoration: underline; transition: color 0.2s ease; }
+    .copy-text .quote a:hover { color: #93c5fd; }
+    .testimonial-controls { display: flex; gap: 1rem; padding-top: 3rem; justify-content: flex-start; }
+    .testimonial-button {
+      width: 2.6rem;
+      height: 2.6rem;
+      border: 0;
+      border-radius: 999px;
+      background: #262626;
+      color: #a3a3a3;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.3s ease, color 0.3s ease;
+    }
+    .testimonial-button:hover { color: #e5e5e5; }
+    .testimonial-button.prev:hover svg { transform: rotate(12deg); }
+    .testimonial-button.next:hover svg { transform: rotate(-12deg); }
+    .testimonial-button svg {
+      width: 1.25rem;
+      height: 1.25rem;
+      transition: transform 0.3s ease;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .floating-card {
+      position: fixed;
+      z-index: 11;
+      overflow: hidden;
+      border-radius: 1.2rem;
+      box-shadow: 0 22px 54px rgba(5, 23, 38, 0.34), 0 1px 0 rgba(255, 255, 255, 0.18) inset;
+      transition:
+        left 0.44s cubic-bezier(0.22, 1, 0.36, 1),
+        top 0.44s cubic-bezier(0.22, 1, 0.36, 1),
+        width 0.44s cubic-bezier(0.22, 1, 0.36, 1),
+        height 0.44s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.44s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.2s ease;
+      pointer-events: none;
+    }
+    .floating-card img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: center; }
+    .hull-overlay {
+      z-index: 10;
+      opacity: var(--hull-visibility);
+      pointer-events: none;
+      transition: opacity 0.08s linear;
+    }
+    .hull-shell {
+      position: absolute;
+      inset: -18%;
+      background: radial-gradient(circle at 50% 50%, transparent 0 18.8%, rgba(0, 0, 0, 0.08) 20%, rgba(13, 27, 38, 0.2) 30%, rgba(31, 54, 70, 0.38) 43%, rgba(57, 88, 109, 0.56) 57%, rgba(20, 34, 45, 0.74) 100%);
+    }
+    .hull-shell::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.38) 0%, rgba(0, 0, 0, 0.16) 10%, transparent 23%, transparent 77%, rgba(0, 0, 0, 0.18) 90%, rgba(0, 0, 0, 0.42) 100%);
+      opacity: 0.95;
+    }
+    .hull-shell::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 50%, transparent 0 23%, rgba(0, 0, 0, 0.18) 24.2%, transparent 26%);
+      opacity: 0.52;
+    }
+    .porthole {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 46vmin;
+      height: 46vmin;
+      min-width: 340px;
+      min-height: 340px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(var(--porthole-scale));
+      transition: transform 0.08s linear;
+    }
+    .porthole-frame {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 26px solid rgba(113, 127, 135, 0.82);
+      box-shadow:
+        inset 0 0 0 2px rgba(227, 239, 244, 0.12),
+        inset 0 0 16px rgba(0, 0, 0, 0.2),
+        0 18px 44px rgba(0, 0, 0, 0.16);
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.08));
+    }
+    .porthole-frame::before {
+      content: "";
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      opacity: 0.4;
+    }
+    .porthole-frame::after {
+      content: "";
+      position: absolute;
+      inset: 12px;
+      border-radius: 50%;
+      border: 1px solid rgba(24, 36, 46, 0.18);
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.12);
+    }
+    .glass {
+      position: absolute;
+      inset: 22px;
+      border-radius: 50%;
+      overflow: hidden;
+      box-shadow: inset 0 0 0 1px rgba(205, 230, 241, 0.16), inset 0 0 30px rgba(0, 0, 0, 0.12);
+    }
+    .glass::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.06) 18%, transparent 36%), radial-gradient(circle at 42% 28%, rgba(234, 246, 251, 0.15), transparent 22%);
+      opacity: calc(0.7 * var(--hull-visibility));
+      transition: opacity 0.08s linear;
+    }
+    .glass::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(6, 18, 28, 0.04), rgba(4, 12, 20, 0.1));
+      opacity: calc(0.52 * var(--hull-visibility));
+    }
+    .rivet {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 15px;
+      height: 15px;
+      margin-left: -7.5px;
+      margin-top: -7.5px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 32%, rgba(246, 250, 252, 0.92), rgba(143, 160, 171, 0.94) 56%, rgba(84, 98, 108, 0.98) 100%);
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.28), 0 1px 5px rgba(0, 0, 0, 0.18);
+    }
+    #contact { position: absolute; bottom: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+    @media (max-width: 1080px) {
+      .planet-wrap { right: -5rem; top: -3.2rem; }
+      .floor-cards { width: min(82vw, 960px); }
+      .testimonials-grid { gap: 3.2rem; }
+    }
+    @media (max-width: 900px) {
+      .about-scroll { height: 600vh; }
+      .porthole { width: 74vmin; height: 74vmin; min-width: 280px; min-height: 280px; }
+      .about-plaque { top: 1.2rem; }
+      .lamp-shell { top: auto; left: -0.1rem; bottom: 24vh; width: 10rem; height: 10rem; }
+      .warm-glow { top: auto; left: 0.9rem; bottom: 35vh; width: 9rem; height: 9rem; }
+      .planet-wrap { top: -6rem; right: 50%; transform: translateX(50%) scale(0.56); transform-origin: top center; }
+      .floor-cards { width: min(96vw, 860px); height: min(32vh, 280px); bottom: -0.8rem; }
+      .detail-panel { width: min(92vw, 780px); }
+      .testimonials-grid { grid-template-columns: 1fr; gap: 1.2rem; }
+      .testimonials-visual { width: min(18rem, 62vw); height: min(420px, 56vh); }
+      .testimonials-copy { min-height: auto; text-align: center; }
+      .testimonial-controls { justify-content: center; padding-top: 1.5rem; }
+      .detail-close { top: -0.6rem; right: 50%; transform: translateX(50%); }
+    }
+    @keyframes rotateRing { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes pulse { from { opacity: calc(var(--lamp-on) * 0.28); } to { opacity: calc(var(--lamp-on) * 0.42); } }
+    @keyframes activePhotoRise {
+      0% { transform: translateY(0) scale(1) rotate(0deg); }
+      50% { transform: translateY(-80px) scale(1) rotate(0deg); }
+      100% { transform: translateY(0) scale(1) rotate(0deg); }
+    }
+  </style>
+</head>
+<body>
+  <section class="blank-panel"><span>Before About</span></section>
+  <section id="aboutScroll" class="about-scroll">
+    <div id="aboutStage" class="about-stage">
+      <div class="room-scene">
+        <div class="room-layer room-dark"></div>
+        <div class="room-layer room-lit"></div>
+      </div>
+      <div class="water-caustics"></div>
+      <div class="interior">
+        <section class="about-room">
+          <div class="about-plaque">About</div>
+          <div class="warm-glow"></div>
+          <div class="lamp-shell"><div id="lampMount" class="lamp-mount" title="点击切换舱室灯光"></div></div>
+          <div class="planet-wrap">
+            <div id="planetSystem" class="planet-system"></div>
+            <div id="planetToast" class="planet-toast">已复制</div>
+          </div>
+          <div id="floorCards" class="floor-cards"></div>
+          <div id="detailOverlay" class="detail-overlay">
+            <div id="detailPanel" class="detail-panel">
+              <button id="detailClose" class="detail-close" type="button" aria-label="关闭详情">×</button>
+              <div class="testimonials-outer">
+                <div class="testimonials-grid">
+                  <div><div id="detailVisual" class="testimonials-visual"></div></div>
+                  <div class="testimonials-copy">
+                    <div id="copyText" class="copy-text">
+                      <h3 id="detailName"></h3>
+                      <p id="detailDesignation" class="designation"></p>
+                      <p id="detailQuote" class="quote"></p>
+                    </div>
+                    <div class="testimonial-controls">
+                      <button id="prevTestimonial" class="testimonial-button prev" type="button" aria-label="上一张"><svg viewBox="0 0 24 24"><path d="M5 12h14"></path><path d="M5 12l6 6"></path><path d="M5 12l6-6"></path></svg></button>
+                      <button id="nextTestimonial" class="testimonial-button next" type="button" aria-label="下一张"><svg viewBox="0 0 24 24"><path d="M19 12H5"></path><path d="M19 12l-6 6"></path><path d="M19 12l-6-6"></path></svg></button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="contact"></div>
+        </section>
+      </div>
+      <div class="hull-overlay">
+        <div class="hull-shell"></div>
+        <div class="porthole">
+          <div class="porthole-frame"></div>
+          <div class="glass"></div>
+          <div class="rivet" style="transform: translate(-50%, -50%) rotate(0deg) translateY(-22vmin);"></div>
+          <div class="rivet" style="transform: translate(-50%, -50%) rotate(30deg) translateY(-22vmin);"></div>
+          <div class="rivet" style="transform: translate(-50%, -50%) rotate(60deg) translateY(-22vmin);"></div>
+          <div class="rivet" style="transform: translate(-50%, -50%) rotate(90deg) translateY(-22vmin);"></div>
+          <div class="rivet" style="transform: translate(-50%, -50%) rotate(120deg) translateY(-22vmin);"></div>
+          <div class="rivet" style="transform: translate(-50%, -50%) rotate(150deg) translateY(-22vmin);"></div>
+          <div class="rivet" style="transform: translate(-50%, -50%) rotate(180deg) translateY(-22vmin);"></div>
+          <div class="rivet" style="transform: translate(-50%, -50%) rotate(210deg) translateY(-22vmin);"></div>
+          <div class="rivet" style="transform: translate(-50%, -50%) rotate(240deg) translateY(-22vmin);"></div>
+          <div class="rivet" style="transform: translate(-50%, -50%) rotate(270deg) translateY(-22vmin);"></div>
+          <div class="rivet" style="transform: translate(-50%, -50%) rotate(300deg) translateY(-22vmin);"></div>
+          <div class="rivet" style="transform: translate(-50%, -50%) rotate(330deg) translateY(-22vmin);"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="blank-panel"><span>After About</span></section>
+  <script type="module">
+    import * as THREE from "../node_modules/three/build/three.module.js";
+
+    const aboutScroll = document.getElementById("aboutScroll");
+    const aboutStage = document.getElementById("aboutStage");
+    const lampMount = document.getElementById("lampMount");
+    const planetSystem = document.getElementById("planetSystem");
+    const planetToast = document.getElementById("planetToast");
+    const floorCards = document.getElementById("floorCards");
+    const detailOverlay = document.getElementById("detailOverlay");
+    const detailPanel = document.getElementById("detailPanel");
+    const detailClose = document.getElementById("detailClose");
+    const detailVisual = document.getElementById("detailVisual");
+    const copyText = document.getElementById("copyText");
+    const detailName = document.getElementById("detailName");
+    const detailDesignation = document.getElementById("detailDesignation");
+    const detailQuote = document.getElementById("detailQuote");
+    const prevTestimonial = document.getElementById("prevTestimonial");
+    const nextTestimonial = document.getElementById("nextTestimonial");
+
+    const testimonials = [
+      { quote: `时间已经过去太久，已经记不清当时的心情了\n当时有一个比较朦胧的想法，在朋友的介绍下认识了[墨间黑沢](https://space.bilibili.com/24271342/dynamic)老师，很快便有了这第一件衣服\n看着脑子里面的想法从模糊到清晰，再到具体，是一种很奇妙的体验。我加入了很多我自己的喜好：白发、蓝瞳、和一点恰到好处的浅浅微笑\n幻象中诞生的少女从纸上走来，很惭愧，我至今没用为她想好一个合适的名字，既然是二次元的“我”，那就以本名 “阵雨” 暂且称呼吧`, name: "初始之服", designation: "阵雨的第一件衣服", src: "../public/assets/oc/oc1.png" },
+      { quote: `旗袍的形象很经典，虽其历史不过区区百年，但其展现的温婉曲线美是近乎无可替代的\n由于其发色瞳色，衣服的形象便也非常自然的确定为蓝白色了，青花瓷的一般的少女也应运而生，微微扎起的头发及垂落的鬓尾更将其含蓄而内敛展现地淋漓尽致\n天青色等烟雨，而我在等你`, name: "旗袍", designation: "青花瓷", src: "../public/assets/oc/oc2.png" },
+      { quote: `其实原本是有死库水的打算，但实在不符合年龄，最后墨间老师画了这种偏水手服风格的泳装\n说真的，我这辈子除游泳课外穿泳装的次数简直屈指可数（大夏天宅空调房不香吗真的是），南方的大火炉实在是太可怕了\n不过阵雨是美少女，美少女是不会被晒黑的（确信）\n相对保守的服饰很好遮住了上身，但空隙间展现的娇小可爱很完美的补足了少女感\n\n※设定上很怕水，刚开始学游泳时很艰难才克服溺水感`, name: "泳装", designation: "正常人谁大夏天去沙滩啊", src: "../public/assets/oc/oc3.png" },
+      { quote: `出于对影视作品里黑客的印象，加上对编程的喜好，便约了这套黑客服设\n高考完后也上了跟计算机相关的专业，虽然学得杂而不精，但看着想法用逻辑变成现实还是很有成就感\n阵雨这套衣服参考了我喜欢的一些黑客形象：宽松而厚的外套、较为凌乱的头发、以及不健康作息带来的黑眼圈\n...还有大腿绑带，大腿绑带是极好的！\n黑客是不愿意受管教和约束的存在，一个关着的门对于黑客来说是一种挑衅，一个锁着的门对黑客来说是一种侮辱。 \n\n这么飒气的女孩子，谁会想到她的算法课是被老师捞过的呢(*^_^*)`, name: "黑客服", designation: "喂喂，验证码发我一下", src: "../public/assets/oc/oc4.png" },
+      { quote: `赛车手是比较远离日常生活的形象，这套服设参考了[赛车服远坂凛](https://www.hpoi.net/hobby/36512)形象，经典的皮克外套及充满速度感的花纹，护目镜、手环等配饰也增添了赛车手的气质，少见的高马尾也是我很喜欢的一点。\n在网站开始页面是墨间老师为其绘制的一幅赠图，超！帅！的！`, name: "赛车服", designation: "昨晚我输给一辆AE86，他用惯性漂移过弯，他的车很快，我只看到他有个豆腐店的招牌。", src: "../public/assets/oc/oc5.png" },
+      { quote: `看起来很像贵族女子学校的校服（不过实际是什么学校我也还没想过）\n深色而典雅的长裙在运动时并不太方便，所以体育课时会换成更方便的款式\n面料舒适，保暖且透气，适合四季穿用\n但是不便清洗，经常不小心弄脏发阵雨只能买多套衣服以备用\n\n※除了校服外，学校对袜子、鞋子及发型也有相应要求，意外严苛`, name: "校服", designation: "贵安", src: "../public/assets/oc/oc6.png" },
+      { quote: `与初始之服相似，但更精炼大方，不对称的设计使其在人群中很容易脱颖而出\n初始服胸口的山荷叶挂饰被挂到腰间，走路时会随之轻轻摇摆。发型和绑带也换成更干练的，颇显成熟\n阵雨并不太习惯这身衣服，但出乎意料的是收到了众多好评，一改往日傻傻憨态的她以性格里另一面出场，着实吓到了不少人`, name: "礼服", designation: "用于出席重要场合的衣服", src: "../public/assets/oc/oc7.png" },
+      { quote: `长下摆，对襟而长袖的白大褂，既用来保护实验服下的身体，也表示角色的知性美。\n话是这么说，可后半句在阵雨身上似乎不适用）\n请千万注意不要在实验室外（至少不要在实验楼外）穿着实验服，以避免将沾染的有毒有害物质带出造成污染\n虽不太符合实验规范，但高跟鞋子的不适让她始终提醒自己保持专注。当然，护目镜和扎起头发这两点仍然不能马虎`, name: "实验服", designation: "为什么结果重复不出来啊/(ㄒoㄒ)/~~", src: "../public/assets/oc/oc8.png" }
+    ];
+
+    const cardBlueprints = [
+      { u: 0.26, v: 0.08, depth: 0.12, rotate: -18 },
+      { u: 0.58, v: 0.14, depth: 0.18, rotate: 10 },
+      { u: 0.4, v: 0.28, depth: 0.3, rotate: -11 },
+      { u: 0.68, v: 0.34, depth: 0.36, rotate: 8 },
+      { u: 0.22, v: 0.5, depth: 0.5, rotate: -15 },
+      { u: 0.52, v: 0.62, depth: 0.64, rotate: 13 },
+      { u: 0.34, v: 0.78, depth: 0.82, rotate: -7 },
+      { u: 0.62, v: 0.94, depth: 0.98, rotate: 16 }
+    ];
+    const floorPlane = {
+      topLeft: { x: 0.425, y: 0.78 },
+      topRight: { x: 0.652, y: 0.828 },
+      bottomLeft: { x: 0.388, y: 0.882 },
+      bottomRight: { x: 0.644, y: 0.934 }
+    };
+
+    const planetRings = [
+      { radius: 150, icons: [
+        { link: "https://github.com/BlackCoder0", type: "svg", viewBox: "0 0 496 512", path: "M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z" },
+        { link: "https://gitee.com/code-liang", type: "image", src: "../public/assets/gitee.svg", alt: "Gitee" }
+      ]},
+      { radius: 250, icons: [
+        { link: "https://space.bilibili.com/335768850", type: "image", src: "../public/assets/bilibili.svg", alt: "Bilibili" },
+        { link: "copy:2943984952@qq.com", type: "svg", viewBox: "0 0 512 512", path: "M502.3 190.8c3.9-3.1 9.7-.2 9.7 4.7V400c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V195.6c0-5 5.7-7.8 9.7-4.7 22.4 17.4 52.1 39.5 154.1 113.6 21.1 15.4 56.7 47.8 92.2 47.6 35.7.3 72-32.8 92.3-47.6 102-74.1 131.6-96.3 154-113.7zM256 320c23.2.4 56.6-29.2 73.4-41.4 132.7-96.3 142.8-104.7 173.4-128.7 5.8-4.5 9.2-11.5 9.2-18.9v-19c0-26.5-21.5-48-48-48H48C21.5 64 0 85.5 0 112v19c0 7.4 3.4 14.3 9.2 18.9 30.6 23.9 40.7 32.4 173.4 128.7 16.8 12.2 50.2 41.8 73.4 41.4z" },
+        { link: "https://xinjinjumin4775442.lofter.com", type: "image", src: "../public/assets/lofter.svg", alt: "Lofter" }
+      ]},
+      { radius: 350, icons: [
+        { link: "#contact", type: "svg", viewBox: "0 0 24 24", path: "M13.0607 8.11097L14.4749 9.52518C17.2086 12.2589 17.2086 16.691 14.4749 19.4247L14.1214 19.7782C11.3877 22.5119 6.95555 22.5119 4.22188 19.7782C1.48821 17.0446 1.48821 12.6124 4.22188 9.87874L5.6361 11.293C3.68348 13.2456 3.68348 16.4114 5.6361 18.364C7.58872 20.3166 10.7545 20.3166 12.7072 18.364L13.0607 18.0105C15.0133 16.0578 15.0133 12.892 13.0607 10.9394L11.6465 9.52518L13.0607 8.11097ZM19.7782 14.1214L18.364 12.7072C20.3166 10.7545 20.3166 7.58872 18.364 5.6361C16.4114 3.68348 13.2456 3.68348 11.293 5.6361L10.9394 5.98965C8.98678 7.94227 8.98678 11.1081 10.9394 13.0607L12.3536 14.4749L10.9394 15.8891L9.52518 14.4749C6.79151 11.7413 6.79151 7.30911 9.52518 4.57544L9.87874 4.22188C12.6124 1.48821 17.0446 1.48821 19.7782 4.22188C22.5119 6.95555 22.5119 11.3877 19.7782 14.1214Z" },
+        { link: "https://steamcommunity.com/profiles/76561199350235965/", type: "svg", viewBox: "0 0 496 512", path: "M496 256c0 137-111.2 248-248.4 248-113.8 0-209.6-76.3-239-180.4l95.2 39.3c6.4 32.1 34.9 56.4 68.9 56.4 39.2 0 71.9-32.4 70.2-73.5l84.5-60.2c52.1 1.3 95.8-40.9 95.8-93.5 0-51.6-42-93.5-93.7-93.5s-93.7 42-93.7 93.5v1.2L176.6 279c-15.5-.9-30.7 3.4-43.5 12.1L0 236.1C10.2 108.4 117.1 8 247.6 8 384.8 8 496 119 496 256zM155.7 384.3l-30.5-12.6a52.79 52.79 0 0 0 27.2 25.8c26.9 11.2 57.8-1.6 69-28.4 5.4-13 5.5-27.3.1-40.3-5.4-13-15.5-23.2-28.5-28.6-12.9-5.4-26.7-5.2-38.9-.6l31.5 13c19.8 8.2 29.2 30.9 20.9 50.7-8.3 19.9-31 29.2-50.8 21zm173.8-129.9c-34.4 0-62.4-28-62.4-62.3s28-62.3 62.4-62.3 62.4 28 62.4 62.3-27.9 62.3-62.4 62.3zm.1-15.6c25.9 0 46.9-21 46.9-46.8 0-25.9-21-46.8-46.9-46.8s-46.9 21-46.9 46.8c.1 25.8 21.1 46.8 46.9 46.8z" }
+      ]}
+    ];
+
+    const photoRotations = testimonials.map(() => Math.floor(Math.random() * 21) - 10);
+    const lampState = { scene: null, camera: null, renderer: null, lampGroup: null, spotLight: null, pointLight: null, animationId: 0 };
+    let activeTestimonial = 0;
+    let lightOn = true;
+    let toastTimer = null;
+    let floatingCard = null;
+    let detailOpen = false;
+    let detailBusy = false;
+    let sourceFloorCard = null;
+
+    function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+    function mapRange(value, start, end) { return clamp((value - start) / (end - start), 0, 1); }
+    function escapeHtml(text) { return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#39;"); }
+    function renderQuoteHtml(text) { return escapeHtml(text).replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>').replace(/\n/g, "<br>"); }
+    function updateLampLinkedState() {
+      aboutStage.style.setProperty("--lamp-on", lightOn ? "1" : "0");
+      aboutStage.style.setProperty("--planet-core-opacity", lightOn ? "0" : "0.94");
+      updateScrollState();
+    }
+    function updateScrollState() {
+      const rect = aboutScroll.getBoundingClientRect();
+      const total = aboutScroll.offsetHeight - window.innerHeight;
+      const raw = clamp(-rect.top / Math.max(total, 1), 0, 1);
+      const zoomIn = mapRange(raw, 0.05, 0.22);
+      const interior = mapRange(raw, 0.16, 0.38);
+      const shellFadeOut = mapRange(raw, 0.58, 0.68);
+      const fullReveal = mapRange(raw, 0.56, 0.7);
+      const linger = mapRange(raw, 0.42, 0.82);
+      const exit = mapRange(raw, 0.92, 1);
+      const hullVisibility = clamp(1 - shellFadeOut + exit, 0, 1);
+      const portholeScale = 1 + zoomIn * 0.72 - exit * 0.06;
+      const roomLight = lightOn ? 0.94 + (1 - exit * 0.08) * 0.12 : 0.42 - exit * 0.06;
+      const portholeRadius = Math.max(180, Math.min(window.innerWidth, window.innerHeight) * 0.23 * portholeScale);
+      const fullRadius = Math.hypot(window.innerWidth, window.innerHeight);
+      const revealRadius = Math.round(portholeRadius + (fullRadius - portholeRadius) * fullReveal);
+      const interiorStrength = clamp(interior + linger * 0.22, 0, 1);
+      aboutStage.style.setProperty("--interior-strength", interiorStrength.toFixed(3));
+      aboutStage.style.setProperty("--hull-visibility", hullVisibility.toFixed(3));
+      aboutStage.style.setProperty("--porthole-scale", portholeScale.toFixed(3));
+      aboutStage.style.setProperty("--room-light", roomLight.toFixed(3));
+      aboutStage.style.setProperty("--room-reveal", `${revealRadius}px`);
+    }
+    function showToast() {
+      planetToast.classList.add("show");
+      window.clearTimeout(toastTimer);
+      toastTimer = window.setTimeout(() => planetToast.classList.remove("show"), 1800);
+    }
+    function iconMarkup(item) {
+      if (item.type === "image") return `<img src="${item.src}" alt="${item.alt}" width="36" height="36">`;
+      return `<svg viewBox="${item.viewBox}" aria-hidden="true"><path d="${item.path}"></path></svg>`;
+    }
+    function renderPlanetSystem() {
+      planetSystem.innerHTML = '<div class="planet-core-glow"></div>';
+      planetRings.forEach((ring, ringIndex) => {
+        const ringLine = document.createElement("div");
+        ringLine.className = "planet-ring";
+        ringLine.style.width = `${ring.radius * 2}px`;
+        ringLine.style.height = `${ring.radius * 2}px`;
+        ringLine.style.left = `calc(50% - ${ring.radius}px)`;
+        ringLine.style.top = `calc(50% - ${ring.radius}px)`;
+        planetSystem.appendChild(ringLine);
+        const iconCount = ring.icons.length;
+        ring.icons.forEach((item, iconIndex) => {
+          const angle = (360 / iconCount) * iconIndex;
+          const duration = `${15 + ringIndex * 5}s`;
+          const orbit = document.createElement("div");
+          orbit.className = "planet-orbit";
+          orbit.style.width = `${ring.radius * 2}px`;
+          orbit.style.height = `${ring.radius * 2}px`;
+          orbit.style.marginLeft = `-${ring.radius}px`;
+          orbit.style.marginTop = `-${ring.radius}px`;
+          orbit.style.animationDuration = duration;
+          orbit.style.animationDelay = `-${(angle / 360) * parseFloat(duration)}s`;
+          orbit.style.transform = `rotate(${angle}deg)`;
+          const link = document.createElement("a");
+          link.className = "planet-icon-link";
+          link.href = item.link;
+          link.innerHTML = iconMarkup(item);
+          link.style.left = `${ring.radius - 20}px`;
+          link.style.top = "-20px";
+          link.style.transform = `rotate(-${angle}deg) scale(1)`;
+          link.target = item.link.startsWith("#") || item.link.startsWith("copy:") ? "_self" : "_blank";
+          if (!item.link.startsWith("#") && !item.link.startsWith("copy:")) link.rel = "noopener noreferrer";
+          link.addEventListener("mouseenter", () => { orbit.style.animationPlayState = "paused"; link.style.transform = `rotate(-${angle}deg) scale(1.28)`; });
+          link.addEventListener("mouseleave", () => { orbit.style.animationPlayState = "running"; link.style.transform = `rotate(-${angle}deg) scale(1)`; });
+          link.addEventListener("click", async (event) => {
+            if (item.link.startsWith("#")) {
+              event.preventDefault();
+              const target = document.querySelector(item.link);
+              if (target) target.scrollIntoView({ behavior: "smooth" });
+              return;
+            }
+            if (item.link.startsWith("copy:")) {
+              event.preventDefault();
+              try { await navigator.clipboard.writeText(item.link.replace("copy:", "")); } catch {}
+              showToast();
+            }
+          });
+          orbit.appendChild(link);
+          planetSystem.appendChild(orbit);
+        });
+      });
+    }
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    function getCardLayout(index) {
+      const blueprint = cardBlueprints[index];
+      const width = floorCards.clientWidth || window.innerWidth || 1200;
+      const height = floorCards.clientHeight || window.innerHeight || 800;
+      const farWidth = clamp(width * 0.075, 54, 82);
+      const nearWidth = clamp(width * 0.13, 96, 132);
+      const cardWidth = Math.round(farWidth + (nearWidth - farWidth) * blueprint.depth);
+      const cardScale = 0.88 + blueprint.depth * 0.18;
+      const leftEdge = lerp(floorPlane.topLeft.x, floorPlane.bottomLeft.x, blueprint.v) * width;
+      const rightEdge = lerp(floorPlane.topRight.x, floorPlane.bottomRight.x, blueprint.v) * width;
+      const centerX = lerp(leftEdge, rightEdge, blueprint.u);
+      const centerY = lerp(floorPlane.topLeft.y, floorPlane.bottomLeft.y, blueprint.v) * height;
+      return {
+        left: Math.round(centerX),
+        top: Math.round(centerY),
+        width: cardWidth,
+        rotate: blueprint.rotate,
+        scale: cardScale,
+        zIndex: String(10 + Math.round(blueprint.depth * 40))
+      };
+    }
+
+    function renderFloorCards() {
+      floorCards.innerHTML = "";
+      testimonials.forEach((item, index) => {
+        const layout = getCardLayout(index);
+        const button = document.createElement("button");
+        button.className = "floor-card";
+        button.type = "button";
+        button.setAttribute("aria-label", item.name);
+        button.dataset.rotate = String(layout.rotate);
+        button.style.left = `${layout.left}px`;
+        button.style.top = `${layout.top}px`;
+        button.style.setProperty("--card-width", `${layout.width}px`);
+        button.style.setProperty("--card-rotate", `${layout.rotate}deg`);
+        button.style.setProperty("--card-scale", String(layout.scale));
+        button.style.zIndex = layout.zIndex;
+        button.innerHTML = `<span class="floor-card-frame"><img src="${item.src}" alt="${item.name}" draggable="false"></span>`;
+        button.addEventListener("click", () => openDetail(index, button));
+        floorCards.appendChild(button);
+      });
+    }
+    function renderDetailCard() {
+      detailVisual.innerHTML = "";
+      testimonials.forEach((item, index) => {
+        const card = document.createElement("div");
+        card.className = "testimonial-photo";
+        if (index === activeTestimonial) card.classList.add("active");
+        const isActive = index === activeTestimonial;
+        card.style.zIndex = String(isActive ? 40 : testimonials.length + 2 - index);
+        card.style.opacity = String(isActive ? 1 : 0.7);
+        card.style.transform = `scale(${isActive ? 1 : 0.95}) rotate(${isActive ? 0 : photoRotations[index]}deg)`;
+        const img = document.createElement("img");
+        img.src = item.src;
+        img.alt = item.name;
+        img.draggable = false;
+        card.appendChild(img);
+        detailVisual.appendChild(card);
+      });
+      const active = testimonials[activeTestimonial];
+      copyText.classList.add("updating");
+      window.setTimeout(() => {
+        detailName.textContent = active.name;
+        detailDesignation.textContent = active.designation;
+        detailQuote.innerHTML = renderQuoteHtml(active.quote);
+        copyText.classList.remove("updating");
+      }, 120);
+    }
+    function setActiveTestimonial(index) {
+      activeTestimonial = (index + testimonials.length) % testimonials.length;
+      renderDetailCard();
+    }
+    function clearFloatingCard() {
+      if (floatingCard) {
+        floatingCard.remove();
+        floatingCard = null;
+      }
+    }
+    function openDetail(index, sourceCard) {
+      if (detailBusy || detailOpen) return;
+      detailBusy = true;
+      detailOpen = true;
+      activeTestimonial = index;
+      sourceFloorCard = sourceCard;
+      renderDetailCard();
+      floorCards.classList.add("detail-open");
+      detailOverlay.classList.add("is-active");
+      sourceFloorCard.classList.add("is-hidden");
+      const sourceRect = sourceCard.getBoundingClientRect();
+      const ghost = document.createElement("div");
+      ghost.className = "floating-card";
+      ghost.style.left = `${sourceRect.left}px`;
+      ghost.style.top = `${sourceRect.top}px`;
+      ghost.style.width = `${sourceRect.width}px`;
+      ghost.style.height = `${sourceRect.height}px`;
+      ghost.style.transform = `rotate(${sourceCard.dataset.rotate || 0}deg)`;
+      ghost.innerHTML = `<img src="${testimonials[index].src}" alt="${testimonials[index].name}">`;
+      document.body.appendChild(ghost);
+      floatingCard = ghost;
+      requestAnimationFrame(() => {
+        const targetWidth = window.innerWidth > 900 ? 320 : Math.min(window.innerWidth * 0.5, 280);
+        const targetHeight = targetWidth * 1.56;
+        ghost.style.left = `${window.innerWidth / 2 - targetWidth / 2}px`;
+        ghost.style.top = `${window.innerHeight / 2 - targetHeight / 2}px`;
+        ghost.style.width = `${targetWidth}px`;
+        ghost.style.height = `${targetHeight}px`;
+        ghost.style.transform = "rotate(0deg)";
+      });
+      window.setTimeout(() => { detailPanel.classList.add("is-visible"); }, 220);
+      window.setTimeout(() => { clearFloatingCard(); detailBusy = false; }, 640);
+    }
+    function closeDetail() {
+      if (!detailOpen || detailBusy) return;
+      detailBusy = true;
+      detailPanel.classList.remove("is-visible");
+      window.setTimeout(() => {
+        detailOverlay.classList.remove("is-active");
+        floorCards.classList.remove("detail-open");
+        if (sourceFloorCard) sourceFloorCard.classList.remove("is-hidden");
+        sourceFloorCard = null;
+        detailOpen = false;
+        detailBusy = false;
+      }, 220);
+    }
+    function initLamp() {
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, lampMount.clientWidth / lampMount.clientHeight, 0.1, 1000);
+      camera.position.set(0, 2, 8);
+      camera.lookAt(0, 2, 0);
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(lampMount.clientWidth, lampMount.clientHeight);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.setClearColor(0x000000, 0);
+      lampMount.appendChild(renderer.domElement);
+      const isMobile = window.innerWidth <= 768;
+      const lampGroup = new THREE.Group();
+      lampGroup.scale.set(1.2, 1.2, 1.2);
+      const whiteMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff, shininess: 100, emissive: 0x333333, emissiveIntensity: 0.2 });
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1.2, 0.3, 16), whiteMaterial);
+      base.position.y = 0.15; base.castShadow = true; base.receiveShadow = true; lampGroup.add(base);
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 3, 8), whiteMaterial);
+      pole.position.y = 1.8; pole.castShadow = true; lampGroup.add(pole);
+      const joint = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), whiteMaterial);
+      joint.position.y = 3.3; joint.castShadow = true; lampGroup.add(joint);
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 2, 8), whiteMaterial);
+      arm.position.set(0.9, 4.25, 0); arm.rotation.z = -Math.PI / 4; arm.castShadow = true; lampGroup.add(arm);
+      const shade = new THREE.Mesh(new THREE.ConeGeometry(0.8, 1.2, 32, 1, true), new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE.DoubleSide, shininess: 60, emissive: 0x444444, emissiveIntensity: 0.3 }));
+      shade.position.set(2, 5, 0); shade.rotation.z = Math.PI / 4; shade.castShadow = true; lampGroup.add(shade);
+      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), new THREE.MeshPhongMaterial({ color: 0xffd700, emissive: 0xffaa00, emissiveIntensity: 1.2, transparent: true, opacity: 0.95 }));
+      bulb.position.set(2, 4.6, 0); bulb.visible = false; lampGroup.add(bulb);
+      const spotLight = new THREE.SpotLight(0xffffff, 5.5, 30, Math.PI / 2.5, 0.35, 1.5);
+      spotLight.position.set(2, 5, 0); spotLight.target.position.set(0, 2, 0); spotLight.castShadow = true;
+      spotLight.shadow.mapSize.width = 2048; spotLight.shadow.mapSize.height = 2048; spotLight.shadow.camera.near = 0.5; spotLight.shadow.camera.far = 40;
+      lampGroup.add(spotLight); lampGroup.add(spotLight.target);
+      const pointLight = new THREE.PointLight(0xffe066, 2.2, 15);
+      pointLight.position.set(2, 4.6, 0); scene.add(pointLight);
+      scene.add(new THREE.AmbientLight(0x404040, isMobile ? 0.6 : 0.8));
+      const globalLight = new THREE.DirectionalLight(0xffffff, 1);
+      globalLight.position.set(5, 10, 5); globalLight.castShadow = true; globalLight.shadow.mapSize.width = 1024; globalLight.shadow.mapSize.height = 1024; scene.add(globalLight);
+      scene.add(lampGroup);
+      lampState.scene = scene;
+      lampState.camera = camera;
+      lampState.renderer = renderer;
+      lampState.lampGroup = lampGroup;
+      lampState.spotLight = spotLight;
+      lampState.pointLight = pointLight;
+      const animate = () => {
+        lampState.animationId = requestAnimationFrame(animate);
+        const time = Date.now() * 0.001;
+        lampGroup.rotation.y = Math.sin(time * 0.5) * 0.1;
+        if (lightOn) {
+          spotLight.intensity = 5.5 + Math.sin(time * 1.5) * 0.3;
+          pointLight.intensity = 2.2 + Math.sin(time * 1.2) * 0.2;
+        } else {
+          spotLight.intensity = 0;
+          pointLight.intensity = 0;
+        }
+        renderer.render(scene, camera);
+      };
+      animate();
+    }
+    function resizeLamp() {
+      if (!lampState.camera || !lampState.renderer) return;
+      lampState.camera.aspect = lampMount.clientWidth / lampMount.clientHeight;
+      lampState.camera.updateProjectionMatrix();
+      lampState.renderer.setSize(lampMount.clientWidth, lampMount.clientHeight);
+    }
+    function toggleLamp() { lightOn = !lightOn; updateLampLinkedState(); }
+
+    prevTestimonial.addEventListener("click", () => setActiveTestimonial(activeTestimonial - 1));
+    nextTestimonial.addEventListener("click", () => setActiveTestimonial(activeTestimonial + 1));
+    detailClose.addEventListener("click", closeDetail);
+    detailOverlay.addEventListener("click", (event) => { if (event.target === detailOverlay) closeDetail(); });
+    lampMount.addEventListener("click", toggleLamp);
+    window.addEventListener("keydown", (event) => { if (event.key === "Escape") closeDetail(); });
+    window.addEventListener("resize", () => {
+      resizeLamp();
+      if (detailOpen) {
+        renderDetailCard();
+      } else {
+        renderFloorCards();
+      }
+      updateScrollState();
+    });
+    window.addEventListener("scroll", updateScrollState, { passive: true });
+
+    renderPlanetSystem();
+    renderFloorCards();
+    initLamp();
+    updateLampLinkedState();
+    updateScrollState();
+  </script>
+</body>
+</html>

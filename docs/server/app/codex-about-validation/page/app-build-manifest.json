@@ -1,0 +1,28 @@
+{
+  "pages": {
+    "/codex-about-validation/page": [
+      "static/chunks/[root-of-the-server]__8ebb6d4b._.css",
+      "static/chunks/node_modules_next_dist_1a6ee436._.js",
+      "static/chunks/src_components_BaiduAnalytics_tsx_b5090627._.js",
+      "static/chunks/src_app_layout_tsx_c0237562._.js",
+      "static/chunks/_eea3d2f4._.js",
+      "static/chunks/node_modules_framer-motion_dist_es_2c5c84b1._.js",
+      "static/chunks/node_modules_motion-dom_dist_es_5b5e0cd8._.js",
+      "static/chunks/node_modules_react-icons_fa_index_mjs_d2e2d7f5._.js",
+      "static/chunks/node_modules_react-icons_ri_index_mjs_0e2ec0a5._.js",
+      "static/chunks/node_modules_react-icons_lib_74ccc930._.js",
+      "static/chunks/node_modules_three_build_three_core_df0bde7e.js",
+      "static/chunks/node_modules_three_build_three_module_230a9f89.js",
+      "static/chunks/node_modules_76026639._.js",
+      "static/chunks/CODEX升级_about-submarine-room-validation_module_2cd43c2a.css",
+      "static/chunks/src_app_codex-about-validation_page_tsx_4d02a815._.js",
+      "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_fd44f5a4._.js",
+      "static/chunks/node_modules_next_dist_compiled_2ce9398a._.js",
+      "static/chunks/node_modules_next_dist_client_8f19e6fb._.js",
+      "static/chunks/node_modules_next_dist_2ecbf5fa._.js",
+      "static/chunks/node_modules_@swc_helpers_cjs_00636ac3._.js",
+      "static/chunks/_e69f0d32._.js",
+      "static/chunks/_93808211._.js"
+    ]
+  }
+}

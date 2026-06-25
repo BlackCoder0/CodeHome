@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Global Depth Driver Lab</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      background: #02070c;
+      color: #e8f6fb;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    body {
+      overflow-x: hidden;
+    }
+
+    #bgCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 0;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .hud {
+      position: absolute;
+      left: 20px;
+      top: 20px;
+      width: min(360px, calc(100vw - 32px));
+      padding: 18px 18px 16px;
+      border-radius: 20px;
+      background: rgba(4, 15, 23, 0.7);
+      box-shadow:
+        inset 0 0 0 1px rgba(148, 213, 234, 0.12),
+        0 24px 60px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(16px);
+    }
+
+    .hud h1 {
+      font-size: 14px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(180, 227, 242, 0.8);
+    }
+
+    .hud h2 {
+      margin-top: 10px;
+      font-size: 32px;
+      line-height: 1;
+      font-weight: 600;
+      color: #f5fbfe;
+    }
+
+    .hud p {
+      margin-top: 10px;
+      color: rgba(201, 229, 238, 0.7);
+      line-height: 1.6;
+      font-size: 13px;
+    }
+
+    .meta {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .meta-card {
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      box-shadow: inset 0 0 0 1px rgba(160, 223, 243, 0.08);
+    }
+
+    .meta-card strong {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(157, 211, 229, 0.7);
+    }
+
+    .meta-card span {
+      display: block;
+      margin-top: 6px;
+      font-size: 16px;
+      color: #f0fbff;
+    }
+
+    .bars {
+      margin-top: 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 132px 1fr 42px;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: rgba(213, 235, 243, 0.8);
+    }
+
+    .bar {
+      position: relative;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 0%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #6fdfff, #c5f4ff);
+      box-shadow: 0 0 20px rgba(111, 223, 255, 0.28);
+    }
+
+    .legend {
+      position: absolute;
+      right: 20px;
+      bottom: 20px;
+      width: min(320px, calc(100vw - 32px));
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(4, 15, 23, 0.62);
+      box-shadow:
+        inset 0 0 0 1px rgba(148, 213, 234, 0.1),
+        0 24px 60px rgba(0, 0, 0, 0.24);
+      backdrop-filter: blur(16px);
+    }
+
+    .legend h3 {
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(176, 224, 239, 0.72);
+    }
+
+    .legend ul {
+      margin-top: 10px;
+      list-style: none;
+      display: grid;
+      gap: 8px;
+      font-size: 13px;
+      color: rgba(212, 232, 238, 0.72);
+    }
+
+    .stage {
+      position: relative;
+      z-index: 1;
+    }
+
+    .section {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 0 5vw;
+    }
+
+    .section-card {
+      max-width: 560px;
+      padding: 24px 26px;
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.035);
+      box-shadow:
+        inset 0 0 0 1px rgba(167, 220, 237, 0.09),
+        0 22px 60px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(10px);
+    }
+
+    .section-card span {
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(164, 221, 239, 0.74);
+    }
+
+    .section-card h3 {
+      margin-top: 10px;
+      font-size: clamp(30px, 5vw, 52px);
+      line-height: 0.94;
+      font-weight: 600;
+    }
+
+    .section-card p {
+      margin-top: 14px;
+      line-height: 1.8;
+      color: rgba(210, 232, 239, 0.74);
+      font-size: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .meta {
+        grid-template-columns: 1fr;
+      }
+
+      .bar-row {
+        grid-template-columns: 110px 1fr 38px;
+      }
+
+      .section {
+        padding: 0 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="bgCanvas"></canvas>
+
+  <div class="overlay">
+    <section class="hud">
+      <h1>Global Depth Driver</h1>
+      <h2 id="phaseTitle">Projects</h2>
+      <p>
+        This page only validates one thing: whether scroll can drive a stable, global
+        ocean-depth parameter system before any section-specific visuals are attached.
+      </p>
+      <div class="meta">
+        <div class="meta-card">
+          <strong>Depth</strong>
+          <span id="depthValue">0.00</span>
+        </div>
+        <div class="meta-card">
+          <strong>Section</strong>
+          <span id="sectionValue">0</span>
+        </div>
+        <div class="meta-card">
+          <strong>Blend</strong>
+          <span id="blendValue">0.00</span>
+        </div>
+      </div>
+      <div class="bars" id="bars"></div>
+    </section>
+
+    <aside class="legend">
+      <h3>Validation Focus</h3>
+      <ul>
+        <li>One scroll source drives all global ocean variables.</li>
+        <li>Section transitions blend, not jump.</li>
+        <li>The same parameter set can later feed every section.</li>
+        <li>Console logs emit only when the dominant phase changes.</li>
+      </ul>
+    </aside>
+  </div>
+
+  <main class="stage">
+    <section class="section" data-phase="Projects">
+      <article class="section-card">
+        <span>Section 01</span>
+        <h3>Projects</h3>
+        <p>
+          Shallow readable water. Strong surface light, weaker mist, low ruins signal,
+          and the highest environment clarity.
+        </p>
+      </article>
+    </section>
+    <section class="section" data-phase="Hobbies">
+      <article class="section-card">
+        <span>Section 02</span>
+        <h3>Hobbies</h3>
+        <p>
+          Wreck presence rises, light falls, particles thicken, and the space starts
+          feeling occupied by found objects.
+        </p>
+      </article>
+    </section>
+    <section class="section" data-phase="Bangumi">
+      <article class="section-card">
+        <span>Section 03</span>
+        <h3>Bangumi</h3>
+        <p>
+          Mid-water archive layer. Creature density peaks, archive belts appear,
+          and the environment becomes calmer but more enclosed.
+        </p>
+      </article>
+    </section>
+    <section class="section" data-phase="About">
+      <article class="section-card">
+        <span>Section 04</span>
+        <h3>About</h3>
+        <p>
+          Private habitat zone. Surface influence is weak, observatory signals rise,
+          and giant-presence becomes slow and distant.
+        </p>
+      </article>
+    </section>
+    <section class="section" data-phase="Contact">
+      <article class="section-card">
+        <span>Section 05</span>
+        <h3>Contact</h3>
+        <p>
+          Lowest layer. Ruin signal, silt density, and electrical echo dominate while
+          surface light nearly disappears.
+        </p>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const defs = [
+      {
+        name: "Projects",
+        depth: 0.08,
+        surfaceLight: 1,
+        waterTint: 0.16,
+        mistLevel: 0.1,
+        particleDensity: 0.16,
+        creatureDensity: 0.12,
+        giantPresence: 0.02,
+        ruinSignalLevel: 0
+      },
+      {
+        name: "Hobbies",
+        depth: 0.28,
+        surfaceLight: 0.74,
+        waterTint: 0.34,
+        mistLevel: 0.18,
+        particleDensity: 0.34,
+        creatureDensity: 0.24,
+        giantPresence: 0.08,
+        ruinSignalLevel: 0.08
+      },
+      {
+        name: "Bangumi",
+        depth: 0.52,
+        surfaceLight: 0.46,
+        waterTint: 0.58,
+        mistLevel: 0.32,
+        particleDensity: 0.5,
+        creatureDensity: 0.68,
+        giantPresence: 0.28,
+        ruinSignalLevel: 0.16
+      },
+      {
+        name: "About",
+        depth: 0.74,
+        surfaceLight: 0.22,
+        waterTint: 0.76,
+        mistLevel: 0.42,
+        particleDensity: 0.62,
+        creatureDensity: 0.34,
+        giantPresence: 0.46,
+        ruinSignalLevel: 0.28
+      },
+      {
+        name: "Contact",
+        depth: 1,
+        surfaceLight: 0.04,
+        waterTint: 1,
+        mistLevel: 0.6,
+        particleDensity: 0.82,
+        creatureDensity: 0.1,
+        giantPresence: 0.18,
+        ruinSignalLevel: 1
+      }
+    ];
+
+    const barKeys = [
+      "surfaceLight",
+      "waterTint",
+      "mistLevel",
+      "particleDensity",
+      "creatureDensity",
+      "giantPresence",
+      "ruinSignalLevel"
+    ];
+
+    const sections = [...document.querySelectorAll(".section")];
+    const canvas = document.getElementById("bgCanvas");
+    const ctx = canvas.getContext("2d");
+    const barsRoot = document.getElementById("bars");
+    const phaseTitle = document.getElementById("phaseTitle");
+    const depthValue = document.getElementById("depthValue");
+    const sectionValue = document.getElementById("sectionValue");
+    const blendValue = document.getElementById("blendValue");
+
+    let width = 1;
+    let height = 1;
+    let dpr = 1;
+    let sectionMetrics = [];
+    let particles = [];
+    let fish = [];
+    let lastPhaseName = "";
+    let rafId = 0;
+
+    const barRefs = {};
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    function smoothstep(min, max, value) {
+      const x = clamp((value - min) / Math.max(max - min, 0.0001), 0, 1);
+      return x * x * (3 - 2 * x);
+    }
+
+    function mixState(a, b, t) {
+      const out = {};
+      for (const key of Object.keys(a)) {
+        out[key] = typeof a[key] === "number" ? lerp(a[key], b[key], t) : (t < 0.5 ? a[key] : b[key]);
+      }
+      return out;
+    }
+
+    function rgb(r, g, b, a) {
+      return `rgba(${r}, ${g}, ${b}, ${a})`;
+    }
+
+    function buildBars() {
+      for (const key of barKeys) {
+        const row = document.createElement("div");
+        row.className = "bar-row";
+
+        const label = document.createElement("div");
+        label.textContent = key;
+
+        const bar = document.createElement("div");
+        bar.className = "bar";
+
+        const fill = document.createElement("div");
+        fill.className = "bar-fill";
+        bar.appendChild(fill);
+
+        const value = document.createElement("div");
+        value.textContent = "0.00";
+
+        row.appendChild(label);
+        row.appendChild(bar);
+        row.appendChild(value);
+        barsRoot.appendChild(row);
+
+        barRefs[key] = { fill, value };
+      }
+    }
+
+    function updateMetrics() {
+      sectionMetrics = sections.map((section, index) => ({
+        index,
+        top: section.offsetTop,
+        height: section.offsetHeight,
+        name: section.dataset.phase || defs[index].name
+      }));
+    }
+
+    function seedScene() {
+      particles = [];
+      fish = [];
+
+      const particleCount = width < 900 ? 80 : 140;
+      for (let i = 0; i < particleCount; i += 1) {
+        particles.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          r: Math.random() * 2.2 + 0.4,
+          speed: Math.random() * 0.42 + 0.08,
+          drift: Math.random() * 0.5 + 0.14,
+          alpha: Math.random() * 0.22 + 0.04
+        });
+      }
+
+      for (let i = 0; i < 12; i += 1) {
+        fish.push({
+          x: Math.random() * width,
+          y: height * (0.32 + Math.random() * 0.28),
+          size: 10 + Math.random() * 14,
+          speed: 0.25 + Math.random() * 0.45,
+          phase: Math.random() * Math.PI * 2
+        });
+      }
+    }
+
+    function resize() {
+      width = Math.max(window.innerWidth, 1);
+      height = Math.max(window.innerHeight, 1);
+      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      canvas.style.width = width + "px";
+      canvas.style.height = height + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      updateMetrics();
+      seedScene();
+      requestRender();
+    }
+
+    function getDriverState() {
+      const scrollY = window.scrollY;
+      let active = sectionMetrics[0];
+
+      for (const metric of sectionMetrics) {
+        if (scrollY >= metric.top) active = metric;
+      }
+
+      const next = sectionMetrics[Math.min(active.index + 1, sectionMetrics.length - 1)];
+      const local = clamp((scrollY - active.top) / Math.max(active.height, 1), 0, 1);
+      const blend = active.index === next.index ? 0 : smoothstep(0.16, 0.84, local);
+      const state = mixState(defs[active.index], defs[next.index], blend);
+
+      return {
+        state,
+        activeIndex: active.index,
+        local,
+        blend
+      };
+    }
+
+    function updateHud(driver) {
+      phaseTitle.textContent = defs[driver.activeIndex].name;
+      depthValue.textContent = driver.state.depth.toFixed(2);
+      sectionValue.textContent = String(driver.activeIndex + 1);
+      blendValue.textContent = driver.blend.toFixed(2);
+
+      for (const key of barKeys) {
+        const value = driver.state[key];
+        barRefs[key].fill.style.width = `${value * 100}%`;
+        barRefs[key].value.textContent = value.toFixed(2);
+      }
+
+      const phaseName = defs[driver.activeIndex].name;
+      if (phaseName !== lastPhaseName) {
+        lastPhaseName = phaseName;
+        console.info("[DepthDriver] active phase", {
+          phase: phaseName,
+          index: driver.activeIndex,
+          scrollY: Number(window.scrollY.toFixed(1))
+        });
+      }
+    }
+
+    function drawBackground(driver, time) {
+      const s = driver.state;
+      const topColor = {
+        r: Math.round(lerp(110, 7, s.waterTint)),
+        g: Math.round(lerp(180, 52, s.waterTint)),
+        b: Math.round(lerp(214, 89, s.waterTint))
+      };
+      const bottomColor = {
+        r: Math.round(lerp(16, 1, s.depth)),
+        g: Math.round(lerp(55, 9, s.depth)),
+        b: Math.round(lerp(83, 18, s.depth))
+      };
+      const surfaceY = lerp(height * 0.16, height * 0.06, s.depth);
+
+      ctx.clearRect(0, 0, width, height);
+
+      if (s.surfaceLight > 0.06) {
+        const sky = ctx.createLinearGradient(0, 0, 0, surfaceY + height * 0.08);
+        sky.addColorStop(0, rgb(194, 221, 232, 0.92 * s.surfaceLight));
+        sky.addColorStop(0.75, rgb(112, 163, 189, 0.54 * s.surfaceLight));
+        sky.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, width, surfaceY + height * 0.08);
+      }
+
+      const water = ctx.createLinearGradient(0, surfaceY, 0, height);
+      water.addColorStop(0, rgb(topColor.r, topColor.g, topColor.b, 1));
+      water.addColorStop(0.5, rgb(
+        Math.round(lerp(topColor.r, bottomColor.r, 0.55)),
+        Math.round(lerp(topColor.g, bottomColor.g, 0.55)),
+        Math.round(lerp(topColor.b, bottomColor.b, 0.55)),
+        1
+      ));
+      water.addColorStop(1, rgb(bottomColor.r, bottomColor.g, bottomColor.b, 1));
+      ctx.fillStyle = water;
+      ctx.fillRect(0, surfaceY, width, height - surfaceY);
+
+      const glow = ctx.createRadialGradient(width * 0.5, surfaceY + 4, 0, width * 0.5, surfaceY + 4, width * 0.46);
+      glow.addColorStop(0, `rgba(236, 249, 255, ${s.surfaceLight * 0.24})`);
+      glow.addColorStop(1, "rgba(236, 249, 255, 0)");
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.fillStyle = `rgba(234, 248, 255, ${0.88 * s.surfaceLight})`;
+      ctx.fillRect(0, surfaceY, width, 2);
+
+      ctx.strokeStyle = `rgba(230, 249, 255, ${0.16 + s.surfaceLight * 0.18})`;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      for (let x = 0; x <= width; x += 10) {
+        const y = surfaceY + Math.sin(x * 0.014 + time * 1.7) * 2.6 + Math.sin(x * 0.036 + time) * 1.4;
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      const mist = ctx.createLinearGradient(0, surfaceY, 0, height);
+      mist.addColorStop(0, `rgba(175, 222, 238, ${s.mistLevel * 0.14})`);
+      mist.addColorStop(1, `rgba(175, 222, 238, ${s.mistLevel * 0.34})`);
+      ctx.fillStyle = mist;
+      ctx.fillRect(0, surfaceY, width, height - surfaceY);
+
+      const causticAlpha = s.surfaceLight * (1 - s.depth) * 0.18;
+      if (causticAlpha > 0.01) {
+        ctx.save();
+        ctx.globalAlpha = causticAlpha;
+        for (let i = 0; i < 8; i += 1) {
+          const x = ((i / 8) * width + time * 30 + i * 90) % (width + 220) - 120;
+          const beam = ctx.createLinearGradient(x, surfaceY + 6, x + 140, surfaceY + height * 0.36);
+          beam.addColorStop(0, "rgba(255,255,255,0)");
+          beam.addColorStop(0.5, "rgba(232,248,255,0.92)");
+          beam.addColorStop(1, "rgba(255,255,255,0)");
+          ctx.fillStyle = beam;
+          ctx.beginPath();
+          ctx.moveTo(x, surfaceY + 6);
+          ctx.lineTo(x + 52, surfaceY + 6);
+          ctx.lineTo(x + 208, surfaceY + height * 0.36);
+          ctx.lineTo(x + 164, surfaceY + height * 0.36);
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      const fishAlpha = s.creatureDensity * 0.28;
+      if (fishAlpha > 0.02) {
+        ctx.save();
+        ctx.strokeStyle = `rgba(192, 233, 245, ${fishAlpha})`;
+        ctx.lineWidth = 1;
+        for (const item of fish) {
+          item.x += item.speed + s.creatureDensity * 0.25;
+          if (item.x > width + item.size * 2) item.x = -item.size * 2;
+          const y = item.y + Math.sin(time * 0.9 + item.phase) * 10;
+          ctx.beginPath();
+          ctx.moveTo(item.x - item.size, y);
+          ctx.quadraticCurveTo(item.x, y - item.size * 0.45, item.x + item.size, y);
+          ctx.quadraticCurveTo(item.x, y + item.size * 0.45, item.x - item.size, y);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      const giantAlpha = s.giantPresence * 0.22;
+      if (giantAlpha > 0.01) {
+        const x = width * 0.82 + Math.sin(time * 0.16) * 22;
+        const y = height * 0.48 + Math.sin(time * 0.22) * 10;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(width < 900 ? 0.62 : 0.84, width < 900 ? 0.62 : 0.84);
+        ctx.fillStyle = `rgba(8, 21, 31, ${giantAlpha})`;
+        ctx.beginPath();
+        ctx.moveTo(-180, 0);
+        ctx.bezierCurveTo(-132, -40, -44, -62, 66, -48);
+        ctx.bezierCurveTo(128, -38, 184, -12, 212, 10);
+        ctx.bezierCurveTo(170, 42, 112, 58, 28, 60);
+        ctx.bezierCurveTo(-74, 60, -142, 36, -180, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(206, 10);
+        ctx.lineTo(262, -22);
+        ctx.lineTo(238, 10);
+        ctx.lineTo(262, 40);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+
+      for (const mote of particles) {
+        mote.y += mote.speed + s.particleDensity * 0.28;
+        mote.x += Math.sin(time * 0.5 + mote.y * 0.01) * mote.drift * (0.4 + s.particleDensity);
+        if (mote.y > height + 12) {
+          mote.y = -12;
+          mote.x = Math.random() * width;
+        }
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(210, 234, 242, ${mote.alpha + s.particleDensity * 0.08})`;
+        ctx.arc(mote.x, mote.y, mote.r + s.particleDensity * 0.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      const ruinAlpha = s.ruinSignalLevel * 0.22;
+      if (ruinAlpha > 0.01) {
+        const baseY = height * 0.84;
+        ctx.save();
+        ctx.fillStyle = `rgba(12, 21, 29, ${0.74 + s.ruinSignalLevel * 0.12})`;
+        ctx.beginPath();
+        ctx.moveTo(0, baseY + 30);
+        for (let x = 0; x <= width; x += 16) {
+          const y = baseY + Math.sin(x * 0.012 + time * 0.1) * 10 + Math.sin(x * 0.03) * 6;
+          ctx.lineTo(x, y);
+        }
+        ctx.lineTo(width, height);
+        ctx.lineTo(0, height);
+        ctx.closePath();
+        ctx.fill();
+
+        const ruins = [
+          { x: width * 0.62, w: 54, h: 120 },
+          { x: width * 0.72, w: 86, h: 160 },
+          { x: width * 0.84, w: 46, h: 98 }
+        ];
+        ctx.strokeStyle = `rgba(156, 221, 242, ${ruinAlpha})`;
+        ctx.lineWidth = 2;
+        for (const ruin of ruins) {
+          ctx.fillStyle = `rgba(20, 30, 37, ${0.56 + ruinAlpha})`;
+          ctx.fillRect(ruin.x, baseY - ruin.h, ruin.w, ruin.h);
+          ctx.strokeRect(ruin.x, baseY - ruin.h, ruin.w, ruin.h);
+        }
+
+        const cx = width * 0.78;
+        const cy = height * 0.68;
+        for (let i = 0; i < 4; i += 1) {
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(150, 238, 255, ${0.08 + s.ruinSignalLevel * 0.16})`;
+          ctx.arc(cx, cy, 18 + i * 20 + Math.sin(time * 1.6) * 2, -Math.PI * 0.26, Math.PI * 0.32);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+    }
+
+    function renderFrame(timeMs) {
+      rafId = 0;
+      const driver = getDriverState();
+      updateHud(driver);
+      drawBackground(driver, timeMs * 0.001);
+    }
+
+    function requestRender() {
+      if (!rafId) {
+        rafId = requestAnimationFrame(renderFrame);
+      }
+    }
+
+    buildBars();
+    resize();
+    requestRender();
+
+    window.addEventListener("resize", resize);
+    window.addEventListener("scroll", requestRender, { passive: true });
+  </script>
+</body>
+</html>

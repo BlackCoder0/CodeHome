@@ -33,8 +33,8 @@ const DeskLamp3D: React.FC<DeskLamp3DProps> = ({ className = '', onToggleLight }
       0.1,
       1000
     );
-    camera.position.set(0, 2, 8);
-    camera.lookAt(0, 2, 0);
+    camera.position.set(0, 2.4, 8);
+    camera.lookAt(0, 2.15, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
@@ -54,7 +54,7 @@ const DeskLamp3D: React.FC<DeskLamp3DProps> = ({ className = '', onToggleLight }
     });
 
     const base = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1.2, 0.3, 16), whiteMaterial);
-    base.position.y = 0.15;
+    base.position.y = 0.08;
     base.castShadow = true;
     base.receiveShadow = true;
     lampGroup.add(base);
@@ -131,15 +131,6 @@ const DeskLamp3D: React.FC<DeskLamp3DProps> = ({ className = '', onToggleLight }
     scene.add(globalLight);
 
     scene.add(lampGroup);
-
-    const plane = new THREE.Mesh(
-      new THREE.PlaneGeometry(20, 20),
-      new THREE.MeshPhongMaterial({ color: 0x333333, transparent: true, opacity: 0.3 })
-    );
-    plane.rotation.x = -Math.PI / 2;
-    plane.position.y = -0.1;
-    plane.receiveShadow = true;
-    scene.add(plane);
 
     const animate = () => {
       const animationId = requestAnimationFrame(animate);
